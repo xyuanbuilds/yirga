@@ -1,0 +1,103 @@
+{
+  // https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "name": "bisheng-test",
+      "request": "launch",
+      "args": ["start", "-c", "./docsystem/site/bisheng.config.js"],
+      "program": "${workspaceFolder}/docsystem/node_modules/.bin/bisheng",
+      "env": {
+        "NODE_ENV": "development"
+      },
+      "cwd": "${workspaceFolder}/docsystem/",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "disableOptimisticBPs": true
+    },
+    {
+      "type": "node",
+      "name": "jest",
+      "request": "launch",
+      "protocol": "inspector",
+      "args": ["--runInBand", "--updateSnapshot", "${relativeFile}"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "openOnFirstSessionStart",
+      // "sourceMaps": true,
+      "stopOnEntry": false,
+      // "disableOptimisticBPs": true,
+      "program": "${workspaceFolder}/node_modules/jest/bin/jest"
+    },
+    {
+      "type": "node",
+      "name": "jest-in-windows",
+      "request": "launch",
+      "protocol": "inspector",
+      "args": ["--runInBand", "--updateSnapshot", "'${relativeFile}'"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "openOnFirstSessionStart",
+      "sourceMaps": true,
+      "stopOnEntry": false,
+      // "disableOptimisticBPs": true,
+      "program": "${workspaceFolder}/node_modules/jest/bin/jest"
+    },
+    {
+      "type": "node",
+      "name": "jest-watch",
+      "request": "launch",
+      "protocol": "inspector",
+      "args": [
+        "--runInBand",
+        "--watch",
+        "--updateSnapshot",
+        "'${relativeFile}'"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "sourceMaps": true,
+      "stopOnEntry": false,
+      // "disableOptimisticBPs": true,
+      "program": "${workspaceFolder}/node_modules/.bin/jest"
+    },
+    {
+      "type": "node",
+      "name": "jest-component",
+      "request": "launch",
+      "protocol": "inspector",
+      "args": [
+        "${relativeFileDirname}",
+        "--coverage=true",
+        "--config='${workspaceFolder}/jest.config.js'",
+        "--watch",
+        "--updateSnapshot",
+        "--testPathPattern='${relativeFileDirname}'"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "sourceMaps": true,
+      "stopOnEntry": false,
+      "program": "${workspaceFolder}/node_modules/.bin/jest"
+    },
+    {
+      "type": "node",
+      "name": "umi-build-analyze",
+      "request": "launch",
+      "protocol": "inspector",
+      "args": ["build"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "stopOnEntry": false,
+      "env": {
+        "DEBUG": "umi*",
+        "ANALYZE": "1",
+        "RM_TMPDIR": "none"
+      },
+      "sourceMaps": true,
+      // "disableOptimisticBPs": true,
+      "program": "${workspaceFolder}/node_modules/.bin/umi"
+    }
+  ]
+}

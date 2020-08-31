@@ -1,0 +1,36 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+node_modules
+
+# production
+dist
+.cacheDir
+product
+lib
+es
+!/packages/
+
+# misc
+.DS_Store
+npm-debug.log
+yarn-error.log
+lerna-debug.log
+
+coverage
+.idea
+*bak
+
+/.vscode/*
+!/.vscode/settings.json
+!/.vscode/launch.json
+.awcache
+
+.umi
+.umi-production
+
+# 测试用文件
+test_app.js
+test_file.js
+webpack.log
+test-report.html

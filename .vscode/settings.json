@@ -1,0 +1,89 @@
+{
+  "eslint.alwaysShowStatus": true,
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "html",
+    "typescript",
+    "typescriptreact"
+  ],
+  "eslint.debug": true,
+  "eslint.packageManager": "yarn",
+  "emmet.triggerExpansionOnTab": true,
+  "emmet.showAbbreviationSuggestions": false,
+  "emmet.showExpandedAbbreviation": "always",
+  "emmet.includeLanguages": {
+    "javascript": "javascriptreact",
+    "typescriptreact": "javascriptreact"
+  },
+  "editor.tabSize": 2,
+  "editor.snippetSuggestions": "inline",
+  "files.eol": "\n",
+  "javascript.preferences.importModuleSpecifier": "non-relative",
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "better-comments.tags": [
+    {
+      "tag": "!",
+      "color": "#FF2D00",
+      "strikethrough": false,
+      "backgroundColor": "transparent"
+    },
+    {
+      "tag": "?",
+      "color": "#3498DB",
+      "strikethrough": false,
+      "backgroundColor": "transparent"
+    },
+    {
+      "tag": "//",
+      "color": "#474747",
+      "strikethrough": true,
+      "backgroundColor": "transparent"
+    },
+    {
+      "tag": "todo",
+      "color": "#FF8C00",
+      "strikethrough": false,
+      "backgroundColor": "transparent"
+    },
+    {
+      "tag": "*",
+      "color": "#98C379",
+      "strikethrough": false,
+      "backgroundColor": "transparent"
+    },
+    {
+      "tag": "deprecated",
+      "color": "#FFE000",
+      "strikethrough": false,
+      "backgroundColor": "transparent"
+    },
+    {
+      "tag": "fixme",
+      "color": "#e66f36",
+      "strikethrough": false,
+      "backgroundColor": "transparent"
+    }
+  ],
+  "less.validate": false,
+  "css.validate": false,
+  "scss.validate": false,
+  "editor.formatOnSave": true,
+  "stylelint.configOverrides": {
+    "ignoreFiles": ["**/*.js", "**/*.tsx", "**/*.ts"]
+  },
+  "stylelint.packageManager": "yarn",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true,
+    "source.fixAll.stylelint": false,
+    "source.fixAll": true
+  },
+  "[less]": {
+    "editor.defaultFormatter": "stylelint.vscode-stylelint",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.stylelint": true
+    }
+  },
+  "jest.autoEnable": false,
+  "editor.defaultFormatter": "esbenp.prettier-vscode"
+}

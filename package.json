@@ -1,0 +1,16 @@
+{
+  "name": "yirga",
+  "private": true,
+  "devDependencies": {
+    "lerna": "^3.22.1",
+    "typescript": "^4.0.2"
+  },
+  "scripts": {
+    "build": "lerna run --stream --sort build",
+    "clean": "yarn workspaces run clean",
+    "test": "yarn workspaces run test"
+  },
+  "workspaces": [
+    "packages/*"
+  ]
+}

@@ -1,0 +1,10 @@
+lib
+dist
+build
+es
+coverage
+node_modules
+dist
+.yarn
+*.js.map
+*.d.ts
