@@ -1,5 +1,9 @@
 const defaultStylelint = {
-  extends: ['stylelint-config-standard', 'stylelint-config-css-modules'],
+  extends: [
+    'stylelint-config-standard',
+    'stylelint-config-css-modules',
+    'stylelint-config-prettier',
+  ],
   rules: {
     'property-case': null,
     'shorthand-property-no-redundant-values': null,

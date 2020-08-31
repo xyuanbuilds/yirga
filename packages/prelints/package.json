@@ -1,5 +1,5 @@
 {
-  "name": "@yirga/prelint",
+  "name": "@yirga/prelints",
   "version": "0.0.0",
   "description": "prettier & lints",
   "author": "JhonXY <1076849402@qq.com>",
@@ -20,7 +20,7 @@
     "stylelint"
   ],
   "publishConfig": {
-    "registry": "https://registry.npm.taobao.org"
+    "access": "public"
   },
   "scripts": {
     "build": "tsc --build ./tsconfig.build.json",
@@ -40,12 +40,15 @@
     "prettier": "^2.1.1",
     "stylelint": "^13.6.1",
     "stylelint-config-css-modules": "^2.2.0",
+    "stylelint-config-prettier": "^8.0.2",
     "stylelint-config-standard": "^20.0.0",
     "typescript": "^4.0.2"
   },
   "devDependencies": {
     "@types/debug": "^4.1.5",
-    "debug": "^4.1.1",
-    "stylelint-config-prettier": "^8.0.2"
+    "debug": "^4.1.1"
+  },
+  "peerDependencies": {
+    "typescript": "^4.0.2"
   }
 }

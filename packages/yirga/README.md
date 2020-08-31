@@ -1,11 +1,11 @@
-# `test-project`
+# `yirga`
 
 > TODO: description
 
 ## Usage
 
 ```
-const testProject = require('test-project');
+const yirga = require('yirga');
 
 // TODO: DEMONSTRATE API
 ```
