@@ -1,3 +1,3 @@
 module.exports = {
-  extends: './packages/prelint/lib/eslint.js',
+  extends: './packages/prelints/lib/eslint.js',
 };

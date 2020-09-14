@@ -1,3 +1,3 @@
-const dsPrettier = require("./packages/prelint/lib").prettier;
+const dsPrettier = require("./packages/prelints/lib").prettier;
 
 module.exports = dsPrettier;

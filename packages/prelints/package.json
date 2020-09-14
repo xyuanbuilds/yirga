@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "prettier & lints",
   "author": "JhonXY <1076849402@qq.com>",
-  "homepage": "",
+  "homepage": "https://github.com/JhonXY/yirga#readme",
   "license": "MIT",
   "main": "lib/index.js",
   "module": "es/index.js",
@@ -21,6 +21,10 @@
   ],
   "publishConfig": {
     "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JhonXY/yirga.git"
   },
   "scripts": {
     "build": "tsc --build ./tsconfig.build.json",

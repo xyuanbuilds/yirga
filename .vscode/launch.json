@@ -4,20 +4,6 @@
   "configurations": [
     {
       "type": "node",
-      "name": "bisheng-test",
-      "request": "launch",
-      "args": ["start", "-c", "./docsystem/site/bisheng.config.js"],
-      "program": "${workspaceFolder}/docsystem/node_modules/.bin/bisheng",
-      "env": {
-        "NODE_ENV": "development"
-      },
-      "cwd": "${workspaceFolder}/docsystem/",
-      "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen",
-      "disableOptimisticBPs": true
-    },
-    {
-      "type": "node",
       "name": "jest",
       "request": "launch",
       "protocol": "inspector",
@@ -64,7 +50,7 @@
     },
     {
       "type": "node",
-      "name": "jest-component",
+      "name": "jest-curDir",
       "request": "launch",
       "protocol": "inspector",
       "args": [
@@ -83,21 +69,15 @@
     },
     {
       "type": "node",
-      "name": "umi-build-analyze",
+      "name": "ts-node",
       "request": "launch",
       "protocol": "inspector",
-      "args": ["build"],
+      "env": { "TS_NODE_PROJECT": "${workspaceFolder}/tsconfig.dev.json" },
+      "args": ["-r", "ts-node/register", "./${relativeFile}"],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "stopOnEntry": false,
-      "env": {
-        "DEBUG": "umi*",
-        "ANALYZE": "1",
-        "RM_TMPDIR": "none"
-      },
       "sourceMaps": true,
-      // "disableOptimisticBPs": true,
-      "program": "${workspaceFolder}/node_modules/.bin/umi"
     }
   ]
 }
