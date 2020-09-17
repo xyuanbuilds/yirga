@@ -8,16 +8,20 @@
   "main": "lib/index.js",
   "exports": {
     ".": "./lib/index.js",
-    "./": "./lib/",
+    "./eslint": "./lib/eslint.js",
+    "./prettier": "./lib/prettier.js",
+    "./stylelint": "./lib/stylelint.js",
     "./tsconfig.default.json": "./lib/tsconfig.default.json",
-    "./tsconfig.dev.json": "./lib/tsconfig.dev.json"
+    "./tsconfig.dev.json": "./lib/tsconfig.dev.json",
+    "./lib/": "./lib/"
   },
   "module": "es/index.js",
   "directories": {
     "lib": "lib"
   },
   "files": [
-    "lib"
+    "lib",
+    "es"
   ],
   "keywords": [
     "yirga",
@@ -34,8 +38,10 @@
   },
   "scripts": {
     "build": "tsc --build ./tsconfig.build.json",
+    "build:es": "tsc --build ./tsconfig.build.es.json",
     "deps": "yarn upgrade-interactive --latest",
-    "clean": "tsc -b tsconfig.build.json --clean"
+    "clean": "tsc -b tsconfig.build.json --clean",
+    "clean:es": "tsc -b tsconfig.build.es.json --clean"
   },
   "dependencies": {
     "@typescript-eslint/eslint-plugin": "^3.10.1",

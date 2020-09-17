@@ -2,6 +2,11 @@
   "extends": "./tsconfig.build.json",
   "compilerOptions": {
     "outDir": "./es",
-    "module": "ES6"
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "lib": ["ES2020"],
+    "module": "ES2020",
+    "moduleResolution": "node",
+    "target": "ES2020"
   }
 }

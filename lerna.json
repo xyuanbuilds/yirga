@@ -2,5 +2,30 @@
   "packages": ["packages/*"],
   "npmClient": "yarn",
   "useWorkspaces": true,
-  "version": "independent"
+  "version": "independent",
+  "command": {
+    "create": {
+      "license": "MIT",
+      "repository": {
+        "type": "git",
+        "url": "git+https://github.com/JhonXY/yirga.git"
+      },
+      "scripts": {
+        "clean": "tsc -b tsconfig.build.json --clean"
+      }
+    },
+    "publish": {
+      "ignoreChanges": [
+        "**/CHANGELOG.md",
+        "**/node_modules/**",
+        "**/package.json",
+        "**/*.md",
+        "**/*.spec.*",
+        "**/*.stories.*",
+        "**/__tests__/**"
+      ],
+      "conventionalCommits": true,
+      "registry": "https://registry.npmjs.org"
+    }
+  }
 }
