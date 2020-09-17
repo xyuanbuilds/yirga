@@ -1,8 +1,9 @@
 {
   "extends": "./tsconfig.build.json",
   "compilerOptions": {
+    "allowJs": true,
     "composite": false,
     "rootDir": "."
   },
-  "include": ["src", "_tests_"]
+  "include": ["src/**/*", "_tests_/**/*"]
 }

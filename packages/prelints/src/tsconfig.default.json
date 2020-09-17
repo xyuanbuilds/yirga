@@ -1,12 +1,16 @@
 {
   "compilerOptions": {
+    "target": "esnext",
+    "module": "commonjs",
+    "lib": ["esnext", "dom"],
+    "outDir": "dist",
     "allowSyntheticDefaultImports": true,
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
     "declaration": true,
     "declarationMap": true,
     "esModuleInterop": true,
-    "module": "commonjs",
+    "experimentalDecorators": true,
     "moduleResolution": "node",
     "noImplicitReturns": true,
     "noUnusedLocals": true,
@@ -14,7 +18,10 @@
     "pretty": true,
     "sourceMap": true,
     "strict": true,
-    "target": "es2017",
-    "lib": ["es2017"]
+    "newLine": "LF",
+    "jsx": "react",
+    "stripInternal": true,
+    "downlevelIteration": true,
+    "resolveJsonModule": true
   }
 }

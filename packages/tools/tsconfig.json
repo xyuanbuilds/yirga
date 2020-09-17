@@ -2,7 +2,8 @@
   "extends": "./tsconfig.build.json",
   "compilerOptions": {
     "composite": false,
+    "allowJs": true,
     "rootDir": "."
   },
-  "include": ["src", "_tests_", ".babelrc.js"]
+  "include": ["src/**/*"]
 }

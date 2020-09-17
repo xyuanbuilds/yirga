@@ -1,11 +1,68 @@
-# `prelint`
+# `@yirga/prelints`
 
-get eslint, stylelint, prettier configs;
+Simply get eslint, stylelint, prettier configs and tsconfig.json for dev and debug;
 
-## Usage
+## prettier & eslint & stylelint 
+
+### Usage
+require or extends in your js conf files (eg. eslintrc.js)
+```
+/* default usage */
+const prettierConfig = require("@yirga/prelints").prettier;
+module.exports = prettierConfig;
+
+/* similar import */
+const eslintConfig = require("@yirga/prelints").eslint; // need tsconfig
+const stylelintConfig = require("@yirga/prelints").stylelint;
+
+/* eslint extend usage */
+module.exports = {
+  extends: '@yirga/prelints/lib/eslint.js'
+}
+```
+
+## lib/tsconfig.default.json
+
+great useful tsconfig.base.json for build and editor interaction times.
+
+### Usage
+tsconfig.json in your root dir
+```
+{
+  "extends": "@yirga/prelints/lib/tsconfig.default.json"
+}
 
 ```
-const prettierConfig = require("./packages/prelint/lib").prettier;
-const eslintConfig = require("./packages/prelint/lib").eslint; // need tsconfig
-const stylelintConfig = require("./packages/prelint/lib").stylelint;
+
+## lib/tsconfig.dev.json
+
+great useful tsconfig.dev.json for vscode debug.
+before than ,you should global add [ts-node](https://www.npmjs.com/package/ts-node)
+
+### Usage
+.vscode/launch.json
+
 ```
+{
+  {
+    "type": "node",
+    "name": "ts-node",
+    "request": "launch",
+    "protocol": "inspector",
+    "env": { "TS_NODE_PROJECT": "${workspaceFolder}/tsconfig.dev.json" },
+    "args": ["-r", "ts-node/register", "./${relativeFile}"],
+    "cwd": "${workspaceFolder}",
+    "console": "integratedTerminal",
+    "sourceMaps": true,
+  }
+}
+```
+then your tsconfig.dev.json
+
+```
+{
+  "extends": "@yirga/prelints/lib/tsconfig.dev.json"
+}
+
+```
+you can debug you focusing .ts/.tsx file with vscode debug now!

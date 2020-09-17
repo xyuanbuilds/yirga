@@ -146,6 +146,5 @@ async function findPort(option: number | Option) {
 // findPort({ port: 3000, host: '0.0.0.0' })
 //   .then((r) => console.log('find port', r))
 //   .catch((e) => console.log('catch err', e));
-console.log(111);
 export { testPort };
 export default findPort;

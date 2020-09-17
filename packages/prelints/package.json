@@ -6,6 +6,12 @@
   "homepage": "https://github.com/JhonXY/yirga#readme",
   "license": "MIT",
   "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./": "./lib/",
+    "./tsconfig.default.json": "./lib/tsconfig.default.json",
+    "./tsconfig.dev.json": "./lib/tsconfig.dev.json"
+  },
   "module": "es/index.js",
   "directories": {
     "lib": "lib"

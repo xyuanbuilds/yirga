@@ -1,5 +1,6 @@
 {
   "name": "@yirga/babel-preset",
+  "private": true,
   "version": "0.0.1",
   "description": "babel-preset-for-yirga",
   "author": "JhonXY <1076849402@qq.com>",
