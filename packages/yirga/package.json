@@ -1,5 +1,6 @@
 {
   "name": "yirga",
+  "private": true,
   "version": "0.0.1",
   "description": "> TODO: description",
   "author": "JhonXY <1076849402@qq.com>",
