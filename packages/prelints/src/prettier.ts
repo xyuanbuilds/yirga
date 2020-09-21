@@ -19,4 +19,3 @@ const defaultPrettier = {
 };
 
 module.exports = defaultPrettier;
-export default defaultPrettier;

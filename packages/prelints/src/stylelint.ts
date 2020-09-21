@@ -16,4 +16,3 @@ const defaultStylelint = {
 };
 
 module.exports = defaultStylelint;
-export default defaultStylelint;

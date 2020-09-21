@@ -1,3 +1,3 @@
-module.exports = {
-  extends: "./packages/prelints/lib/prettier.js",
-};
+const config = require("./packages/prelints/lib/prettier.js").default;
+
+module.exports = config;
