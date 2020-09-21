@@ -22,7 +22,7 @@ const defaultConfig = {
     "prettier/@typescript-eslint", // 关闭与 @typescript-eslint/eslint-plugin 冲突的rules
     "prettier/react", // 关闭与 eslint-plugin-react 冲突的rules
   ],
-  plugins: ["react-hooks"],
+  plugins: ["@typescript-eslint", "react-hooks"],
   env: {
     es6: true,
     node: true,
@@ -130,16 +130,17 @@ const defaultConfig = {
         props: false,
       },
     ],
-    // 添加以下TS检查
-    // 关闭部分可推导内容的强制书写
-    "@typescript-eslint/explicit-function-return-type": [
-      "off",
-      { allowTypedFunctionExpressions: true },
+    "no-use-before-define": [
+      "error",
+      { functions: false, classes: true, variables: true },
     ],
-    "no-use-before-define": 0,
     "@typescript-eslint/no-use-before-define": [
       "error",
       { functions: false, classes: true, variables: true, typedefs: true },
+    ],
+    "@typescript-eslint/explicit-function-return-type": [
+      "error",
+      { allowExpressions: true, allowTypedFunctionExpressions: true },
     ],
     "@typescript-eslint/no-var-requires": 0,
     "@typescript-eslint/explicit-member-accessibility": 0,
