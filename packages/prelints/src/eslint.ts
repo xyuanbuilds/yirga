@@ -13,7 +13,7 @@ const parserOptions: ParserOptions = {
 
 const defaultConfig = {
   root: true,
-  parser: "@typescript-eslint/parser",
+  plugins: ["@typescript-eslint", "react-hooks"],
   extends: [
     "airbnb-typescript", // react, ts
     "plugin:@typescript-eslint/recommended",
@@ -22,7 +22,6 @@ const defaultConfig = {
     "prettier/@typescript-eslint", // 关闭与 @typescript-eslint/eslint-plugin 冲突的rules
     "prettier/react", // 关闭与 eslint-plugin-react 冲突的rules
   ],
-  plugins: ["@typescript-eslint", "react-hooks"],
   env: {
     es6: true,
     node: true,
@@ -48,7 +47,6 @@ const defaultConfig = {
     // issue https://github.com/facebook/react/issues/15204
     "react-hooks/exhaustive-deps": "off", // 对依赖限制太死暂时不使用
     "react/forbid-prop-types": [0],
-    "react/jsx-filename-extension": [1, { extensions: [".js", "tsx", "ts"] }],
     "global-require": [1],
     "import/prefer-default-export": "off",
     "import/no-default-export": [0, "camel-case"],
@@ -60,6 +58,7 @@ const defaultConfig = {
     "import/extensions": 0,
     "react/jsx-no-bind": [0],
     "react/no-access-state-in-setstate": 1,
+    "react/jsx-filename-extension": "off",
     "react/prop-types": [0],
     "react/sort-comp": 1,
     "react/prefer-stateless-function": [0],
@@ -130,10 +129,7 @@ const defaultConfig = {
         props: false,
       },
     ],
-    "no-use-before-define": [
-      "error",
-      { functions: false, classes: true, variables: true },
-    ],
+    "no-use-before-define": ["off"],
     "@typescript-eslint/no-use-before-define": [
       "error",
       { functions: false, classes: true, variables: true, typedefs: true },
@@ -149,24 +145,11 @@ const defaultConfig = {
     camelcase: 0,
   },
   parserOptions,
-  overrides: [
-    {
-      files: ["src/models/**/*.js", "src/models/**/*.ts"],
-      rules: {
-        "no-restricted-imports": [
-          "error",
-          {
-            patterns: ["@/components", "**/components", "@/pages", "**/pages"],
-          },
-        ],
-      },
-    },
-  ],
   settings: {
     react: {
       version: "detect",
     },
-    "import/extensions": [".js", ".jsx", ".tsx"],
+    "import/extensions": [".js", ".jsx", ".tsx", ".ts"],
   },
 };
 
