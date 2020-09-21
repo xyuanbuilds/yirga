@@ -1,6 +1,6 @@
 {
   "name": "@yirga/tools",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "> TODO: description",
   "author": "JhonXY <1076849402@qq.com>",
   "homepage": "https://github.com/JhonXY/yirga#readme",
@@ -37,7 +37,7 @@
     "@babel/core": "^7.11.6",
     "@babel/plugin-transform-runtime": "^7.11.5",
     "@babel/preset-typescript": "^7.10.4",
-    "@yirga/prelints": "^0.0.2"
+    "@yirga/prelints": "^0.0.3"
   },
   "dependencies": {
     "@babel/runtime-corejs3": "^7.11.2"
