@@ -22,7 +22,6 @@
     "packages/*"
   ],
   "dependencies": {
-    "@yirga/prelints": "^0.0.3",
     "debug": "^4.1.1"
   }
 }

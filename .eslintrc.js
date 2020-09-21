@@ -1,3 +1,3 @@
 module.exports = {
-  extends: "./node_modules/@yirga/prelints/lib/eslint.js",
+  extends: "./packages/prelints/lib/eslint.js",
 };
