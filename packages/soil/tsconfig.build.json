@@ -1,0 +1,9 @@
+{
+  "extends": "@yirga/prelints/lib/tsconfig.default.json",
+  "compilerOptions": {
+    "resolveJsonModule": true,
+    "outDir": "./lib",
+    "rootDir": ".",
+    "checkJs": false
+  }
+}

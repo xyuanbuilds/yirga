@@ -26,5 +26,8 @@
   },
   "bugs": {
     "url": "https://github.com/JhonXY/yirga/issues"
+  },
+  "devDependencies": {
+    "@yirga/prelints": "^0.0.4"
   }
 }

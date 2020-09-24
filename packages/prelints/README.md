@@ -9,15 +9,23 @@ require or extends in your js conf files (eg. eslintrc.js)
 ```
 /* default usage */
 const prettierConfig = require("@yirga/prelints").prettier;
-module.exports = prettierConfig;
+module.exports = {
+  ...prettierConfig,
+};
 
 /* similar import */
 const eslintConfig = require("@yirga/prelints").eslint; // need tsconfig
 const stylelintConfig = require("@yirga/prelints").stylelint;
 
 /* eslint extend usage */
+// must or install all needed eslint-plugins to your devDependencies
+require("@rushstack/eslint-patch/modern-module-resolution");
+
 module.exports = {
-  extends: '@yirga/prelints/lib/eslint.js'
+  extends: [require.resolve(@yirga/prelints/lib/eslint.js)],
+  parserOptions: {
+    tsconfigRootDir: __dirname, // need your tsconfig.
+  },
 }
 ```
 
@@ -37,7 +45,7 @@ tsconfig.json in your root dir
 ## lib/tsconfig.dev.json
 
 great useful tsconfig.dev.json for vscode debug.
-before than ,you should global add [ts-node](https://www.npmjs.com/package/ts-node)
+before that, you should global add [ts-node](https://www.npmjs.com/package/ts-node)
 
 ### Usage
 .vscode/launch.json
@@ -65,4 +73,4 @@ then your tsconfig.dev.json
 }
 
 ```
-you can debug you focusing .ts/.tsx file with vscode debug now!
+you can debug the focusing .ts/.tsx file with vscode debug now!

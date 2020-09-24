@@ -29,5 +29,8 @@
   },
   "peerDependencies": {
     "typescript": "^4.0.2"
+  },
+  "devDependencies": {
+    "@yirga/prelints": "^0.0.4"
   }
 }

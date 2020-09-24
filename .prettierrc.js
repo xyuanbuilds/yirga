@@ -1,3 +1,5 @@
+const config = require("@yirga/prelints");
+
 module.exports = {
-  extends: "./packages/prelints/lib/prettier.js",
+  ...config.prettier,
 };

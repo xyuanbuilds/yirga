@@ -78,6 +78,8 @@
     "source.fixAll.stylelint": false,
     "source.fixAll": true
   },
+  "eslint.lintTask.enable": true,
+  // "eslint.run": "onSave",
   "[less]": {
     "editor.defaultFormatter": "stylelint.vscode-stylelint",
     "editor.codeActionsOnSave": {
