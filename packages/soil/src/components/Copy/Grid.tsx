@@ -1,5 +1,5 @@
 /* eslint-disable no-param-reassign */
-
+/* copy from bvaughn/react-window: https://github.com/bvaughn/react-window */
 import * as React from 'react';
 import Cell from './Cell';
 
@@ -294,9 +294,9 @@ function getColStopIndex(
   let stopIndex = startIndex;
 
   while (stopIndex < columnCount - 1 && offset < maxOffset) {
-    stopIndex++;
     offset += getItemMetadata('col', props, stopIndex, metadata, measuredInfo)
       .size;
+    stopIndex += 1;
   }
 
   return stopIndex;
@@ -328,9 +328,9 @@ function getRowStopIndex(
   let stopIndex = startIndex;
 
   while (stopIndex < rowCount - 1 && offset < maxOffset) {
-    stopIndex++;
     offset += getItemMetadata('row', props, stopIndex, metadata, measuredInfo)
       .size;
+    stopIndex += 1;
   }
 
   return stopIndex;
