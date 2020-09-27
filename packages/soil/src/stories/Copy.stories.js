@@ -1,15 +1,15 @@
 import React from 'react';
-import Grid from '../components/Copy/Grid';
+import Table from '../components/Copy';
 
 export default {
-  title: 'Example/Grid',
-  component: Grid,
+  title: 'Example/MyTable',
+  component: Table,
 };
 
 const Template = (args) => {
   return (
     <div style={{ height: 300, width: 300 }}>
-      <Grid {...args} />
+      <Table {...args} />
     </div>
   );
 };
@@ -27,6 +27,7 @@ const dataSource = Array(100).fill(
 );
 
 export const Virtualized = Template.bind({});
+Virtualized.title = '虚拟滚动';
 Virtualized.args = {
   columnWidth: (index) => index + 100,
   rowHeight: 48,

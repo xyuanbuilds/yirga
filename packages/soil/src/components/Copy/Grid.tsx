@@ -2,6 +2,7 @@
 /* copy from bvaughn/react-window: https://github.com/bvaughn/react-window */
 import * as React from 'react';
 import Cell from './Cell';
+// import bindRaf from './utils/bindRaf';
 
 type ColumnMetaData = {
   itemType: 'col';
@@ -16,16 +17,24 @@ type RowMetaData = {
 };
 
 function Grid(props) {
-  const { dataSource: data, columns, children, columnCount, rowCount } = props;
+  const {
+    dataSource: data,
+    columns,
+    // children,
+    scroll,
+    columnCount,
+    rowCount,
+    setHeader,
+  } = props;
 
-  const wrapperRef = React.useRef(null);
+  // const wrapperRef = React.useRef(null);
   // scrollHeight, scrollWidth // 可滚动块信息
   // scrollLeft, scrollTop // 实际滚动区域
   // * 当前外框滚动记录
-  const [scroll, setScroll] = React.useState({
-    scrollLeft: 0,
-    scrollTop: 0,
-  });
+  // const [scroll, setScroll] = React.useState({
+  //   scrollLeft: 0,
+  //   scrollTop: 0,
+  // });
   // * 当前内框宽高
   const [{ width, height }, setContentInfo] = React.useState({
     width: 0,
@@ -70,7 +79,7 @@ function Grid(props) {
     lastMeasuredRowIndex: -1,
   });
 
-  function reCalculate() {
+  const reCalculate = function () {
     const contentHeight = getEstimatedTotalHeight(
       rowCount,
       metaDataMap.current.rowMetadataMap,
@@ -85,11 +94,38 @@ function Grid(props) {
     const [curRowStartIndex, curRowStopIndex] = getVerticalRange();
     const [curColStartIndex, curColStopIndex] = getHorizontalRange();
 
+    const offsetArr = [] as Array<any[]>;
+    for (let i = curColStartIndex; i <= curColStopIndex; i++) {
+      offsetArr.push([
+        i,
+        getItemMetadata(
+          'col',
+          props,
+          i,
+          metaDataMap.current,
+          innerFlags.current,
+        ),
+      ]);
+      // offsetArr.push(metaDataMap.current.columnMetadataMap[i].offset);
+    }
+    setHeader({
+      scroll,
+      columnsInfo: offsetArr,
+    });
+    // console.log(curColStartIndex, curColStopIndex, offsetArr);
+
     // * 获取当前 可预测的内容容器 渲染 startIndex -> stopIndex
     setContentInfo({ width: contentWidth, height: contentHeight });
-    setRows({ rowStartIndex: curRowStartIndex, rowStopIndex: curRowStopIndex });
-    setCols({ colStartIndex: curColStartIndex, colStopIndex: curColStopIndex });
-  }
+    setRows({
+      rowStartIndex: curRowStartIndex,
+      rowStopIndex: curRowStopIndex,
+    });
+    setCols({
+      colStartIndex: curColStartIndex,
+      colStopIndex: curColStopIndex,
+    });
+  };
+
   // *初始化metaData
   React.useEffect(() => {
     reCalculate();
@@ -160,43 +196,43 @@ function Grid(props) {
   //   onScroll(event);
   // }
 
-  function onScroll(event: React.UIEvent<HTMLDivElement, UIEvent>) {
-    const {
-      clientHeight,
-      clientWidth,
-      scrollLeft,
-      scrollTop,
-      scrollHeight,
-      scrollWidth,
-    } = event.currentTarget;
+  // function onScroll(event: React.UIEvent<HTMLDivElement, UIEvent>) {
+  //   const {
+  //     clientHeight,
+  //     clientWidth,
+  //     scrollLeft,
+  //     scrollTop,
+  //     scrollHeight,
+  //     scrollWidth,
+  //   } = event.currentTarget;
 
-    setScroll((prevState) => {
-      if (
-        prevState.scrollLeft === scrollLeft &&
-        prevState.scrollTop === scrollTop
-      ) {
-        // Scroll position may have been updated by cDM/cDU,
-        // In which case we don't need to trigger another render,
-        // And we don't want to update state.isScrolling.
-        return prevState;
-      }
+  //   setScroll((prevState) => {
+  //     if (
+  //       prevState.scrollLeft === scrollLeft &&
+  //       prevState.scrollTop === scrollTop
+  //     ) {
+  //       // Scroll position may have been updated by cDM/cDU,
+  //       // In which case we don't need to trigger another render,
+  //       // And we don't want to update state.isScrolling.
+  //       return prevState;
+  //     }
 
-      // 处理 safari 弹性滚动
-      const actualLeft = Math.max(
-        0,
-        Math.min(scrollLeft, scrollWidth - clientWidth),
-      );
-      const actualTop = Math.max(
-        0,
-        Math.min(scrollTop, scrollHeight - clientHeight),
-      );
+  //     // 处理 safari 弹性滚动
+  //     const actualLeft = Math.max(
+  //       0,
+  //       Math.min(scrollLeft, scrollWidth - clientWidth),
+  //     );
+  //     const actualTop = Math.max(
+  //       0,
+  //       Math.min(scrollTop, scrollHeight - clientHeight),
+  //     );
 
-      return {
-        scrollLeft: actualLeft,
-        scrollTop: actualTop,
-      };
-    });
-  }
+  //     return {
+  //       scrollLeft: actualLeft,
+  //       scrollTop: actualTop,
+  //     };
+  //   });
+  // }
 
   function getItemStyle(rowIndex: number, columnIndex: number) {
     const curRow = getItemMetadata(
@@ -246,24 +282,24 @@ function Grid(props) {
   }
 
   return (
-    <div
-      style={{
-        position: 'relative',
-        height: '100%',
-        width: '100%',
-        overflow: 'auto',
-        WebkitOverflowScrolling: 'touch',
-        willChange: 'transform',
-        direction: 'ltr',
-      }}
-      onScroll={onScroll}
-      // onWheel={onWheel}
-      ref={wrapperRef}
-      className="tableWrapper"
-    >
-      <div style={{ height, width }} className="tableInner">
-        {items}
-      </div>
+    // <div
+    //   style={{
+    //     position: 'relative',
+    //     height: '100%',
+    //     width: '100%',
+    //     overflow: 'auto',
+    //     WebkitOverflowScrolling: 'touch',
+    //     willChange: 'transform',
+    //     direction: 'ltr',
+    //   }}
+    //   onScroll={onScroll}
+    //   // onWheel={onWheel}
+    //   ref={wrapperRef}
+    //   className="tableWrapper"
+    // >
+    <div style={{ height, width }} className="tableInner">
+      {items}
+      {/* </div> */}
     </div>
   );
 }
@@ -548,9 +584,9 @@ function getItemMetadata(
 // function getColumnWidth(props, index, metadata, measuredInfo) {
 //   return getItemMetadata('col', props, index, metadata, measuredInfo).size;
 // }
-// function getColumnOffset(props, index, metadata, measuredInfo) {
-//   return getItemMetadata('col', props, index, metadata, measuredInfo).offset;
-// }
+function getColumnOffset(props, index, metadata, measuredInfo) {
+  return getItemMetadata('col', props, index, metadata, measuredInfo).offset;
+}
 // function getRowOffset(props, index, metadata, measuredInfo) {
 //   return getItemMetadata('row', props, index, metadata, measuredInfo).offset;
 // }
@@ -559,27 +595,4 @@ function getDefaultCellKey(columnIndex, rowIndex) {
   return `${rowIndex}:${columnIndex}`;
 }
 
-interface DefaultProps {
-  columns: any[];
-  dataSource: any[];
-}
-
-const InitialWrapper = React.memo(
-  ({ columns = [], dataSource = [], ...reset }: DefaultProps) => {
-    const columnCount = columns.length;
-    const rowCount = dataSource.length;
-
-    return (
-      <Grid
-        columns={columns}
-        columnCount={columnCount}
-        rowCount={rowCount}
-        dataSource={dataSource}
-        {...reset}
-      />
-    );
-  },
-);
-InitialWrapper.displayName = 'InitialWrapper';
-
-export default InitialWrapper;
+export default Grid;

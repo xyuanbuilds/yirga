@@ -31,7 +31,7 @@
     "url": "https://github.com/JhonXY/yirga/issues"
   },
   "dependencies": {
-    "@types/react": "^16.9.49",
+    "clsx": "^1.1.1",
     "lodash": "^4.17.20",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
@@ -45,6 +45,8 @@
     "@storybook/preset-ant-design": "^0.0.1",
     "@storybook/preset-typescript": "^3.0.0",
     "@storybook/react": "^6.0.21",
+    "@types/lodash": "^4.14.161",
+    "@types/react": "^16.9.49",
     "@types/react-dom": "^16.9.8",
     "@yirga/prelints": "^0.0.4",
     "babel-loader": "^8.1.0",

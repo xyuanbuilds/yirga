@@ -1,0 +1,41 @@
+.table-wrapper {
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  border-left: 1px solid #e8e8e8;
+  border-top: 1px solid #e8e8e8;
+}
+
+.table-scroll-wrapper::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  background-color: initial;
+  visibility: hidden;
+}
+
+.table-scroll-wrapper::-webkit-scrollbar-track {
+  background-color: initial;
+  width: auto;
+  visibility: hidden;
+}
+
+.table-scroll-wrapper::-webkit-scrollbar-thumb {
+  width: 8px;
+  height: 8px;
+  border-radius: 8px;
+  background-color: #ccc;
+  visibility: hidden;
+}
+
+.table-scroll-wrapper:hover::-webkit-scrollbar {
+  visibility: visible;
+}
+
+.table-scroll-wrapper:hover::-webkit-scrollbar-track {
+  visibility: visible;
+}
+
+.table-scroll-wrapper:hover::-webkit-scrollbar-thumb {
+  visibility: visible;
+}

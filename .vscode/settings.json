@@ -89,6 +89,7 @@
   "jest.autoEnable": false,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "cSpell.words": [
-    "bvaughn"
+    "bvaughn",
+    "clsx"
   ]
 }
