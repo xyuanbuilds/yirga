@@ -2,7 +2,6 @@
 /* copy from bvaughn/react-window: https://github.com/bvaughn/react-window */
 import * as React from 'react';
 import Cell from './Cell';
-// import bindRaf from './utils/bindRaf';
 
 type ColumnMetaData = {
   itemType: 'col';
@@ -24,17 +23,8 @@ function Grid(props) {
     scroll,
     columnCount,
     rowCount,
-    setHeader,
   } = props;
 
-  // const wrapperRef = React.useRef(null);
-  // scrollHeight, scrollWidth // 可滚动块信息
-  // scrollLeft, scrollTop // 实际滚动区域
-  // * 当前外框滚动记录
-  // const [scroll, setScroll] = React.useState({
-  //   scrollLeft: 0,
-  //   scrollTop: 0,
-  // });
   // * 当前内框宽高
   const [{ width, height }, setContentInfo] = React.useState({
     width: 0,
@@ -79,40 +69,52 @@ function Grid(props) {
     lastMeasuredRowIndex: -1,
   });
 
-  const reCalculate = function () {
+  const accurateTotalWidth = React.useRef(0);
+
+  React.useEffect(() => {
+    let lastMeasuredColumnIndex = 0;
+    let interrupted = false; // * 数据异常造成测量失败
+    const metadata = {};
+    let contentWidth = 0;
+
+    columns.forEach((i, index) => {
+      const { offset, width: curWidth } = i;
+      if (typeof offset === 'number' && typeof curWidth === 'number') {
+        metadata[index] = {
+          itemType: 'col',
+          offset,
+          size: curWidth,
+        };
+        if (!interrupted) lastMeasuredColumnIndex = index;
+        contentWidth += curWidth;
+      } else {
+        interrupted = true;
+      }
+    });
+
+    metaDataMap.current.columnMetadataMap = metadata;
+    innerFlags.current.lastMeasuredColumnIndex = lastMeasuredColumnIndex;
+    // TODO width 变化需要重置
+    if (lastMeasuredColumnIndex === columns.length - 1 && !interrupted)
+      accurateTotalWidth.current = contentWidth;
+  }, [columns]);
+
+  const reCalculate = () => {
     const contentHeight = getEstimatedTotalHeight(
       rowCount,
       metaDataMap.current.rowMetadataMap,
       innerFlags.current,
     );
-    const contentWidth = getEstimatedTotalWidth(
-      columnCount,
-      metaDataMap.current.columnMetadataMap,
-      innerFlags.current,
-    );
+    const contentWidth =
+      accurateTotalWidth.current ||
+      getEstimatedTotalWidth(
+        columnCount,
+        metaDataMap.current.columnMetadataMap,
+        innerFlags.current,
+      );
 
     const [curRowStartIndex, curRowStopIndex] = getVerticalRange();
     const [curColStartIndex, curColStopIndex] = getHorizontalRange();
-
-    const offsetArr = [] as Array<any[]>;
-    for (let i = curColStartIndex; i <= curColStopIndex; i++) {
-      offsetArr.push([
-        i,
-        getItemMetadata(
-          'col',
-          props,
-          i,
-          metaDataMap.current,
-          innerFlags.current,
-        ),
-      ]);
-      // offsetArr.push(metaDataMap.current.columnMetadataMap[i].offset);
-    }
-    setHeader({
-      scroll,
-      columnsInfo: offsetArr,
-    });
-    // console.log(curColStartIndex, curColStopIndex, offsetArr);
 
     // * 获取当前 可预测的内容容器 渲染 startIndex -> stopIndex
     setContentInfo({ width: contentWidth, height: contentHeight });
@@ -192,48 +194,6 @@ function Grid(props) {
     ];
   }
 
-  // function onWheel(event: React.UIEvent<HTMLDivElement, UIEvent>) {
-  //   onScroll(event);
-  // }
-
-  // function onScroll(event: React.UIEvent<HTMLDivElement, UIEvent>) {
-  //   const {
-  //     clientHeight,
-  //     clientWidth,
-  //     scrollLeft,
-  //     scrollTop,
-  //     scrollHeight,
-  //     scrollWidth,
-  //   } = event.currentTarget;
-
-  //   setScroll((prevState) => {
-  //     if (
-  //       prevState.scrollLeft === scrollLeft &&
-  //       prevState.scrollTop === scrollTop
-  //     ) {
-  //       // Scroll position may have been updated by cDM/cDU,
-  //       // In which case we don't need to trigger another render,
-  //       // And we don't want to update state.isScrolling.
-  //       return prevState;
-  //     }
-
-  //     // 处理 safari 弹性滚动
-  //     const actualLeft = Math.max(
-  //       0,
-  //       Math.min(scrollLeft, scrollWidth - clientWidth),
-  //     );
-  //     const actualTop = Math.max(
-  //       0,
-  //       Math.min(scrollTop, scrollHeight - clientHeight),
-  //     );
-
-  //     return {
-  //       scrollLeft: actualLeft,
-  //       scrollTop: actualTop,
-  //     };
-  //   });
-  // }
-
   function getItemStyle(rowIndex: number, columnIndex: number) {
     const curRow = getItemMetadata(
       'row',
@@ -282,24 +242,8 @@ function Grid(props) {
   }
 
   return (
-    // <div
-    //   style={{
-    //     position: 'relative',
-    //     height: '100%',
-    //     width: '100%',
-    //     overflow: 'auto',
-    //     WebkitOverflowScrolling: 'touch',
-    //     willChange: 'transform',
-    //     direction: 'ltr',
-    //   }}
-    //   onScroll={onScroll}
-    //   // onWheel={onWheel}
-    //   ref={wrapperRef}
-    //   className="tableWrapper"
-    // >
     <div style={{ height, width }} className="tableInner">
       {items}
-      {/* </div> */}
     </div>
   );
 }

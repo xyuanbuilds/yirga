@@ -7,6 +7,20 @@
   border-top: 1px solid #e8e8e8;
 }
 
+.table-header-translate-wrapper {
+  height: 48px;
+  position: relative;
+  width: auto;
+}
+
+.table-scroll-wrapper {
+  height: calc(100% - 48px);
+  width: 100%;
+  overflow: auto;
+  -webkit-overflow-scrolling: auto;
+  position: relative;
+}
+
 .table-scroll-wrapper::-webkit-scrollbar {
   width: 8px;
   height: 8px;

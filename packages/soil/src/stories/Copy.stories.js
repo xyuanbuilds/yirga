@@ -30,6 +30,7 @@ export const Virtualized = Template.bind({});
 Virtualized.title = '虚拟滚动';
 Virtualized.args = {
   columnWidth: (index) => index + 100,
+  // columnWidth: 100,
   rowHeight: 48,
   height: 300, // TODO 容器监听
   width: 300, // TODO 容器监听

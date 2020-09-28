@@ -4,12 +4,15 @@ import Header from './Header';
 // import bindRaf from './utils/bindRaf';
 import './index.css';
 
+type InnerColumn = { name: string; width?: number; offset?: number };
 interface DefaultProps {
-  columns: { name: string }[];
+  columns: InnerColumn[];
   dataSource: any[];
   columnWidth: number | ((index: number) => number);
   rowHeight: number | ((index: number) => number);
 }
+
+// function diffColumns(columns) {}
 
 const InitialWrapper = React.memo(
   ({
@@ -25,25 +28,59 @@ const InitialWrapper = React.memo(
     const scrollWrapper = React.useRef<HTMLDivElement>(null);
     const headerRef = React.useRef<HTMLDivElement>(null);
 
-    const [headerInfo, setHeader] = React.useState({
-      scroll: { scrollLeft: 0 },
-      columnsInfo: [],
-    });
+    const diffedColumns = React.useMemo(() => {
+      const diffed = columns.reduce((pre, cur, index) => {
+        const c = Object.defineProperties(cur, {
+          width: {
+            value:
+              typeof columnWidth === 'function'
+                ? columnWidth(index)
+                : columnWidth,
+            writable: true,
+            enumerable: true,
+            configurable: true,
+          },
+          offset: {
+            value:
+              index === 0 ? 0 : pre[index - 1].offset + pre[index - 1].width,
+            writable: true,
+            enumerable: true,
+            configurable: true,
+          },
+        });
+
+        pre.push(c);
+        return pre;
+      }, [] as { name: string; width: number; offset: number }[]);
+      // console.log(diffed);
+      return diffed;
+    }, [columns, columnWidth]);
 
     const [scroll, setScroll] = React.useState({
       scrollLeft: 0,
       scrollTop: 0,
     });
 
-    // React.useEffect(() => {
-    //   if (scrollWrapper.current !== null) {
-    //     scrollWrapper.current.scrollLeft = scroll.scrollLeft;
-    //     scrollWrapper.current.scrollTop = scroll.scrollTop;
-    //   }
-    // }, [scrollWrapper.current, scroll]);
+    const headerTranslate = React.useCallback(
+      (scrollLeft) => {
+        if (headerRef.current)
+          headerRef.current.style.transform = `translate3d(${-scrollLeft}px, 0px, 0px)`;
+      },
+      [headerRef.current],
+    );
+    const wrapperScroll = React.useCallback(
+      (scrollLeft, scrollTop) => {
+        if (scrollWrapper.current) {
+          scrollWrapper.current.scrollLeft = scrollLeft;
+          scrollWrapper.current.scrollTop = scrollTop;
+        }
+      },
+      [scrollWrapper.current],
+    );
 
     const onScroll = React.useCallback(
       (event: React.UIEvent<HTMLDivElement, UIEvent>) => {
+        event.preventDefault();
         const {
           clientHeight,
           clientWidth,
@@ -52,6 +89,18 @@ const InitialWrapper = React.memo(
           scrollHeight,
           scrollWidth,
         } = event.currentTarget;
+
+        const actualLeft = Math.max(
+          0,
+          Math.min(scrollLeft, scrollWidth - clientWidth),
+        );
+        const actualTop = Math.max(
+          0,
+          Math.min(scrollTop, scrollHeight - clientHeight),
+        );
+
+        headerTranslate(actualLeft);
+        wrapperScroll(actualLeft, actualTop);
 
         setScroll((prevState) => {
           if (
@@ -65,21 +114,6 @@ const InitialWrapper = React.memo(
           }
 
           // 处理 safari 弹性滚动
-          const actualLeft = Math.max(
-            0,
-            Math.min(scrollLeft, scrollWidth - clientWidth),
-          );
-          const actualTop = Math.max(
-            0,
-            Math.min(scrollTop, scrollHeight - clientHeight),
-          );
-
-          if (headerRef.current)
-            headerRef.current.style.transform = `translate3d(${-scrollLeft}px, 0px, 0px)`;
-
-          // if (scrollWrapper.current) {
-          //   scrollWrapper.current.scrollTo(scrollLeft, scrollTop);
-          // }
 
           return {
             scrollLeft: actualLeft,
@@ -87,41 +121,24 @@ const InitialWrapper = React.memo(
           };
         });
       },
-      [headerRef.current],
+      [headerRef.current, headerTranslate, wrapperScroll],
     );
 
     // const wrapped = React.useCallback(bindRaf(onScroll), [onScroll]);
 
     return (
       <div className="table-wrapper">
-        <div
-          ref={headerRef}
-          style={{
-            height: 48,
-            position: 'relative',
-            willChange: 'transform',
-            // transform: `translate3d(${-scroll.scrollLeft}px, 0px, 0px)`,
-          }}
-        >
-          <Header headerInfo={headerInfo} columns={columns} />
+        <div ref={headerRef} className="table-header-translate-wrapper">
+          <Header columns={diffedColumns} />
         </div>
         <div
-          style={{
-            height: 'calc(100% - 48px)',
-            width: '100%',
-            overflow: 'auto',
-            WebkitOverflowScrolling: 'touch',
-            direction: 'ltr',
-            position: 'relative',
-          }}
           ref={scrollWrapper}
           onScroll={onScroll}
           className="table-scroll-wrapper"
         >
           <Grid
             scroll={scroll}
-            setHeader={setHeader}
-            columns={columns}
+            columns={diffedColumns}
             columnCount={columnCount}
             rowCount={rowCount}
             columnWidth={columnWidth}
