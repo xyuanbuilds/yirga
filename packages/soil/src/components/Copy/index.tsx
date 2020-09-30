@@ -12,55 +12,61 @@ interface DefaultProps {
   rowHeight: number | ((index: number) => number);
 }
 
-// function diffColumns(columns) {}
+function diffColumns(originColumns, columnWidth) {
+  const diffed = originColumns.reduce((pre, cur, index) => {
+    const c = Object.defineProperties(cur, {
+      width: {
+        value:
+          typeof columnWidth === 'function' ? columnWidth(index) : columnWidth,
+        writable: true,
+        enumerable: true,
+        configurable: true,
+      },
+      offset: {
+        value: index === 0 ? 0 : pre[index - 1].offset + pre[index - 1].width,
+        writable: true,
+        enumerable: true,
+        configurable: true,
+      },
+    });
+
+    pre.push(c);
+    return pre;
+  }, [] as { name: string; width: number; offset: number }[]);
+  return diffed;
+}
+
+const defaultColumns = [];
+const defaultDataSource = [];
 
 const InitialWrapper = React.memo(
   ({
-    columns = [],
-    dataSource = [],
+    columns: originColumns = defaultColumns,
+    dataSource = defaultDataSource,
     columnWidth = 100,
     rowHeight = 48,
     ...reset
   }: DefaultProps) => {
-    const columnCount = columns.length;
+    const columnCount = originColumns.length;
     const rowCount = dataSource.length;
 
     const scrollWrapper = React.useRef<HTMLDivElement>(null);
     const headerRef = React.useRef<HTMLDivElement>(null);
 
-    const diffedColumns = React.useMemo(() => {
-      const diffed = columns.reduce((pre, cur, index) => {
-        const c = Object.defineProperties(cur, {
-          width: {
-            value:
-              typeof columnWidth === 'function'
-                ? columnWidth(index)
-                : columnWidth,
-            writable: true,
-            enumerable: true,
-            configurable: true,
-          },
-          offset: {
-            value:
-              index === 0 ? 0 : pre[index - 1].offset + pre[index - 1].width,
-            writable: true,
-            enumerable: true,
-            configurable: true,
-          },
-        });
+    const [diffedColumns, setColumn] = React.useState(
+      diffColumns(originColumns, columnWidth),
+    );
 
-        pre.push(c);
-        return pre;
-      }, [] as { name: string; width: number; offset: number }[]);
-      // console.log(diffed);
-      return diffed;
-    }, [columns, columnWidth]);
+    React.useEffect(() => {
+      setColumn(diffColumns(originColumns, columnWidth));
+    }, [originColumns, columnWidth]);
 
     const [scroll, setScroll] = React.useState({
       scrollLeft: 0,
       scrollTop: 0,
     });
 
+    // * 滚动相关
     const headerTranslate = React.useCallback(
       (scrollLeft) => {
         if (headerRef.current)
@@ -90,6 +96,7 @@ const InitialWrapper = React.memo(
           scrollWidth,
         } = event.currentTarget;
 
+        // 处理 safari 弹性滚动
         const actualLeft = Math.max(
           0,
           Math.min(scrollLeft, scrollWidth - clientWidth),
@@ -113,8 +120,6 @@ const InitialWrapper = React.memo(
             return prevState;
           }
 
-          // 处理 safari 弹性滚动
-
           return {
             scrollLeft: actualLeft,
             scrollTop: actualTop,
@@ -124,12 +129,10 @@ const InitialWrapper = React.memo(
       [headerRef.current, headerTranslate, wrapperScroll],
     );
 
-    // const wrapped = React.useCallback(bindRaf(onScroll), [onScroll]);
-
     return (
       <div className="table-wrapper">
         <div ref={headerRef} className="table-header-translate-wrapper">
-          <Header columns={diffedColumns} />
+          <Header columns={diffedColumns} setColumn={setColumn} />
         </div>
         <div
           ref={scrollWrapper}

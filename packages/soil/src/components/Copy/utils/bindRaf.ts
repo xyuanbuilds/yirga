@@ -10,8 +10,6 @@ function bindRaf(fn: (...args: any) => void, throttle?: boolean) {
   return (...params) => {
     args = params;
 
-    console.log('isR', isRunning);
-
     if (isRunning && throttle) {
       return;
     }

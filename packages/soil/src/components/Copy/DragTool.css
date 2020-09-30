@@ -1,0 +1,25 @@
+.drag-stuff {
+  background-color: red;
+  height: 100%;
+  width: 10px;
+  position: absolute;
+  right: 0;
+  top: 0;
+  z-index: 2;
+  opacity: 1;
+  transition: opacity 0.2s ease-in-out;
+  opacity: 0;
+  /* -webkit-user-drag: auto; */
+}
+.drag-stuff:hover {
+  opacity: 1;
+}
+
+.stuff-dragging {
+  z-index: 100000;
+  width: 10px;
+  background-color: yellow;
+  position: fixed;
+  opacity: 1;
+  /* top: 0; */
+}

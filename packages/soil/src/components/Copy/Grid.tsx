@@ -131,7 +131,7 @@ function Grid(props) {
   // *初始化metaData
   React.useEffect(() => {
     reCalculate();
-  }, [scroll, columnCount, rowCount]);
+  }, [scroll, columnCount, rowCount, columns]);
 
   function getVerticalRange() {
     if (columnCount === 0 || rowCount === 0) {
