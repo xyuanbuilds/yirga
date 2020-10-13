@@ -9,7 +9,7 @@ import React, {
   forwardRef,
   useRef,
 } from 'react';
-import { Row, Col, Button, Form, Divider } from 'antd';
+import { Row, Col, Button, Form, Divider, Checkbox } from 'antd';
 import {
   ArrowUpOutlined,
   ArrowDownOutlined,
@@ -38,6 +38,7 @@ export interface CustomColumnProps<RecordType>
     isLastLine: boolean,
   ) => React.ReactNode;
   valuePropName?: string;
+  handleSave?: (params: unknown) => void;
   // 重复数据检测
   checkDuplicate?: boolean;
   checkFunction?: (fields: any[]) => void;
@@ -106,17 +107,15 @@ const EditableTable = (
 ) => {
   const [form] = Form.useForm();
   const [dataSource, setDataSource] = useState<any[]>([]);
-  const [selectedRowKeys, setSelect] = useState<string[]>([]);
+
   const basicTableHeight = useMemo(() => {
     return height - (28 + 12);
   }, [height]);
 
   const preInitialData = useRef<{
-    preColumn: null | Record<string, unknown>;
     preOriginInitial: any[];
     preInitial: any[];
   }>({
-    preColumn: null,
     preOriginInitial: [],
     preInitial: [],
   });
@@ -127,7 +126,6 @@ const EditableTable = (
     for (let n = 0; n < res.length; n++) {
       if (!isSimilar(res[n], pre[n])) {
         preInitialData.current = {
-          preColumn: originColumns,
           preOriginInitial: initialValues,
           preInitial: res,
         };
@@ -137,13 +135,6 @@ const EditableTable = (
     return pre;
   }, [initialValues, originColumns]);
 
-  // * 手动重设form展示值（dataSource更新）
-  const setFormValues = (data) => {
-    const formValuesForSet = data.reduce((r, cur) => ({ ...r, ...cur }), {});
-    console.log(formValuesForSet);
-    form.setFieldsValue(formValuesForSet);
-  };
-
   // TODO 外部响应需要重写
   useEffect(() => {
     if (onValuesChange) {
@@ -151,18 +142,7 @@ const EditableTable = (
     }
   }, [dataSource, onValuesChange]);
 
-  // const existedFieldsCache = useRef<string[]>([]);
   const [fieldsDataMap, setFieldsData] = useState({});
-  useEffect(() => {
-    setFieldsData((cache) => {
-      const newCache = Object.fromEntries(
-        Object.entries(cache).map((i) => {
-          return [i[0], i[1] !== undefined ? i[1] : dataSource[i[0]]]; // dataSource的变化以cache为主
-        }),
-      );
-      return newCache;
-    });
-  }, [dataSource]);
 
   const collectFieldData = useCallback((fieldName: string, data: unknown) => {
     setFieldsData((v) => ({ ...v, [fieldName]: data }));
@@ -172,7 +152,7 @@ const EditableTable = (
   const resetForm = useCallback(() => {
     // TODO reset需要调整cache
     setDataSource(() => {
-      setFormValues(initialData);
+      // setFormValues(initialData);
       return initialData;
     });
   }, [initialData]);
@@ -184,7 +164,7 @@ const EditableTable = (
   const onFinish = useCallback(async () => {
     const res = await form.validateFields();
     return res;
-  }, [form]);
+  }, []);
 
   console.log('datasource change', dataSource);
 
@@ -210,6 +190,7 @@ const EditableTable = (
     });
   }, []);
 
+  // done
   const addLine = useCallback(
     throttle(() => {
       // TODO 需要虚拟滚动到添加后到位置
@@ -220,22 +201,21 @@ const EditableTable = (
             return [`${curLine}_${item[0].replace(/^\d+_/, '')}`, undefined];
           }),
         );
-        setFormValues(curDataSource);
         return curDataSource.concat({
           index: curLine,
           key: curLine,
           ...fields,
         });
       });
-    }, 500),
+    }, 800),
     [initialData],
   );
 
+  // done
   const exchangeLine = useCallback((index, type) => {
     if (type === 'up') {
       setDataSource((v) => {
         const newData = [...swap(v, index, index - 1)];
-        setFormValues(newData);
         const cacheForUpdate = { ...newData[index], ...newData[index - 1] };
         setFieldsData((cache) => {
           return Object.fromEntries(
@@ -252,7 +232,6 @@ const EditableTable = (
     } else {
       setDataSource((v) => {
         const newData = [...swap(v, index, index + 1)];
-        setFormValues(newData);
         const cacheForUpdate = { ...newData[index], ...newData[index + 1] };
         setFieldsData((cache) => {
           return Object.fromEntries(
@@ -269,6 +248,9 @@ const EditableTable = (
     }
   }, []);
 
+  const [selectedRowKeys, setSelect] = useState<number[]>([]);
+
+  // done
   const deleteLine = useCallback((index) => {
     setDataSource((curDataSource) => {
       const keep = curDataSource.slice(0, index);
@@ -276,20 +258,27 @@ const EditableTable = (
       const newData = keep.concat(drop(willDrop));
       const cacheForUpdate = newData.reduce((record, curLine) => {
         for (const key in curLine) {
-          console.log(curLine[key]);
           if (curLine[key] !== undefined && key !== 'key' && key !== 'index') {
             record[key] = curLine[key];
           }
         }
         return record;
       }, {});
-      setFormValues(newData);
+
       setFieldsData(cacheForUpdate);
-      console.log('cache update', cacheForUpdate);
+      setSelect((v) => {
+        const indexInSelected = v.findIndex((i) => i === index);
+        if (indexInSelected !== -1) {
+          v.splice(indexInSelected, 1);
+          return [...v];
+        }
+        return v;
+      });
       return newData;
     });
   }, []);
 
+  // done
   const actionColumn = useMemo(() => {
     return {
       title: '操作',
@@ -305,7 +294,9 @@ const EditableTable = (
                 first || disabled ? styles.disableIcon : styles.normalIcon
               }
               disabled={first || disabled}
-              onClick={() => exchangeLine(index, 'up')}
+              onClick={
+                first || disabled ? undefined : () => exchangeLine(index, 'up')
+              }
             />
 
             <Divider type="vertical" />
@@ -314,13 +305,15 @@ const EditableTable = (
                 last || disabled ? styles.disableIcon : styles.normalIcon
               }
               disabled={last || disabled}
-              onClick={() => exchangeLine(index, 'down')}
+              onClick={
+                last || disabled ? undefined : () => exchangeLine(index, 'down')
+              }
             />
             <Divider type="vertical" />
             <DeleteOutlined
               disabled={disabled}
               className={disabled ? styles.disableIcon : styles.normalIcon}
-              onClick={() => deleteLine(index)}
+              onClick={disabled ? undefined : () => deleteLine(index)}
             />
           </>
         );
@@ -328,10 +321,21 @@ const EditableTable = (
     };
   }, [disabled]);
 
+  const selectColumn = useMemo<CustomColumnProps<any>>(() => {
+    return {
+      title: '',
+      width: 30,
+      dataIndex: 'index',
+      render: (_, __, index) => (
+        <SelectableCell index={index} setSelect={setSelect} />
+      ),
+    };
+  }, []);
+
   const formattedColumns = useMemo(
     () =>
-      originColumns
-        .map((col) => {
+      [selectColumn].concat(
+        originColumns.map((col) => {
           if (!col.renderForm) {
             return col;
           }
@@ -339,35 +343,47 @@ const EditableTable = (
             ...col,
             handleSave,
           };
-        })
-        .concat(actionColumn),
-    [handleSave, originColumns, actionColumn],
+        }),
+        actionColumn,
+      ),
+    [selectColumn, originColumns, actionColumn],
   );
 
-  const deleteMultipleLines = useCallback(
-    (lines) => {
-      const actualIndex = lines
-        .sort((a, b) => a - b)
-        .map((index, i) => index - i);
-      let newDataSource = dataSource;
-      actualIndex.forEach((key) => {
-        newDataSource = dropMultiple(newDataSource, key);
+  const deleteMultipleLines = useCallback((rowKeys) => {
+    const sortedIndex = rowKeys.sort((a, b) => a - b);
+    setDataSource((preDataSource) => {
+      sortedIndex.forEach((deleteIndex, curIndex) => {
+        preDataSource.splice(deleteIndex - curIndex, 1);
       });
-      setDataSource(newDataSource);
-    },
-    [dataSource],
-  );
+      const newDataSource = preDataSource.map((fieldsMap, i) => {
+        return Object.fromEntries(
+          Object.entries(fieldsMap).map((item) => [
+            item[0].replace(/^\d+/, String(i + 1)),
+            item[1],
+          ]),
+        );
+      });
+      const newCache = newDataSource.reduce((cacheRes, lineFieldsData) => {
+        for (const key in lineFieldsData) {
+          if (
+            key !== 'key' &&
+            key !== 'index' &&
+            lineFieldsData[key] !== undefined
+          ) {
+            cacheRes[key] = lineFieldsData[key];
+          }
+        }
+        return cacheRes;
+      }, {} as Record<string, unknown>);
+      setFieldsData(newCache);
+      return newDataSource;
+    });
+  }, []);
 
-  // const rowSelection = {
-  //   selectedRowKeys,
-  //   onChange: (rowKeys) => setSelect(rowKeys),
-  // };
-
-  const deleteLines = useCallback(() => {
-    const lines = selectedRowKeys.map((key) => Number(key) - 1);
-    deleteMultipleLines(lines);
+  const deleteLines = () => {
+    deleteMultipleLines(selectedRowKeys);
     setSelect([]);
-  }, [selectedRowKeys, deleteMultipleLines]);
+  };
 
   return (
     <div className={className}>
@@ -412,5 +428,35 @@ const EditableTable = (
     </div>
   );
 };
+
+function SelectableCell({ setSelect, index }) {
+  const [checked, setChecked] = useState(false);
+  useEffect(() => {
+    setSelect((selectedRowKeys) => {
+      if (selectedRowKeys.findIndex((i) => i === index) !== -1)
+        setChecked(true);
+      return selectedRowKeys;
+    });
+  }, []);
+  const onChange = (e) => {
+    const { checked: eventValue } = e.target;
+    setChecked(() => {
+      setSelect((v) => {
+        const lineIndex = v.findIndex((i) => i === index);
+        // console.log('lineIndex', lineIndex, eventValue, index);
+        if (eventValue) {
+          if (lineIndex !== -1) return v;
+          return [...v, index];
+        } else {
+          if (lineIndex === -1) return v;
+          v.splice(lineIndex, 1);
+          return [...v];
+        }
+      });
+      return eventValue;
+    });
+  };
+  return <Checkbox checked={checked} onChange={onChange} />;
+}
 
 export default memo(forwardRef(EditableTable));

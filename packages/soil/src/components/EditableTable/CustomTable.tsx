@@ -239,13 +239,20 @@ function Item({ name, valuePropName, rules, save, renderForm }) {
   }, 300);
 
   useEffect(() => {
-    if (fieldsDataMap[name] !== undefined) {
-      console.log('set cur lineV', fieldsDataMap[name]);
-      form.setFieldsValue({
-        [name]: fieldsDataMap[name],
-      });
+    if (fieldsDataMap[name] === undefined) {
+      return form.setFields([
+        {
+          name,
+          value: undefined,
+          touched: false,
+        },
+      ]);
     }
-  }, []);
+    form.setFieldsValue({
+      [name]: fieldsDataMap[name],
+    });
+    form.validateFields([name]);
+  }, [fieldsDataMap, name]);
   return (
     <Form.Item
       name={name}
@@ -267,12 +274,20 @@ function ItemNeedCheckDuplicate({ name, renderForm, save }) {
 
   // ! 缓存中有值，说明该表单域已被touched，且有值
   useEffect(() => {
-    if (fieldsDataMap[name] !== undefined) {
-      form.setFieldsValue({
-        [name]: fieldsDataMap[name],
-      });
+    if (fieldsDataMap[name] === undefined) {
+      return form.setFields([
+        {
+          name,
+          value: undefined,
+          touched: false,
+        },
+      ]);
     }
-  }, []);
+    form.setFieldsValue({
+      [name]: fieldsDataMap[name],
+    });
+    form.validateFields([name]);
+  }, [fieldsDataMap, name]);
 
   // * 获取当前重名验证字段的所有值
   const existedFields = useMemo(() => {
@@ -280,7 +295,7 @@ function ItemNeedCheckDuplicate({ name, renderForm, save }) {
 
     const regForField = new RegExp(`^[0-9]+_${curField}$`);
     const regForSpecial = new RegExp(`^${curLine}_${curField}$`);
-    return Object.entries<string>(fieldsDataMap).reduce<string[]>(
+    const existed = Object.entries<string>(fieldsDataMap).reduce<string[]>(
       (resArr, cur) => {
         if (regForField.test(cur[0]) && !regForSpecial.test(cur[0])) {
           if (cur[1] !== '' && cur[1] !== undefined) {
@@ -291,20 +306,22 @@ function ItemNeedCheckDuplicate({ name, renderForm, save }) {
       },
       [],
     );
+
+    return existed;
   }, [fieldsDataMap, name]);
 
   // *判断重名
   // 1. 有已存在值
   // 2. 当前有内容（不是undefined）
-  useEffect(() => {
-    if (
-      existedFields &&
-      existedFields.length > 0 &&
-      fieldsDataMap[name] !== undefined
-    ) {
-      form.validateFields([name]);
-    }
-  }, [existedFields, fieldsDataMap, name]);
+  // useEffect(() => {
+  //   if (
+  //     existedFields &&
+  //     existedFields.length > 0 &&
+  //     fieldsDataMap[name] !== undefined
+  //   ) {
+  //     form.validateFields([name]);
+  //   }
+  // }, [existedFields]);
 
   const collectFormValues = debounce(() => {
     const { value, fieldName } = save();
