@@ -1,0 +1,41 @@
+// @import mixture
+
+@buttonMargin: 8; // 按钮右margin
+
+.buttonBar {
+  margin-bottom: 12px;
+
+  button {
+    margin-right: unit(@buttonMargin, px);
+  }
+}
+
+.tableWrapper {
+  :global {
+    .ant-col.ant-form-item-control {
+      position: relative;
+
+      .ant-form-item-explain {
+        position: absolute;
+        bottom: -19px;
+        z-index: 1000;
+      }
+    }
+
+    .ant-form-item-explain {
+      display: flex;
+
+      div {
+        margin-right: 5px;
+      }
+    }
+  }
+}
+
+.disableIcon {
+  color: #8abfff;
+}
+
+.normalIcon {
+  color: #1980ff;
+}

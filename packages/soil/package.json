@@ -1,6 +1,5 @@
 {
   "name": "@yirga/soil",
-  "private": true,
   "version": "0.0.2",
   "description": "soil to grow",
   "author": "JhonXY <1076849402@qq.com>",
@@ -31,11 +30,14 @@
     "url": "https://github.com/JhonXY/yirga/issues"
   },
   "dependencies": {
+    "antd": "^4.7.0",
     "clsx": "^1.1.1",
     "lodash": "^4.17.20",
+    "rc-resize-observer": "^0.2.5",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
-    "react-draggable": "^4.4.3"
+    "react-draggable": "^4.4.3",
+    "react-window": "^1.8.5"
   },
   "devDependencies": {
     "@babel/core": "^7.11.6",
