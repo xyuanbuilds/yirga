@@ -1,5 +1,5 @@
 import React from 'react';
-import Table from '../components/Copy';
+import Table from '../components/VirtualTable';
 
 export default {
   title: 'Example/MyTable',
@@ -8,7 +8,7 @@ export default {
 
 const Template = (args) => {
   return (
-    <div style={{ height: 300, width: 300 }}>
+    <div style={{ height: 500, width: 500 }}>
       <Table {...args} />
     </div>
   );
@@ -32,8 +32,8 @@ Virtualized.args = {
   columnWidth: (index) => index + 100,
   // columnWidth: 100,
   rowHeight: 48,
-  height: 300, // TODO 容器监听
-  width: 300, // TODO 容器监听
+  height: 500, // TODO 容器监听
+  width: 500, // TODO 容器监听
   columns,
   dataSource,
 };

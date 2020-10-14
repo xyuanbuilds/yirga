@@ -71,3 +71,27 @@ Editable.args = {
   columns,
   height: 500,
 };
+
+const initialValues = [
+  { field: 'dfd', type: 1, fieldNotes: 'shit', mainKey: true },
+  { field: 'dfuuu', type: 1, fieldNotes: 'shit', mainKey: false },
+  { field: 'lalaland', type: 3, fieldNotes: 'shit', mainKey: true },
+  { field: 'yuyu', type: 1, fieldNotes: 'shit', mainKey: true },
+  { field: 'testsield', fieldNotes: undefined, type: 1, mainKey: false },
+  { field: 'testsield2', fieldNotes: undefined, type: 1, mainKey: false },
+  { field: 'testsield3', fieldNotes: undefined, type: 1, mainKey: false },
+  { field: 'testsield4', fieldNotes: undefined, type: 1, mainKey: false },
+  { field: 'testsield5', fieldNotes: undefined, type: 1, mainKey: false },
+  { field: 'testsield6', fieldNotes: 'dfsfsdsfs', type: 1, mainKey: false },
+  { field: 'testsield7', fieldNotes: undefined, type: 1, mainKey: false },
+  { field: 'testsield8', fieldNotes: undefined, type: 2, mainKey: false },
+  { field: 'testsield9', fieldNotes: undefined, type: 1, mainKey: false },
+  { field: 'testsield10', fieldNotes: undefined, type: 1, mainKey: false },
+  { field: 'testsield11', fieldNotes: 'dfss', type: 1, mainKey: false },
+];
+export const WithInitial = Template.bind({});
+WithInitial.args = {
+  columns,
+  height: 500,
+  initialValues,
+};

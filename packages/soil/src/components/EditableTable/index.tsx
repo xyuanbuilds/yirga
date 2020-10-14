@@ -17,9 +17,9 @@ import {
 } from '@ant-design/icons';
 import { TableProps, ColumnType } from 'antd/lib/table';
 // import { FormInstance } from 'antd/lib/form';
-import { omit, throttle } from 'lodash';
+import { omit, throttle, cloneDeep } from 'lodash';
 import Table from './CustomTable';
-import { drop, swap, dropMultiple, isSimilar } from './utils';
+import { drop, swap, isSimilar } from './utils';
 import DuplicateCheckContext from './DuplicateCheckContext';
 
 import styles from './index.less';
@@ -63,33 +63,48 @@ function diffInitial(originColumns, initialValues) {
   const fields = originColumns
     .filter((i) => i.dataIndex !== 'key' && i.dataIndex !== 'index')
     .map((i) => i.dataIndex);
-  const fieldsHasInitialValue = Object.entries(initialValues[0]).map(
-    (i) => i[0],
-  );
-  const fieldNeedFillInitialValue = fields.filter(
-    (i) => fieldsHasInitialValue.find((field) => field === i) === undefined,
-  );
 
   const diffed = initialValues.map((initialLine, index) => {
     const line = index + 1;
-    const actual = Object.fromEntries(
-      Object.entries(initialLine)
-        .map((item) => {
-          const key = item[0];
-          const content = item[1];
-          return [`${line}_${key}`, content];
-        })
-        .concat(
-          fieldNeedFillInitialValue.map((field) => {
-            return [`${line}_${field}`, undefined];
-          }),
-        ),
-    );
-
-    return { index: line, key: line, ...actual };
+    const lineFieldsData = fields.reduce((res, field) => {
+      res[`${line}_${field}`] = initialLine[field] || undefined;
+      return res;
+    }, {} as Record<string, unknown>);
+    lineFieldsData.index = line;
+    lineFieldsData.key = line;
+    return lineFieldsData;
   });
-  // console.log('diffed initial form data', diffed);
+  console.log('diffed initial form data', diffed);
   return diffed;
+}
+
+function diffFormRes(dataSource: Record<string, unknown>[]) {
+  return dataSource.map((lineFieldsData) => {
+    return Object.fromEntries(
+      Object.entries(lineFieldsData).reduce((res, curPair) => {
+        if (curPair[0] === 'key' || curPair[0] === 'index') return res;
+        res.push([curPair[0].replace(/^\d+_/, ''), curPair[1]]);
+        return res;
+      }, [] as [string, unknown][]),
+    );
+  });
+}
+
+function diffDataSourceToFieldsData(dataSource: Record<string, unknown>[]) {
+  const newCache = dataSource.reduce((cacheRes, lineFieldsData) => {
+    for (const key in lineFieldsData) {
+      if (
+        lineFieldsData[key] !== undefined &&
+        key !== 'key' &&
+        key !== 'index'
+      ) {
+        cacheRes[key] = lineFieldsData[key];
+      }
+    }
+    return cacheRes;
+  }, {} as Record<string, unknown>);
+
+  return newCache;
 }
 
 const EditableTable = (
@@ -135,57 +150,48 @@ const EditableTable = (
     return pre;
   }, [initialValues, originColumns]);
 
-  // TODO 外部响应需要重写
+  // *当前表单中的所有真实值
+  const [fieldsDataMap, setFieldsData] = useState({});
+
   useEffect(() => {
     if (onValuesChange) {
-      onValuesChange(dataSource);
+      onValuesChange(diffFormRes(dataSource));
     }
-  }, [dataSource, onValuesChange]);
-
-  const [fieldsDataMap, setFieldsData] = useState({});
+  }, [fieldsDataMap, onValuesChange]);
 
   const collectFieldData = useCallback((fieldName: string, data: unknown) => {
     setFieldsData((v) => ({ ...v, [fieldName]: data }));
   }, []);
 
-  // TODO 需要调整
-  const resetForm = useCallback(() => {
-    // TODO reset需要调整cache
+  const resetForm = () => {
     setDataSource(() => {
-      // setFormValues(initialData);
-      return initialData;
+      setFieldsData(diffDataSourceToFieldsData(initialData));
+      return cloneDeep(initialData);
     });
-  }, [initialData]);
-  // * 初始值变化重设 dataSource
+  };
+  const onFinish = async () => {
+    await form.validateFields();
+    const formData = diffFormRes(dataSource);
+    return formData;
+  };
+
   useEffect(() => {
     resetForm();
-  }, [resetForm]);
-
-  const onFinish = useCallback(async () => {
-    const res = await form.validateFields();
-    return res;
-  }, []);
-
-  console.log('datasource change', dataSource);
-
+  }, [initialData]);
   useImperativeHandle(
     ref,
     () => ({
       onFinish,
       resetForm,
     }),
-    [onFinish, resetForm],
+    [fieldsDataMap, initialData],
   );
 
-  // * basic save
+  // * basic save 存值，但不刷新表格
   const handleSave = useCallback(({ value, fieldName, line }) => {
     setDataSource((v) => {
       // ? 需要确定稳定性
       v[line - 1] = { ...v[line - 1], [fieldName]: value };
-      // const newData = v.map((data, index) => {
-      //   if (index !== line - 1) return data;
-      //   return { ...data, [fieldName]: value };
-      // });
       return v;
     });
   }, []);
@@ -256,16 +262,16 @@ const EditableTable = (
       const keep = curDataSource.slice(0, index);
       const willDrop = curDataSource.slice(index + 1, curDataSource.length);
       const newData = keep.concat(drop(willDrop));
-      const cacheForUpdate = newData.reduce((record, curLine) => {
-        for (const key in curLine) {
-          if (curLine[key] !== undefined && key !== 'key' && key !== 'index') {
-            record[key] = curLine[key];
-          }
-        }
-        return record;
-      }, {});
-
-      setFieldsData(cacheForUpdate);
+      // const cacheForUpdate = newData.reduce((record, curLine) => {
+      //   for (const key in curLine) {
+      //     if (curLine[key] !== undefined && key !== 'key' && key !== 'index') {
+      //       record[key] = curLine[key];
+      //     }
+      //   }
+      //   return record;
+      // }, {});
+      setFieldsData(diffDataSourceToFieldsData(newData));
+      // setFieldsData(cacheForUpdate);
       setSelect((v) => {
         const indexInSelected = v.findIndex((i) => i === index);
         if (indexInSelected !== -1) {
@@ -363,19 +369,19 @@ const EditableTable = (
           ]),
         );
       });
-      const newCache = newDataSource.reduce((cacheRes, lineFieldsData) => {
-        for (const key in lineFieldsData) {
-          if (
-            key !== 'key' &&
-            key !== 'index' &&
-            lineFieldsData[key] !== undefined
-          ) {
-            cacheRes[key] = lineFieldsData[key];
-          }
-        }
-        return cacheRes;
-      }, {} as Record<string, unknown>);
-      setFieldsData(newCache);
+      // const newCache = newDataSource.reduce((cacheRes, lineFieldsData) => {
+      //   for (const key in lineFieldsData) {
+      //     if (
+      //       key !== 'key' &&
+      //       key !== 'index' &&
+      //       lineFieldsData[key] !== undefined
+      //     ) {
+      //       cacheRes[key] = lineFieldsData[key];
+      //     }
+      //   }
+      //   return cacheRes;
+      // }, {} as Record<string, unknown>);
+      setFieldsData(diffDataSourceToFieldsData(newDataSource));
       return newDataSource;
     });
   }, []);
@@ -399,6 +405,8 @@ const EditableTable = (
           >
             删除
           </Button>
+          <Button onClick={onFinish}>获取</Button>
+          <Button onClick={resetForm}>重置</Button>
         </Col>
       </Row>
       <Row>

@@ -1,7 +1,8 @@
 import * as React from 'react';
+// import { throttle } from 'lodash';
 import Grid from './Grid';
 import Header from './Header';
-// import bindRaf from './utils/bindRaf';
+import bindRaf from './utils/bindRaf';
 import './index.css';
 
 type InnerColumn = { name: string; width?: number; offset?: number };
@@ -38,7 +39,6 @@ function diffColumns(originColumns, columnWidth) {
 
 const defaultColumns = [];
 const defaultDataSource = [];
-
 const InitialWrapper = React.memo(
   ({
     columns: originColumns = defaultColumns,
@@ -86,7 +86,10 @@ const InitialWrapper = React.memo(
 
     const onScroll = React.useCallback(
       (event: React.UIEvent<HTMLDivElement, UIEvent>) => {
+        // console.log('scroll trigger', performance.now());
         event.preventDefault();
+        // event.persist();
+        event.stopPropagation();
         const {
           clientHeight,
           clientWidth,
@@ -126,7 +129,7 @@ const InitialWrapper = React.memo(
           };
         });
       },
-      [headerRef.current, headerTranslate, wrapperScroll],
+      [headerRef.current, wrapperScroll],
     );
 
     return (
