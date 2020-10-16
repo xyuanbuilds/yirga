@@ -1,4 +1,4 @@
-@import (reference) '../styles/variables.less';
+@import (reference) './variables.less';
 
 :global {
   div.ant-table {
@@ -126,6 +126,24 @@
 
     &:last-child {
       padding-right: 16px !important;
+    }
+  }
+
+  .ant-table-container {
+    height: 100%;
+  }
+
+  .ant-table-thead {
+    line-height: 23px;
+  }
+
+    // * scroll 产生样式的问题
+  .ant-table-scroll {
+    th.ant-table-selection-column + th {
+      padding-left: 16px;
+    }
+    td.ant-table-selection-column + td {
+      padding-left: 16px;
     }
   }
 }

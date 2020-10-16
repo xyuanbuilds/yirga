@@ -1,0 +1,168 @@
+@import './index.less';
+
+:global {
+  // search-tree
+  .search-tree-wrapper {
+    width: 100%;
+    height: 100%;
+
+    .search-tree-header {
+      display: flex;
+      padding: 6px;
+      background-color: #f8f8f8;
+      border-bottom: 1px solid #dfdfdf;
+      line-height: 24px;
+    }
+
+    .search-tree-empty {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      align-items: center;
+
+      .icon-empty,
+      i {
+        width: auto;
+        height: auto;
+        font-size: 80px;
+      }
+
+      span {
+        color: #999;
+      }
+    }
+
+    .search-tree-title-wrapper {
+      width: 100%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+  // all directory-tree
+  .ant-tree-directory,
+  .ant-tree {
+    div.ant-tree-treenode {
+      padding: 0;
+
+      & > span.ant-tree-checkbox {
+        margin: 6px 6px 0 0;
+      }
+    }
+
+    span.ant-tree-indent-unit {
+      width: 16px;
+    }
+
+    .ant-tree-treenode::before {
+      height: 28px;
+    }
+
+    .ant-tree-treenode-disabled {
+      .anticon {
+        opacity: 0.5;
+      }
+    }
+
+    .ant-tree-treenode-selected:hover::before {
+      background: @blueHover !important;
+    }
+
+    .ant-tree-treenode-selected::before {
+      background: rgba(66, 158, 255, 0.35) !important;
+    }
+
+    span.ant-tree-switcher {
+      // width: 16px !important;
+      flex: 0 0 16px;
+    }
+
+    .ant-tree-switcher_close {
+      color: #999 !important;
+    }
+
+    .ant-tree-switcher_open {
+      color: #333 !important;
+    }
+
+    .ant-tree-node-selected {
+      color: inherit !important;
+    }
+
+    span.ant-tree-node-content-wrapper {
+      padding: 0;
+      // width: ~'calc(100% - 48px)';
+      // width: 100%;
+      display: flex;
+      overflow: hidden; // 核心
+      .ant-tree-iconEle {
+        margin-right: 8px;
+        // width: 16px;
+        i {
+          top: 0 !important;
+          margin: 0;
+        }
+
+        img {
+          width: 16px;
+        }
+      }
+
+      .ant-tree-title {
+        // width: ~'calc(100% - 48px)';
+        padding-right: 8px;
+        flex: 1 1 100%;
+        // width: 100%;
+        // display: flex;
+        justify-content: space-between;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+        //! 以下样式为部分页面的定制样式，不具备全局性
+        .listAll {
+          color: @primary-color;
+        }
+
+        .wrapper {
+          // width: ~'calc(100% - 44px)';
+          width: 100%;
+          height: 100%;
+          display: flex;
+        }
+
+        .filenameBox {
+          flex: 1;
+          // margin-right: 8px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          // width: 72%;
+          i {
+            margin-left: 4px;
+            font-style: normal;
+            color: @primary-color;
+          }
+        }
+
+        .hoverEditIcon {
+          flex: 0 0 auto;
+          // display: none;
+          width: 0;
+
+          i,
+          .iconfont-wrapper {
+            margin-left: 8px !important;
+          }
+        }
+      }
+
+      &:hover {
+        .hoverEditIcon {
+          width: auto !important;
+          // display: inline-block !important;
+        }
+      }
+    }
+  }
+}
