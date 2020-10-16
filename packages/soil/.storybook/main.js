@@ -1,4 +1,5 @@
 const path = require('path');
+const webpack = require('webpack');
 
 module.exports = {
   stories: ['../src/**/*.stories.mdx', '../src/**/*.stories.@(js|jsx|ts|tsx)'],
@@ -23,9 +24,11 @@ module.exports = {
         {
           use: [
             { loader: 'style-loader' },
+            { loader: 'webpack-typings-for-css' },
             {
               loader: 'css-loader',
               options: {
+                localsConvention: 'camelCaseOnly',
                 modules: {
                   localIdentName: '[local]___[hash:base64:5]',
                 },
@@ -53,6 +56,8 @@ module.exports = {
         },
       ],
     };
+
+    config.plugins.push(new webpack.WatchIgnorePlugin([/less\.d\.ts$/]));
 
     // Return the altered config
     return config;
