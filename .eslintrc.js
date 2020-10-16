@@ -12,6 +12,11 @@ module.exports = {
     es6: true,
     node: true,
   },
+  globals: {
+    document: true,
+    localStorage: true,
+    window: true,
+  },
   rules: {
     'react/jsx-props-no-spreading': 'off',
     'react/prop-types': 'off',

@@ -84,12 +84,9 @@ const InitialWrapper = React.memo(
       [scrollWrapper.current],
     );
 
-    const onScroll = React.useCallback(
-      (event: React.UIEvent<HTMLDivElement, UIEvent>) => {
-        // console.log('scroll trigger', performance.now());
-        event.preventDefault();
-        // event.persist();
-        event.stopPropagation();
+    // const gridRef = React.useRef(null);
+    const actualSet = React.useCallback(
+      bindRaf((target) => {
         const {
           clientHeight,
           clientWidth,
@@ -97,9 +94,7 @@ const InitialWrapper = React.memo(
           scrollTop,
           scrollHeight,
           scrollWidth,
-        } = event.currentTarget;
-
-        // 处理 safari 弹性滚动
+        } = target;
         const actualLeft = Math.max(
           0,
           Math.min(scrollLeft, scrollWidth - clientWidth),
@@ -108,14 +103,14 @@ const InitialWrapper = React.memo(
           0,
           Math.min(scrollTop, scrollHeight - clientHeight),
         );
-
         headerTranslate(actualLeft);
         wrapperScroll(actualLeft, actualTop);
 
+        // gridRef.current.setScroll((prevState) => {
         setScroll((prevState) => {
           if (
-            prevState.scrollLeft === scrollLeft &&
-            prevState.scrollTop === scrollTop
+            prevState.scrollLeft === actualLeft &&
+            prevState.scrollTop === actualTop
           ) {
             // Scroll position may have been updated by cDM/cDU,
             // In which case we don't need to trigger another render,
@@ -128,8 +123,16 @@ const InitialWrapper = React.memo(
             scrollTop: actualTop,
           };
         });
+      }),
+      [wrapperScroll, headerTranslate],
+    );
+    const onScroll = React.useCallback(
+      (event: React.UIEvent<HTMLDivElement, UIEvent>) => {
+        event.preventDefault();
+        event.stopPropagation();
+        actualSet(event.currentTarget || event.target);
       },
-      [headerRef.current, wrapperScroll],
+      [actualSet],
     );
 
     return (
@@ -143,6 +146,7 @@ const InitialWrapper = React.memo(
           className="table-scroll-wrapper"
         >
           <Grid
+            // ref={gridRef}
             scroll={scroll}
             columns={diffedColumns}
             columnCount={columnCount}

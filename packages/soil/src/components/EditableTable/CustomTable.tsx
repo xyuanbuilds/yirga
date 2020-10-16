@@ -6,6 +6,8 @@ import React, {
   memo,
   forwardRef,
   useContext,
+  useCallback,
+  useImperativeHandle,
 } from 'react';
 import { VariableSizeGrid as Grid } from 'react-window';
 import ResizeObserver from 'rc-resize-observer';
@@ -15,20 +17,18 @@ import getStandardRules from './getStandardRules';
 import DuplicateFieldsDataContext from './DuplicateCheckContext';
 import styles from './CustomTable.less';
 
-function VirtualTable(props) {
-  const { columns, height, form, lines } = props;
+function VirtualTable(props, ref) {
+  const { columns, height, form, lines, ...resetTableProps } = props;
   const [tableWidth, setTableWidth] = useState(0);
 
-  const dataSource = useMemo(() => {
-    return Array(lines)
-      .fill(null)
-      .map((_, index) => {
-        return {
-          key: index + 1,
-          index: index + 1,
-        };
-      });
-  }, [lines]);
+  const dataSource = Array(lines)
+    .fill(null)
+    .map((_, index) => {
+      return {
+        key: index + 1,
+        index: index + 1,
+      };
+    });
 
   const mergedColumns = useMemo(() => {
     const widthColumnCount = columns.filter(({ width }) => !width).length;
@@ -69,6 +69,8 @@ function VirtualTable(props) {
     return obj;
   });
 
+  useImperativeHandle(ref, () => gridRef.current);
+
   const resetVirtualGrid = () => {
     if (gridRef.current)
       gridRef.current.resetAfterIndices({
@@ -81,9 +83,9 @@ function VirtualTable(props) {
 
   const renderVirtualList = (
     rawData: Record<string, unknown>[],
-    { scrollbarSize, ref, onScroll }: any,
+    { scrollbarSize, ref: innerRef, onScroll }: any,
   ) => {
-    ref.current = connectObject;
+    innerRef.current = connectObject;
     const totalHeight = rawData.length * 48;
 
     return (
@@ -141,24 +143,32 @@ function VirtualTable(props) {
     );
   };
 
+  const customComponents = useMemo(() => {
+    return {
+      body: renderVirtualList,
+    };
+  }, [mergedColumns]);
+
+  const resizableListener = useCallback(({ offsetWidth }) => {
+    setTableWidth(offsetWidth);
+  }, []);
+
+  const scroll = useMemo(() => {
+    return {
+      y: height - 48,
+      x: tableWidth,
+    };
+  }, [height, tableWidth]);
+
   return (
-    <ResizeObserver
-      onResize={({ offsetWidth }) => {
-        setTableWidth(offsetWidth);
-      }}
-    >
+    <ResizeObserver onResize={resizableListener}>
       {tableWidth ? (
         <Table
-          {...props}
-          scroll={{
-            y: height - 48,
-            x: tableWidth,
-          }}
+          {...resetTableProps}
+          scroll={scroll}
           columns={mergedColumns}
           pagination={false}
-          components={{
-            body: renderVirtualList,
-          }}
+          components={customComponents}
           dataSource={dataSource}
         />
       ) : (
@@ -229,9 +239,12 @@ function EditableCell({
 }
 
 function Item({ name, valuePropName, rules, save, renderForm }) {
-  const { fieldsDataMap, collectFieldData, form } = useContext(
-    DuplicateFieldsDataContext,
-  );
+  const {
+    fieldsDataMap,
+    collectFieldData,
+    form,
+    collectFieldValidate,
+  } = useContext(DuplicateFieldsDataContext);
 
   const collectFormValues = debounce(() => {
     const { value, fieldName } = save();
@@ -253,6 +266,13 @@ function Item({ name, valuePropName, rules, save, renderForm }) {
     });
     form.validateFields([name]);
   }, [fieldsDataMap, name]);
+
+  useEffect(() => {
+    collectFieldValidate({
+      name,
+      rules: rules || [],
+    });
+  }, [collectFieldValidate, rules, name]);
   return (
     <Form.Item
       name={name}
@@ -268,9 +288,12 @@ function Item({ name, valuePropName, rules, save, renderForm }) {
 }
 
 function ItemNeedCheckDuplicate({ name, renderForm, save }) {
-  const { fieldsDataMap, collectFieldData, form } = useContext(
-    DuplicateFieldsDataContext,
-  );
+  const {
+    fieldsDataMap,
+    collectFieldData,
+    form,
+    collectFieldValidate,
+  } = useContext(DuplicateFieldsDataContext);
 
   // ! 缓存中有值，说明该表单域已被touched，且有值
   useEffect(() => {
@@ -327,6 +350,17 @@ function ItemNeedCheckDuplicate({ name, renderForm, save }) {
     const { value, fieldName } = save();
     collectFieldData(fieldName, value);
   }, 300);
+
+  useEffect(() => {
+    collectFieldValidate({
+      name,
+      rules: getStandardRules(
+        '请输入字段名！',
+        ['', existedFields],
+        'tableField',
+      ),
+    });
+  }, [collectFieldValidate, existedFields, name]);
 
   return (
     <Form.Item

@@ -6,6 +6,7 @@ const DuplicateFieldsDataContext = createContext({
   collectFieldData: (fieldName: string, data?: unknown) => {
     console.log(fieldName, data);
   },
+  collectFieldValidate: (() => {}) as (column: Record<string, unknown>) => void,
 });
 
 export default DuplicateFieldsDataContext;

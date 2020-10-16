@@ -1,4 +1,4 @@
-/* eslint-disable no-continue */
+/* eslint-disable no-continue,prefer-promise-reject-errors */
 import React, {
   useState,
   useMemo,
@@ -10,16 +10,19 @@ import React, {
   useRef,
 } from 'react';
 import { Row, Col, Button, Form, Divider, Checkbox } from 'antd';
+/* eslint-disable import/no-extraneous-dependencies */
 import {
   ArrowUpOutlined,
   ArrowDownOutlined,
   DeleteOutlined,
 } from '@ant-design/icons';
+import { validateRules } from 'rc-field-form/es/utils/validateUtil';
+/* eslint-disable import/no-extraneous-dependencies */
 import { TableProps, ColumnType } from 'antd/lib/table';
-// import { FormInstance } from 'antd/lib/form';
-import { omit, throttle, cloneDeep } from 'lodash';
+// import RawAsyncValidator from 'async-validator';
+import { throttle, cloneDeep } from 'lodash';
 import Table from './CustomTable';
-import { drop, swap, isSimilar } from './utils';
+import { drop, swap, isSimilar, allPromiseFinish } from './utils';
 import DuplicateCheckContext from './DuplicateCheckContext';
 
 import styles from './index.less';
@@ -122,6 +125,7 @@ const EditableTable = (
 ) => {
   const [form] = Form.useForm();
   const [dataSource, setDataSource] = useState<any[]>([]);
+  const gridRef = useRef();
 
   const basicTableHeight = useMemo(() => {
     return height - (28 + 12);
@@ -169,8 +173,98 @@ const EditableTable = (
       return cloneDeep(initialData);
     });
   };
+
+  const fieldValidate = (column, value) => {
+    const promise = validateRules(
+      [column.name],
+      value,
+      column.rules,
+      { validateMessages: {} },
+      false,
+      { label: column.label },
+    );
+    promise.catch((e) => e);
+    // .then((errors: string[] = []) => {
+    //   console.log(errors);
+    // });
+    return promise;
+  };
+
+  const validateColumns = useRef({});
+  const validateAll = () => {
+    const promiseList: Promise<{
+      name: string;
+      line: number;
+      errors: string[];
+    }>[] = [];
+    dataSource.forEach((lineFields) => {
+      for (const key in lineFields) {
+        if (key === 'key' || key === 'index') continue;
+        const gap = key.indexOf('_');
+        const line = Number(key.slice(0, gap));
+        // const fieldName = key.slice(gap + 1);
+        const curColumn = validateColumns.current[key];
+        if (!curColumn.rules || !curColumn.rules.length) continue;
+        const promise = fieldValidate(curColumn, lineFields[key]);
+        promiseList.push(
+          promise
+            .then(() => ({ name: key, errors: [], line }))
+            .catch((errors) =>
+              Promise.reject({
+                name: key,
+                errors,
+                line,
+              }),
+            ),
+        );
+      }
+    });
+
+    return allPromiseFinish(promiseList)
+      .then(() => {
+        return Promise.resolve(diffFormRes(dataSource));
+      })
+      .catch(
+        (
+          results: {
+            name: string;
+            line: number;
+            errors: string[];
+          }[],
+        ) => {
+          const errorList = results.filter(
+            (result) => result && result.errors.length,
+          );
+          return Promise.reject({
+            values: diffFormRes(dataSource),
+            errorFields: errorList,
+          });
+        },
+      );
+  };
   const onFinish = async () => {
-    await form.validateFields();
+    try {
+      await form.validateFields();
+      const formData = await validateAll();
+      return formData;
+    } catch (e) {
+      // console.log('get error', e);
+      const { errorFields } = e;
+      const line =
+        errorFields[0].line ||
+        Number(
+          errorFields.reduce((res, cur) => {
+            const lineNum = Number(cur.name[0].split('_')[0]);
+            if (lineNum < res) return lineNum;
+            return res;
+          }, dataSource.length),
+        );
+      // console.log('curLine', line, errorFields);
+      gridRef.current.scrollTo({
+        scrollTop: (line - 1) * 48,
+      });
+      form.validateFields();
+    }
     const formData = diffFormRes(dataSource);
     return formData;
   };
@@ -199,25 +293,25 @@ const EditableTable = (
   // done
   const addLine = useCallback(
     throttle(() => {
-      // TODO 需要虚拟滚动到添加后到位置
       setDataSource((curDataSource) => {
         const curLine = curDataSource.length + 1;
-        const fields = Object.fromEntries(
-          Object.entries(omit(initialData[0], ['key', 'index'])).map((item) => {
+        const newLineFieldsData = Object.fromEntries(
+          Object.entries(initialData[0]).map((item) => {
+            if (item[0] === 'key' || item[0] === 'index')
+              return [item[0], curLine];
             return [`${curLine}_${item[0].replace(/^\d+_/, '')}`, undefined];
           }),
         );
-        return curDataSource.concat({
-          index: curLine,
-          key: curLine,
-          ...fields,
+        const scrollTop = curDataSource.length * 48;
+        gridRef.current.scrollTo({
+          scrollTop: scrollTop > basicTableHeight - 48 ? scrollTop : 0,
         });
+        return curDataSource.concat(newLineFieldsData);
       });
     }, 800),
-    [initialData],
+    [initialData, basicTableHeight],
   );
 
-  // done
   const exchangeLine = useCallback((index, type) => {
     if (type === 'up') {
       setDataSource((v) => {
@@ -256,22 +350,12 @@ const EditableTable = (
 
   const [selectedRowKeys, setSelect] = useState<number[]>([]);
 
-  // done
   const deleteLine = useCallback((index) => {
     setDataSource((curDataSource) => {
       const keep = curDataSource.slice(0, index);
       const willDrop = curDataSource.slice(index + 1, curDataSource.length);
       const newData = keep.concat(drop(willDrop));
-      // const cacheForUpdate = newData.reduce((record, curLine) => {
-      //   for (const key in curLine) {
-      //     if (curLine[key] !== undefined && key !== 'key' && key !== 'index') {
-      //       record[key] = curLine[key];
-      //     }
-      //   }
-      //   return record;
-      // }, {});
       setFieldsData(diffDataSourceToFieldsData(newData));
-      // setFieldsData(cacheForUpdate);
       setSelect((v) => {
         const indexInSelected = v.findIndex((i) => i === index);
         if (indexInSelected !== -1) {
@@ -284,7 +368,6 @@ const EditableTable = (
     });
   }, []);
 
-  // done
   const actionColumn = useMemo(() => {
     return {
       title: '操作',
@@ -369,18 +452,6 @@ const EditableTable = (
           ]),
         );
       });
-      // const newCache = newDataSource.reduce((cacheRes, lineFieldsData) => {
-      //   for (const key in lineFieldsData) {
-      //     if (
-      //       key !== 'key' &&
-      //       key !== 'index' &&
-      //       lineFieldsData[key] !== undefined
-      //     ) {
-      //       cacheRes[key] = lineFieldsData[key];
-      //     }
-      //   }
-      //   return cacheRes;
-      // }, {} as Record<string, unknown>);
       setFieldsData(diffDataSourceToFieldsData(newDataSource));
       return newDataSource;
     });
@@ -390,6 +461,22 @@ const EditableTable = (
     deleteMultipleLines(selectedRowKeys);
     setSelect([]);
   };
+
+  const collectFieldValidate = useCallback((column) => {
+    validateColumns.current = {
+      ...validateColumns.current,
+      [column.name]: column,
+    };
+  }, []);
+
+  const contextValue = useMemo(() => {
+    return {
+      form,
+      fieldsDataMap,
+      collectFieldData,
+      collectFieldValidate,
+    };
+  }, [fieldsDataMap]);
 
   return (
     <div className={className}>
@@ -412,18 +499,10 @@ const EditableTable = (
       <Row>
         <Col flex="1" className={styles.tableWrapper}>
           <Form component={false} form={form}>
-            <DuplicateCheckContext.Provider
-              value={{
-                // existedFieldsCache,
-                form,
-                fieldsDataMap,
-                collectFieldData,
-              }}
-            >
+            <DuplicateCheckContext.Provider value={contextValue}>
               <Table
                 {...reset}
-                // TODO 重做列选中
-                // rowSelection={rowSelection}
+                ref={gridRef}
                 height={basicTableHeight}
                 form={form}
                 columns={formattedColumns}

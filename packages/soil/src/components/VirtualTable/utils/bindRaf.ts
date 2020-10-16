@@ -1,4 +1,12 @@
+const globalThis = window as Window;
+
+// const frame =
+//   typeof globalThis.requestIdleCallback === 'function'
+//     ? globalThis.requestIdleCallback
+//     : globalThis.requestAnimationFrame;
+
 function bindRaf(fn: (...args: any) => void, throttle?: boolean) {
+  if (!globalThis.requestAnimationFrame) return fn;
   let isRunning = false;
   let args: any[];
 
@@ -15,7 +23,8 @@ function bindRaf(fn: (...args: any) => void, throttle?: boolean) {
     }
 
     isRunning = true;
-    requestAnimationFrame(run);
+    globalThis.requestAnimationFrame(run);
+    // frame(run);
   };
 }
 

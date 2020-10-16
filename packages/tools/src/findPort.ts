@@ -7,7 +7,7 @@ const highestPort = 2 ** 16 - 1;
 const getNextPort = (port: number) => port + 1;
 
 function getHosts() {
-  let interfaces = {};
+  let interfaces: ReturnType<typeof os.networkInterfaces> = {};
   const addressArr: Array<string | undefined> = ['0.0.0.0']; // 默认外部可访问
   try {
     interfaces = os.networkInterfaces();
@@ -25,12 +25,20 @@ function getHosts() {
 
   const interfaceNames = Object.keys(interfaces);
 
-  for (let i = 0; i < interfaceNames.length; i++) {
-    const netInterface = interfaces[interfaceNames[i]];
+  // for (let i = 0; i < interfaceNames.length; i++) {
+  //   const netInterface = interfaces[interfaceNames[i]];
+  //   if (!netInterface?.length) continue;
+  //   for (let j = 0; j < netInterface.length; j++) {
+  //     addressArr.push(netInterface[j].address);
+  //   }
+  // }
+  interfaceNames.forEach((interfaceName) => {
+    const netInterface = interfaces[interfaceName];
+    if (!netInterface?.length) return;
     for (let j = 0; j < netInterface.length; j++) {
       addressArr.push(netInterface[j].address);
     }
-  }
+  });
 
   // add null value, For createServer function, do not use host.
   addressArr.push(undefined);

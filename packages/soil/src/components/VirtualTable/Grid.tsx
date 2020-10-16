@@ -15,7 +15,7 @@ type RowMetaData = {
   size: number;
 };
 
-function Grid(props) {
+function Grid(props, ref) {
   const {
     dataSource: data,
     columns,
@@ -24,6 +24,18 @@ function Grid(props) {
     columnCount,
     rowCount,
   } = props;
+  // const [scroll, setScroll] = React.useState({
+  //   scrollLeft: 0,
+  //   scrollTop: 0,
+  // });
+
+  // React.useImperativeHandle(
+  //   ref,
+  //   () => ({
+  //     setScroll,
+  //   }),
+  //   [],
+  // );
 
   // * 当前内框宽高
   const [{ width, height }, setContentInfo] = React.useState({
@@ -539,4 +551,4 @@ function getDefaultCellKey(columnIndex, rowIndex) {
   return `${rowIndex}:${columnIndex}`;
 }
 
-export default Grid;
+export default React.memo(React.forwardRef(Grid));
