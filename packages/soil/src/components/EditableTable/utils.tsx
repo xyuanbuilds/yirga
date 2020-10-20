@@ -127,3 +127,16 @@ export function allPromiseFinish(
     });
   });
 }
+
+export function ArrayContentEqual(left: unknown[], right: unknown[]) {
+  const flag = [...left];
+  for (let i = 0; i < right.length; i++) {
+    const curIndex = left.findIndex((item) => item === right[i]);
+    if (curIndex >= 0) {
+      flag.splice(curIndex, 1);
+    } else {
+      return false;
+    }
+  }
+  return true;
+}

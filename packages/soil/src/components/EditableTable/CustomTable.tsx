@@ -157,9 +157,7 @@ function VirtualTable(props, ref) {
     ) {
       return (
         <th>
-          <div>
-            <AllSelectCheckBox />
-          </div>
+          <AllSelectCheckBox />
         </th>
       );
     }
@@ -347,10 +345,8 @@ function ItemNeedCheckDuplicate({ name, renderForm, save }) {
     form.validateFields([name]);
   }, [fieldsDataMap, name]);
 
-  // * 获取当前重名验证字段的所有值
   const existedFields = useMemo(() => {
     const [curLine, curField] = name.split('_');
-
     const regForField = new RegExp(`^[0-9]+_${curField}$`);
     const regForSpecial = new RegExp(`^${curLine}_${curField}$`);
     const existed = Object.entries<string>(fieldsDataMap).reduce<string[]>(
@@ -367,19 +363,6 @@ function ItemNeedCheckDuplicate({ name, renderForm, save }) {
 
     return existed;
   }, [fieldsDataMap, name]);
-
-  // *判断重名
-  // 1. 有已存在值
-  // 2. 当前有内容（不是undefined）
-  // useEffect(() => {
-  //   if (
-  //     existedFields &&
-  //     existedFields.length > 0 &&
-  //     fieldsDataMap[name] !== undefined
-  //   ) {
-  //     form.validateFields([name]);
-  //   }
-  // }, [existedFields]);
 
   const collectFormValues = debounce(() => {
     const { value, fieldName } = save();
@@ -426,10 +409,10 @@ function AllSelectCheckBox() {
   const { isAllSelected, selectedRowKeys, setAllSelected } = useContext(
     SelectedRowsContext,
   );
+
   const [checkState, setCheckState] = useState({
     indeterminate: false,
     checked: false,
-    // disabled: false,
   });
   useEffect(() => {
     if (isAllSelected) {
@@ -461,18 +444,5 @@ function AllSelectCheckBox() {
     />
   );
 }
-
-// function ArrayContentEqual(left: unknown[], right: unknown[]) {
-//   const flag = [...left];
-//   for (let i = 0; i < right.length; i++) {
-//     const curIndex = left.findIndex((item) => item === right[i]);
-//     if (curIndex >= 0) {
-//       flag.splice(curIndex, 1);
-//     } else {
-//       return false;
-//     }
-//   }
-//   return true;
-// }
 
 export default memo(forwardRef(VirtualTable));
