@@ -8,6 +8,8 @@ import React, {
   useImperativeHandle,
   forwardRef,
   useRef,
+  createContext,
+  useContext,
 } from 'react';
 import { Row, Col, Button, Form, Divider, Checkbox } from 'antd';
 /* eslint-disable import/no-extraneous-dependencies */
@@ -19,14 +21,16 @@ import {
 import { validateRules } from 'rc-field-form/es/utils/validateUtil';
 /* eslint-disable import/no-extraneous-dependencies */
 import { TableProps, ColumnType } from 'antd/lib/table';
-// import RawAsyncValidator from 'async-validator';
 import { throttle, cloneDeep } from 'lodash';
+import getStandardRules from './getStandardRules';
 import Table from './CustomTable';
 import { drop, swap, isSimilar, allPromiseFinish } from './utils';
 import DuplicateCheckContext from './DuplicateCheckContext';
 
 import styles from './index.less';
 
+const TABLE_HEADER_HEIGHT = 48;
+const ROW_HEIGHT = 53;
 export interface CustomColumnProps<RecordType>
   extends Omit<ColumnType<RecordType>, 'title' | 'ellipsis' | 'render'> {
   title: string;
@@ -53,6 +57,7 @@ export interface EditableTableProps<RecordType>
   columns?: CustomColumnProps<RecordType>[];
   initialValues?: any[];
   onValuesChange?: (values: any[]) => void;
+  onChange?: () => void;
   disabled?: boolean;
   height: number;
   // onFinish?: () => void;
@@ -77,8 +82,41 @@ function diffInitial(originColumns, initialValues) {
     lineFieldsData.key = line;
     return lineFieldsData;
   });
-  console.log('diffed initial form data', diffed);
   return diffed;
+}
+
+function diffColumnRule(
+  column: CustomColumnProps<any>,
+  dataSource: Record<string, unknown>[],
+  line: number,
+) {
+  const { rule, required, checkDuplicate, dataIndex: name, title } = column;
+  let curRule =
+    rule ||
+    (required
+      ? [
+          {
+            required: true,
+            message: `${title}是必须的`,
+          },
+        ]
+      : undefined);
+  if (checkDuplicate) {
+    const existedFields = dataSource.reduce((res, cur, index) => {
+      if (index + 1 === line) return res;
+      res.push(cur[String(name)]);
+      return res;
+    }, [] as unknown[]);
+    curRule = getStandardRules(
+      '请输入字段名！',
+      ['', existedFields],
+      'tableField',
+    );
+  }
+  return {
+    name: `${line}_${name}`,
+    rules: curRule || [],
+  };
 }
 
 function diffFormRes(dataSource: Record<string, unknown>[]) {
@@ -110,12 +148,21 @@ function diffDataSourceToFieldsData(dataSource: Record<string, unknown>[]) {
   return newCache;
 }
 
+const SelectedRowsContext = createContext({
+  selectedRowKeys: [] as number[],
+  isAllSelected: false,
+  setAllSelected: (p: boolean) => {
+    console.log(p);
+  },
+});
+
+export { SelectedRowsContext };
 const EditableTable = (
   {
     columns: originColumns = [],
-    className,
     initialValues = INITIAL_EMPTY,
     onValuesChange,
+    onChange,
     dataSource: dataSourceControlled,
     disabled = false,
     height,
@@ -125,7 +172,7 @@ const EditableTable = (
 ) => {
   const [form] = Form.useForm();
   const [dataSource, setDataSource] = useState<any[]>([]);
-  const gridRef = useRef();
+  const gridRef = useRef<{ scrollTo: ({ scrollTop: number }) => void }>();
 
   const basicTableHeight = useMemo(() => {
     return height - (28 + 12);
@@ -154,6 +201,7 @@ const EditableTable = (
     return pre;
   }, [initialValues, originColumns]);
 
+  console.log('index render');
   // *当前表单中的所有真实值
   const [fieldsDataMap, setFieldsData] = useState({});
 
@@ -167,10 +215,11 @@ const EditableTable = (
     setFieldsData((v) => ({ ...v, [fieldName]: data }));
   }, []);
 
-  const resetForm = () => {
+  const resetForm = (resetData?) => {
+    const forReset = resetData || initialData;
     setDataSource(() => {
-      setFieldsData(diffDataSourceToFieldsData(initialData));
-      return cloneDeep(initialData);
+      setFieldsData(diffDataSourceToFieldsData(forReset));
+      return cloneDeep(forReset);
     });
   };
 
@@ -184,9 +233,6 @@ const EditableTable = (
       { label: column.label },
     );
     promise.catch((e) => e);
-    // .then((errors: string[] = []) => {
-    //   console.log(errors);
-    // });
     return promise;
   };
 
@@ -204,7 +250,8 @@ const EditableTable = (
         const line = Number(key.slice(0, gap));
         // const fieldName = key.slice(gap + 1);
         const curColumn = validateColumns.current[key];
-        if (!curColumn.rules || !curColumn.rules.length) continue;
+        // console.log('get curColumn', curColumn);
+        if (!curColumn || !curColumn.rules || !curColumn.rules.length) continue;
         const promise = fieldValidate(curColumn, lineFields[key]);
         promiseList.push(
           promise
@@ -244,11 +291,12 @@ const EditableTable = (
   };
   const onFinish = async () => {
     try {
+      diffRules();
       await form.validateFields();
       const formData = await validateAll();
       return formData;
     } catch (e) {
-      // console.log('get error', e);
+      // console.log('finish get error', e);
       const { errorFields } = e;
       const line =
         errorFields[0].line ||
@@ -259,18 +307,41 @@ const EditableTable = (
             return res;
           }, dataSource.length),
         );
-      // console.log('curLine', line, errorFields);
-      gridRef.current.scrollTo({
-        scrollTop: (line - 1) * 48,
-      });
+      scrollToLine(line);
       form.validateFields();
+      throw new Error('编辑信息异常！');
     }
-    const formData = diffFormRes(dataSource);
-    return formData;
   };
+  function scrollToLine(line: number, paramDataSource?: unknown[]) {
+    const actualDataSource = paramDataSource || dataSource;
+    const maxScrollTop =
+      actualDataSource.length * ROW_HEIGHT -
+      (basicTableHeight - TABLE_HEADER_HEIGHT);
+    const curScrollTop = (line - 1) * ROW_HEIGHT;
+    if (gridRef.current) {
+      gridRef.current.scrollTo({
+        scrollTop: curScrollTop >= maxScrollTop ? maxScrollTop : curScrollTop,
+      });
+    }
+  }
+
+  function diffRules(paramInitialData?) {
+    // console.log('for diff', dataSource);
+    const forDiff = paramInitialData || dataSource;
+    const needRuleColumn = originColumns.filter(
+      (i) => i.rule || i.checkDuplicate || i.required,
+    );
+    forDiff.forEach((_, index) => {
+      needRuleColumn.forEach((curColumn) => {
+        const res = diffColumnRule(curColumn, forDiff, index + 1);
+        validateColumns.current[res.name] = res;
+      });
+    });
+  }
 
   useEffect(() => {
     resetForm();
+    diffRules(initialData);
   }, [initialData]);
   useImperativeHandle(
     ref,
@@ -278,7 +349,7 @@ const EditableTable = (
       onFinish,
       resetForm,
     }),
-    [fieldsDataMap, initialData],
+    [fieldsDataMap, initialData, dataSource],
   );
 
   // * basic save 存值，但不刷新表格
@@ -302,11 +373,9 @@ const EditableTable = (
             return [`${curLine}_${item[0].replace(/^\d+_/, '')}`, undefined];
           }),
         );
-        const scrollTop = curDataSource.length * 48;
-        gridRef.current.scrollTo({
-          scrollTop: scrollTop > basicTableHeight - 48 ? scrollTop : 0,
-        });
-        return curDataSource.concat(newLineFieldsData);
+        const newDataSource = curDataSource.concat(newLineFieldsData);
+        scrollToLine(newDataSource.length, newDataSource);
+        return newDataSource;
       });
     }, 800),
     [initialData, basicTableHeight],
@@ -350,6 +419,25 @@ const EditableTable = (
 
   const [selectedRowKeys, setSelect] = useState<number[]>([]);
 
+  const setAllSelected = useCallback(
+    (selectedAll: boolean) => {
+      if (!selectedAll) {
+        return setSelect([]);
+      }
+      setSelect(dataSource.map((_, index) => index));
+    },
+    [dataSource],
+  );
+  const selectedRowsContextValue = useMemo(() => {
+    return {
+      selectedRowKeys,
+      isAllSelected:
+        selectedRowKeys.length === dataSource.length &&
+        selectedRowKeys.length > 0,
+      setAllSelected,
+    };
+  }, [selectedRowKeys, dataSource]);
+
   const deleteLine = useCallback((index) => {
     setDataSource((curDataSource) => {
       const keep = curDataSource.slice(0, index);
@@ -368,11 +456,12 @@ const EditableTable = (
     });
   }, []);
 
-  const actionColumn = useMemo(() => {
+  const actionColumn = useMemo<CustomColumnProps<any>>(() => {
     return {
       title: '操作',
-      width: 129,
+      width: 109,
       dataIndex: 'index',
+      align: 'center',
       render(_, __, index, isLast) {
         const first = index === 0;
         const last = isLast;
@@ -408,12 +497,12 @@ const EditableTable = (
         );
       },
     };
-  }, [disabled]);
+  }, [disabled, onChange]);
 
   const selectColumn = useMemo<CustomColumnProps<any>>(() => {
     return {
-      title: '',
-      width: 30,
+      title: 'SELECT_COLUMN',
+      width: 38,
       dataIndex: 'index',
       render: (_, __, index) => (
         <SelectableCell index={index} setSelect={setSelect} />
@@ -479,53 +568,65 @@ const EditableTable = (
   }, [fieldsDataMap]);
 
   return (
-    <div className={className}>
+    <div className={styles.wrapper}>
       <Row className={styles.buttonBar}>
         <Col flex="1">
-          <Button type="primary" disabled={disabled} onClick={addLine}>
+          <Button
+            type="primary"
+            disabled={disabled}
+            onClick={() => {
+              if (onChange) onChange();
+              addLine();
+            }}
+          >
             添加字段
           </Button>
           <Button
             danger
             disabled={disabled || selectedRowKeys.length === 0}
-            onClick={deleteLines}
+            onClick={() => {
+              if (onChange) onChange();
+              deleteLines();
+            }}
           >
             删除
           </Button>
-          <Button onClick={onFinish}>获取</Button>
-          <Button onClick={resetForm}>重置</Button>
+          <Button onClick={() => onFinish()}>获取</Button>
+          <Button onClick={() => resetForm()}>重置</Button>
         </Col>
       </Row>
-      <Row>
-        <Col flex="1" className={styles.tableWrapper}>
-          <Form component={false} form={form}>
+      <div className={styles.tableWrapper}>
+        <Form component={false} form={form}>
+          <SelectedRowsContext.Provider value={selectedRowsContextValue}>
             <DuplicateCheckContext.Provider value={contextValue}>
               <Table
                 {...reset}
                 ref={gridRef}
                 height={basicTableHeight}
+                rowHeight={ROW_HEIGHT}
                 form={form}
                 columns={formattedColumns}
                 lines={dataSource.length}
               />
             </DuplicateCheckContext.Provider>
-          </Form>
-        </Col>
-      </Row>
+          </SelectedRowsContext.Provider>
+        </Form>
+      </div>
     </div>
   );
 };
 
 function SelectableCell({ setSelect, index }) {
+  const { selectedRowKeys } = useContext(SelectedRowsContext);
   const [checked, setChecked] = useState(false);
   useEffect(() => {
-    setSelect((selectedRowKeys) => {
-      if (selectedRowKeys.findIndex((i) => i === index) !== -1)
-        setChecked(true);
-      return selectedRowKeys;
-    });
-  }, []);
-  const onChange = (e) => {
+    if (selectedRowKeys.findIndex((i) => i === index) !== -1) {
+      setChecked(true);
+    } else {
+      setChecked(false);
+    }
+  }, [selectedRowKeys, index]);
+  const onChange = useCallback((e) => {
     const { checked: eventValue } = e.target;
     setChecked(() => {
       setSelect((v) => {
@@ -542,8 +643,12 @@ function SelectableCell({ setSelect, index }) {
       });
       return eventValue;
     });
-  };
-  return <Checkbox checked={checked} onChange={onChange} />;
+  }, []);
+  return (
+    <div className={styles.selectBoxWrapper}>
+      <Checkbox checked={checked} onChange={onChange} />
+    </div>
+  );
 }
 
 export default memo(forwardRef(EditableTable));

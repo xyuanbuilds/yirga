@@ -1,21 +1,6 @@
-@import './scrollbar.less';
-@import './notification.less';
-@import './modal.less';
-@import './input.less';
-@import './form.less';
-@import './tree.less';
-@import './card.less';
-@import './table.less';
-@import './select.less';
-@import './button.less';
-@import './treeselect.less';
-@import './upload.less';
-@import './menu.less';
-@import './dropdown.less';
-
 @blueHover: #e6f1ff;
 @blueHover2: #429eff;
-@blueClick: #0b61d9;
+@blueClick: #0b61d956;
 @iconFontSize: 20px;
 
 .globalSpin {
@@ -33,75 +18,9 @@
     white-space: nowrap;
   }
 
-  // ACEEditor全局滚动条hover展示
-  .ace_editor:hover {
-    .ace_scrollbar::-webkit-scrollbar {
-      visibility: visible;
-    }
-
-    .ace_scrollbar::-webkit-scrollbar-thumb {
-      visibility: visible;
-    }
-
-    .ace_scrollbar::-webkit-scrollbar-track {
-      visibility: visible;
-    }
-  }
 
   // temp fix for https://github.com/ant-design/ant-design/commit/a1fafb5b727b62cb0be29ce6e9eca8f579d4f8b7
   .ant-spin-container {
     overflow: visible !important;
-  }
-
-  // 修改 icon 使用方法后，用于兼容jsplumb使用icon的写法
-  .jsplumb-del {
-    img {
-      height: 100%;
-      width: 100%;
-      padding: 5px;
-      padding-bottom: 8px;
-    }
-  }
-
-  // * 全局定制 dirctory tree的样式
-  .ant-tree li .ant-tree-node-content-wrapper {
-    padding: 0;
-  }
-
-  .ant-btn-sm {
-    font-size: 13px;
-  }
-
-  .ant-tree.ant-tree-directory > li span.ant-tree-node-content-wrapper:hover::before,
-  .ant-tree.ant-tree-directory .ant-tree-child-tree > li span.ant-tree-node-content-wrapper:hover::before {
-    // background: @blueHover!important;
-    background: @blueHover;
-  }
-  // .ant-tree.ant-tree-directory > li.ant-tree-treenode-selected > span.ant-tree-node-content-wrapper:before, .ant-tree.ant-tree-directory .ant-tree-child-tree > li.ant-tree-treenode-selected > span.ant-tree-node-content-wrapper:before {
-  //   background: @blueSelected!important;
-  // }
-  // .ant-tree.ant-tree-directory > li.ant-tree-treenode-selected > span.ant-tree-switcher {
-  //   color: inherit!important;
-  // }
-  .ant-tree.ant-tree-directory > li span.ant-tree-node-content-wrapper.ant-tree-node-selected {
-    color: inherit !important;
-  }
-  // .ant-tree.ant-tree-directory > li span.ant-tree-node-content-wrapper.ant-tree-node-selected, .ant-tree.ant-tree-directory .ant-tree-child-tree > li span.ant-tree-node-content-wrapper.ant-tree-node-selected {
-  //   color: inherit!important;
-  // }
-  // 兼容4.x升级Tabs样式带来的变化
-  .ant-tabs-card > .ant-tabs-nav button.ant-tabs-tab,
-  .ant-tabs-nav button.ant-tabs-tab {
-    padding: 9px 12px;
-    margin: 0;
-  }
-
-  .ant-tabs-tab {
-    margin: unset;
-    padding: 12px 16px;
-  }
-
-  div.antd-pro-ellipsis-ellipsis {
-    white-space: initial;
   }
 }

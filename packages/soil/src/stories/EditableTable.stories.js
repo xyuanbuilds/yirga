@@ -17,7 +17,7 @@ const Template = (args) => {
 const columns = [
   {
     title: '序号',
-    width: 30,
+    width: 40,
     dataIndex: 'index',
   },
   {
@@ -73,25 +73,49 @@ Editable.args = {
 };
 
 const initialValues = [
-  { field: 'dfd', type: 1, fieldNotes: 'shit', mainKey: true },
-  { field: 'dfuuu', type: 1, fieldNotes: 'shit', mainKey: false },
-  { field: 'lalaland', type: 3, fieldNotes: 'shit', mainKey: true },
-  { field: 'yuyu', type: 1, fieldNotes: 'shit', mainKey: true },
+  { field: 'dfd', type: 1, fieldNotes: 'dfdfs', mainKey: true },
+  { field: 'dfuuu', type: 1, fieldNotes: 'dfdfs', mainKey: false },
+  { field: 'lalaland', type: 3, fieldNotes: 'dfdfs', mainKey: true },
+  { field: 'yuyu', type: 1, fieldNotes: 'dfdfs', mainKey: true },
   { field: 'testsield', fieldNotes: undefined, type: 1, mainKey: false },
-  { field: 'testsield2', fieldNotes: undefined, type: 1, mainKey: false },
-  { field: 'testsield3', fieldNotes: undefined, type: 1, mainKey: false },
-  { field: 'testsield4', fieldNotes: undefined, type: 1, mainKey: false },
-  { field: 'testsield5', fieldNotes: undefined, type: 1, mainKey: false },
+  { field: 'testsield2sdf', fieldNotes: undefined, type: 1, mainKey: false },
+  { field: 'testsield3di', fieldNotes: undefined, type: 1, mainKey: false },
+  { field: 'testsield4i', fieldNotes: undefined, type: 1, mainKey: false },
+  { field: 'testsield5sf', fieldNotes: undefined, type: 1, mainKey: false },
   { field: 'testsield6', fieldNotes: 'dfsfsdsfs', type: 1, mainKey: false },
-  { field: 'testsield7', fieldNotes: undefined, type: 1, mainKey: false },
-  { field: 'testsield8', fieldNotes: undefined, type: 2, mainKey: false },
-  { field: 'testsield9', fieldNotes: undefined, type: 1, mainKey: false },
-  { field: 'testsield10', fieldNotes: undefined, type: 1, mainKey: false },
-  { field: 'testsield11', fieldNotes: 'dfss', type: 1, mainKey: false },
+  { field: 'testsield7df', fieldNotes: undefined, type: 1, mainKey: false },
+  { field: 'testsield8ds', fieldNotes: undefined, type: 2, mainKey: false },
+  { field: 'testsield9dfs', fieldNotes: undefined, type: 1, mainKey: false },
+  { field: 'testsield1df0', fieldNotes: undefined, type: 1, mainKey: false },
+  { field: 'testsield1dfs1', fieldNotes: 'dfss', type: 1, mainKey: false },
+  { field: 'testsield13df4', fieldNotes: 'dfss', type: 1, mainKey: false },
+  { field: 'testsield1123sd', fieldNotes: 'dfss', type: 1, mainKey: false },
+  { field: 'testsield1213fd12', fieldNotes: 'dfss', type: 1, mainKey: false },
+  { field: 'testsield1123df21', fieldNotes: 'dfss', type: 1, mainKey: false },
 ];
 export const WithInitial = Template.bind({});
 WithInitial.args = {
   columns,
   height: 500,
-  initialValues,
+  initialValues: Array(5)
+    .fill({})
+    .reduce((pre) => {
+      return pre.concat(
+        pre.map((i, index) => {
+          return Object.fromEntries(
+            Object.entries(i).map((item) => {
+              if (item[0] === 'field') {
+                return [
+                  item[0],
+                  `e${String(Math.random() * 100000).slice(0, 4)}${String(
+                    Math.random() * 100000,
+                  ).slice(0, 4)}`,
+                ];
+              }
+              return item;
+            }),
+          );
+        }),
+      );
+    }, initialValues),
 };

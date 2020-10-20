@@ -11,15 +11,18 @@ import React, {
 } from 'react';
 import { VariableSizeGrid as Grid } from 'react-window';
 import ResizeObserver from 'rc-resize-observer';
-import { Table, Form } from 'antd';
+import { Table, Form, Checkbox } from 'antd';
 import { debounce } from 'lodash';
 import getStandardRules from './getStandardRules';
 import DuplicateFieldsDataContext from './DuplicateCheckContext';
+import { SelectedRowsContext } from './index';
 import styles from './CustomTable.less';
 
 function VirtualTable(props, ref) {
-  const { columns, height, form, lines, ...resetTableProps } = props;
+  const { columns, height, form, lines, rowHeight, ...resetTableProps } = props;
   const [tableWidth, setTableWidth] = useState(0);
+
+  console.log('custom render');
 
   const dataSource = Array(lines)
     .fill(null)
@@ -40,13 +43,13 @@ function VirtualTable(props, ref) {
       return pre;
     }, 0);
 
+    const widthForUse = Math.floor(
+      (tableWidth - widthAlready) / widthColumnCount,
+    );
     return columns.map((column) => {
       if (column.width) {
         return column;
       }
-      const widthForUse = Math.floor(
-        (tableWidth - widthAlready) / widthColumnCount,
-      );
       return {
         ...column,
         width: widthForUse < 80 ? 80 : widthForUse,
@@ -79,14 +82,16 @@ function VirtualTable(props, ref) {
       });
   };
 
-  useEffect(() => resetVirtualGrid, [tableWidth]);
+  useEffect(() => {
+    resetVirtualGrid();
+  }, [mergedColumns, height, rowHeight]);
 
   const renderVirtualList = (
     rawData: Record<string, unknown>[],
     { scrollbarSize, ref: innerRef, onScroll }: any,
   ) => {
     innerRef.current = connectObject;
-    const totalHeight = rawData.length * 48;
+    // const totalHeight = rawData.length * rowHeight;
 
     return (
       <Grid
@@ -94,13 +99,13 @@ function VirtualTable(props, ref) {
         columnCount={mergedColumns.length}
         columnWidth={(index) => {
           const { width } = mergedColumns[index];
-          return totalHeight > height - 48 && index === mergedColumns.length - 1
+          return index === mergedColumns.length - 1
             ? width - scrollbarSize - 1
             : width;
         }}
-        height={height - 48}
+        height={height - rowHeight}
         rowCount={rawData.length}
-        rowHeight={() => 48}
+        rowHeight={() => rowHeight}
         width={tableWidth - 1}
         onScroll={({ scrollLeft }) => {
           onScroll({ scrollLeft });
@@ -143,11 +148,34 @@ function VirtualTable(props, ref) {
     );
   };
 
-  const customComponents = useMemo(() => {
+  const renderCell = (cellProps: Record<string, unknown>) => {
+    const { children } = cellProps;
+    if (
+      (Array.isArray(children) ? children : []).find(
+        (i) => i === 'SELECT_COLUMN',
+      )
+    ) {
+      return (
+        <th>
+          <div>
+            <AllSelectCheckBox />
+          </div>
+        </th>
+      );
+    }
+    return <th {...cellProps} />;
+  };
+
+  const customComponents = useMemo<
+    import('rc-table/lib/interface.d').TableComponents<any>
+  >(() => {
     return {
+      header: {
+        cell: renderCell,
+      },
       body: renderVirtualList,
     };
-  }, [mergedColumns]);
+  }, [mergedColumns, height, rowHeight]);
 
   const resizableListener = useCallback(({ offsetWidth }) => {
     setTableWidth(offsetWidth);
@@ -155,10 +183,10 @@ function VirtualTable(props, ref) {
 
   const scroll = useMemo(() => {
     return {
-      y: height - 48,
-      x: tableWidth,
+      y: height - rowHeight,
+      x: 'max-content',
     };
-  }, [height, tableWidth]);
+  }, [height, rowHeight]);
 
   return (
     <ResizeObserver onResize={resizableListener}>
@@ -273,6 +301,7 @@ function Item({ name, valuePropName, rules, save, renderForm }) {
       rules: rules || [],
     });
   }, [collectFieldValidate, rules, name]);
+  const FormElement = renderForm && renderForm(save);
   return (
     <Form.Item
       name={name}
@@ -280,9 +309,15 @@ function Item({ name, valuePropName, rules, save, renderForm }) {
       valuePropName={valuePropName}
       rules={rules}
     >
-      {React.cloneElement(renderForm && renderForm(save), {
-        onChange: collectFormValues,
-      })}
+      {FormElement
+        ? React.cloneElement(FormElement, {
+            onChange: (...params) => {
+              if (FormElement.props.onChang)
+                FormElement.props.onChange(...params);
+              collectFormValues();
+            },
+          })
+        : null}
     </Form.Item>
   );
 }
@@ -362,6 +397,8 @@ function ItemNeedCheckDuplicate({ name, renderForm, save }) {
     });
   }, [collectFieldValidate, existedFields, name]);
 
+  const FormElement = renderForm && renderForm(collectFormValues);
+
   return (
     <Form.Item
       preserve={false}
@@ -372,10 +409,56 @@ function ItemNeedCheckDuplicate({ name, renderForm, save }) {
         'tableField',
       )}
     >
-      {React.cloneElement(renderForm && renderForm(collectFormValues), {
-        onChange: collectFormValues,
-      })}
+      {FormElement
+        ? React.cloneElement(FormElement, {
+            onChange: (...params) => {
+              if (FormElement.props.onChang)
+                FormElement.props.onChange(...params);
+              collectFormValues();
+            },
+          })
+        : null}
     </Form.Item>
+  );
+}
+
+function AllSelectCheckBox() {
+  const { isAllSelected, selectedRowKeys, setAllSelected } = useContext(
+    SelectedRowsContext,
+  );
+  const [checkState, setCheckState] = useState({
+    indeterminate: false,
+    checked: false,
+    // disabled: false,
+  });
+  useEffect(() => {
+    if (isAllSelected) {
+      return setCheckState({
+        indeterminate: false,
+        checked: true,
+      });
+    }
+    if (selectedRowKeys.length > 0) {
+      return setCheckState({
+        indeterminate: true,
+        checked: false,
+      });
+    }
+    setCheckState({
+      indeterminate: false,
+      checked: false,
+    });
+  }, [isAllSelected, selectedRowKeys]);
+
+  return (
+    <Checkbox
+      {...checkState}
+      style={{ marginLeft: 8 }}
+      onChange={(e) => {
+        const { checked } = e.target;
+        setAllSelected(checked);
+      }}
+    />
   );
 }
 

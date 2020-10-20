@@ -1,3 +1,4 @@
+@import '../../theme/globalCSS/table.less';
 @buttonMargin: 8; // 按钮右margin
 
 .buttonBar {
@@ -10,6 +11,10 @@
 
 .tableWrapper {
   :global {
+    .ant-table-thead {
+      line-height: 23px;
+    }
+
     .ant-col.ant-form-item-control {
       position: relative;
 
@@ -36,4 +41,11 @@
 
 .normalIcon {
   color: #1980ff;
+}
+
+.selectBoxWrapper {
+  padding-left: 8px;
+  height: 100%;
+  align-items: center;
+  display: flex;
 }
