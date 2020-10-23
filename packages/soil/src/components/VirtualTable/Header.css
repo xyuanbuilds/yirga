@@ -1,3 +1,6 @@
+/* .table-header-content {
+  display: flex;
+} */
 .table-header-th {
   position: absolute;
   top: 0;

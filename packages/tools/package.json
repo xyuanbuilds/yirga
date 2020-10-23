@@ -40,6 +40,6 @@
     "@yirga/prelints": "^0.0.4"
   },
   "dependencies": {
-    "@babel/runtime-corejs3": "^7.11.2"
+    "@babel/runtime-corejs3": "^7.12.1"
   }
 }

@@ -13,12 +13,16 @@
   width: auto;
   will-change: transform;
 }
+/* TODO 更兼容的方式取消滚动条
+.table-header-translate-wrapper::-webkit-scrollbar {
+  display: none;
+} */
 
 .table-scroll-wrapper {
-  height: calc(100% - 48px);
+  /* height: calc(100% - 48px); */
   width: 100%;
   overflow: auto;
-  -webkit-overflow-scrolling: auto;
+  /* -webkit-overflow-scrolling: auto; */
   position: relative;
 }
 

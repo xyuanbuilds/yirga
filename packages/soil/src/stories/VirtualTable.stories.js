@@ -8,7 +8,7 @@ export default {
 
 const Template = (args) => {
   return (
-    <div style={{ height: 500, width: 500 }}>
+    <div style={{ height: args.height, width: args.width }}>
       <Table {...args} />
     </div>
   );
@@ -17,23 +17,28 @@ const Template = (args) => {
 const columns = Array(100)
   .fill({})
   .map((i, index) => ({ name: `name${index}` }));
-const dataSource = Array(100).fill(
-  columns
-    .map((i) => i.name)
-    .reduce((pre, cur) => {
-      pre[cur] = '1111';
-      return pre;
-    }, {}),
-);
+const dataSource = Array(1000)
+  .fill(null)
+  .map((i, lineIndex) => {
+    const curData = columns
+      .map((column) => column.name)
+      .reduce((pre, cur) => {
+        pre[cur] = '';
+        return pre;
+      }, {});
+    Object.keys(curData).forEach((key) => {
+      curData[key] = lineIndex;
+    });
+    return curData;
+  });
 
 export const Virtualized = Template.bind({});
 Virtualized.title = '虚拟滚动';
 Virtualized.args = {
-  columnWidth: (index) => index + 100,
-  // columnWidth: 100,
+  columnWidth: (i) => 100 + i,
   rowHeight: 48,
-  height: 500, // TODO 容器监听
-  width: 500, // TODO 容器监听
+  height: 488 + 2, // TODO 容器监听
+  width: 1000, // TODO 容器监听
   columns,
   dataSource,
 };

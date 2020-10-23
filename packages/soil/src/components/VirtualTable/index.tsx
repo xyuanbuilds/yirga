@@ -1,17 +1,148 @@
 import * as React from 'react';
-// import { throttle } from 'lodash';
 import Grid from './Grid';
 import Header from './Header';
 import bindRaf from './utils/bindRaf';
 import './index.css';
 
-type InnerColumn = { name: string; width?: number; offset?: number };
-interface DefaultProps {
+type InnerColumn = {
+  name: string;
+  width?: number; // 渲染宽度
+  offset?: number; // left / top 偏移量
+};
+interface DefaultProps<T = Record<string, unknown>> {
   columns: InnerColumn[];
-  dataSource: any[];
+  dataSource: T[];
   columnWidth: number | ((index: number) => number);
   rowHeight: number | ((index: number) => number);
+  height: number; // 表格容器高
+  width: number; // 表格容器宽
+  headerHeight?: number; // 表头高度
 }
+
+const defaultColumns = [];
+const defaultDataSource = [];
+const InitialWrapper = React.memo(
+  ({
+    columns: originColumns = defaultColumns,
+    dataSource = defaultDataSource,
+    columnWidth = 100,
+    rowHeight = 48,
+    height,
+    width,
+    headerHeight = 48,
+  }: DefaultProps) => {
+    const columnCount = originColumns.length;
+    const rowCount = dataSource.length;
+
+    const bodyContainerRef = React.useRef<HTMLDivElement>(null);
+    const headerRef = React.useRef<HTMLDivElement>(null);
+    const gridRef = React.useRef<import('./Grid').GridRefObj>(null);
+
+    const [diffedColumns, setColumn] = React.useState(
+      diffColumns(originColumns, columnWidth),
+    );
+
+    const headerSetCol = React.useCallback(
+      (index, newColumAction) => {
+        if (gridRef.current)
+          gridRef.current.measuredInfos.lastMeasuredColumnIndex = index - 1;
+        setColumn(newColumAction);
+      },
+      [diffedColumns],
+    );
+    React.useEffect(() => {
+      setColumn(diffColumns(originColumns, columnWidth));
+    }, [originColumns, columnWidth]);
+
+    const setScrollStyles = React.useCallback((target) => {
+      const {
+        clientHeight,
+        clientWidth,
+        scrollLeft,
+        scrollTop,
+        scrollHeight,
+        scrollWidth,
+      } = target;
+      const actualLeft = Math.max(
+        0,
+        Math.min(scrollLeft, scrollWidth - clientWidth),
+      );
+      const actualTop = Math.max(
+        0,
+        Math.min(scrollTop, scrollHeight - clientHeight),
+      );
+
+      if (headerRef.current)
+        headerRef.current.style.transform = `translate3d(${-scrollLeft}px, 0px, 0px)`;
+      // headerRef.current.scrollLeft = scrollLeft;
+      if (bodyContainerRef.current) {
+        bodyContainerRef.current.scrollLeft = actualLeft;
+        bodyContainerRef.current.scrollTop = actualTop;
+      }
+      if (gridRef.current) {
+        gridRef.current.scrollTo({
+          scrollTop: actualTop,
+          scrollLeft: actualLeft,
+        });
+      }
+    }, []);
+    const onScroll = React.useCallback(
+      (event: React.UIEvent<HTMLDivElement, UIEvent>) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setScrollStyles(event.currentTarget || event.target);
+      },
+      [],
+    );
+
+    const renderHeader = () => {
+      return (
+        <div
+          style={{ height: headerHeight }}
+          ref={headerRef}
+          className="table-header-translate-wrapper"
+        >
+          <Header columns={diffedColumns} setColumn={headerSetCol} />
+        </div>
+      );
+    };
+
+    const renderBody = () => {
+      return (
+        <div
+          onScroll={onScroll}
+          ref={bodyContainerRef}
+          className="table-scroll-wrapper"
+          style={{
+            height: height - headerHeight - 1,
+            width: width - 1,
+          }}
+        >
+          <Grid
+            ref={gridRef}
+            columns={diffedColumns}
+            columnCount={columnCount}
+            rowCount={rowCount}
+            columnWidth={(index) => {
+              return diffedColumns[index].width || columnWidth;
+            }}
+            rowHeight={rowHeight}
+            dataSource={dataSource}
+            containerHeight={height - headerHeight - 1} // 减去表头 减去外框border-top
+            containerWidth={width - 1} // 减去外框border-left
+          />
+        </div>
+      );
+    };
+
+    return (
+      <div className="table-wrapper">
+        {renderHeader()}
+        {renderBody()}
+      </div>
+    );
+  },
+);
 
 function diffColumns(originColumns, columnWidth) {
   const diffed = originColumns.reduce((pre, cur, index) => {
@@ -37,129 +168,19 @@ function diffColumns(originColumns, columnWidth) {
   return diffed;
 }
 
-const defaultColumns = [];
-const defaultDataSource = [];
-const InitialWrapper = React.memo(
-  ({
-    columns: originColumns = defaultColumns,
-    dataSource = defaultDataSource,
-    columnWidth = 100,
-    rowHeight = 48,
-    ...reset
-  }: DefaultProps) => {
-    const columnCount = originColumns.length;
-    const rowCount = dataSource.length;
-
-    const scrollWrapper = React.useRef<HTMLDivElement>(null);
-    const headerRef = React.useRef<HTMLDivElement>(null);
-
-    const [diffedColumns, setColumn] = React.useState(
-      diffColumns(originColumns, columnWidth),
-    );
-
-    React.useEffect(() => {
-      setColumn(diffColumns(originColumns, columnWidth));
-    }, [originColumns, columnWidth]);
-
-    const [scroll, setScroll] = React.useState({
-      scrollLeft: 0,
-      scrollTop: 0,
-    });
-
-    // * 滚动相关
-    const headerTranslate = React.useCallback(
-      (scrollLeft) => {
-        if (headerRef.current)
-          headerRef.current.style.transform = `translate3d(${-scrollLeft}px, 0px, 0px)`;
-      },
-      [headerRef.current],
-    );
-    const wrapperScroll = React.useCallback(
-      (scrollLeft, scrollTop) => {
-        if (scrollWrapper.current) {
-          scrollWrapper.current.scrollLeft = scrollLeft;
-          scrollWrapper.current.scrollTop = scrollTop;
-        }
-      },
-      [scrollWrapper.current],
-    );
-
-    // const gridRef = React.useRef(null);
-    const actualSet = React.useCallback(
-      bindRaf((target) => {
-        const {
-          clientHeight,
-          clientWidth,
-          scrollLeft,
-          scrollTop,
-          scrollHeight,
-          scrollWidth,
-        } = target;
-        const actualLeft = Math.max(
-          0,
-          Math.min(scrollLeft, scrollWidth - clientWidth),
-        );
-        const actualTop = Math.max(
-          0,
-          Math.min(scrollTop, scrollHeight - clientHeight),
-        );
-        headerTranslate(actualLeft);
-        wrapperScroll(actualLeft, actualTop);
-
-        // gridRef.current.setScroll((prevState) => {
-        setScroll((prevState) => {
-          if (
-            prevState.scrollLeft === actualLeft &&
-            prevState.scrollTop === actualTop
-          ) {
-            // Scroll position may have been updated by cDM/cDU,
-            // In which case we don't need to trigger another render,
-            // And we don't want to update state.isScrolling.
-            return prevState;
-          }
-
-          return {
-            scrollLeft: actualLeft,
-            scrollTop: actualTop,
-          };
-        });
-      }),
-      [wrapperScroll, headerTranslate],
-    );
-    const onScroll = React.useCallback(
-      (event: React.UIEvent<HTMLDivElement, UIEvent>) => {
-        event.preventDefault();
-        event.stopPropagation();
-        actualSet(event.currentTarget || event.target);
-      },
-      [actualSet],
-    );
-
-    return (
-      <div className="table-wrapper">
-        <div ref={headerRef} className="table-header-translate-wrapper">
-          <Header columns={diffedColumns} setColumn={setColumn} />
-        </div>
-        <div
-          ref={scrollWrapper}
-          onScroll={onScroll}
-          className="table-scroll-wrapper"
-        >
-          <Grid
-            // ref={gridRef}
-            scroll={scroll}
-            columns={diffedColumns}
-            columnCount={columnCount}
-            rowCount={rowCount}
-            columnWidth={columnWidth}
-            rowHeight={rowHeight}
-            dataSource={dataSource}
-            {...reset}
-          />
-        </div>
-      </div>
-    );
-  },
-);
+// function forceScroll(
+//   scrollLeft: number,
+//   target: HTMLDivElement | ((left: number) => void),
+// ) {
+//   if (!target) {
+//     return;
+//   }
+//   if (typeof target === 'function') {
+//     target(scrollLeft);
+//   } else if (target.scrollLeft !== scrollLeft) {
+//     // eslint-disable-next-line no-param-reassign
+//     target.scrollLeft = scrollLeft;
+//   }
+// }
 
 export default InitialWrapper;

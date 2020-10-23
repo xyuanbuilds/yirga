@@ -25,7 +25,9 @@ function DragStuff(props) {
 
   const handleDragStart: DraggableEventHandler = (_, ui) => {
     setDrag(true);
-    const wrapper = document.getElementsByClassName('table-wrapper')[0];
+    const wrapper = document.getElementsByClassName(
+      'table-wrapper',
+    )[0] as HTMLElement;
     const height = getInnerHeight(wrapper);
 
     const dragInfo = dragStuffRef.current;
@@ -52,10 +54,8 @@ function DragStuff(props) {
     const { lastX } = ui;
 
     drag.current.state.x = 0;
-
-    props.setColumn((preColumns) => {
-      // const preColumn = preColumns[props.columnIndex];
-      const newColumns = preColumns.reduce((pre, cur, i) => {
+    props.setColumn(props.columnIndex, (preColumns) =>
+      preColumns.reduce((pre, cur, i) => {
         if (i > props.columnIndex) {
           pre.push({
             ...cur,
@@ -70,10 +70,8 @@ function DragStuff(props) {
           pre.push(cur);
         }
         return pre;
-      }, []);
-
-      return newColumns;
-    });
+      }, []),
+    );
     const dragInfo = dragStuffRef.current;
     if (dragInfo.node) {
       document.body.removeChild(dragInfo.node);

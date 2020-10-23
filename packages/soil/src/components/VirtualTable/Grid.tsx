@@ -1,6 +1,7 @@
 /* eslint-disable no-param-reassign */
 /* copy from bvaughn/react-window: https://github.com/bvaughn/react-window */
 import * as React from 'react';
+import bindRaf from './utils/bindRaf';
 import Cell from './Cell';
 
 type ColumnMetaData = {
@@ -15,44 +16,53 @@ type RowMetaData = {
   size: number;
 };
 
-function Grid(props, ref) {
-  const {
-    dataSource: data,
-    columns,
-    // children,
-    scroll,
-    columnCount,
-    rowCount,
-  } = props;
-  // const [scroll, setScroll] = React.useState({
-  //   scrollLeft: 0,
-  //   scrollTop: 0,
-  // });
+export interface GridRefObj {
+  scrollTo: (scroll: { scrollLeft: number; scrollTop: number }) => void;
+  measuredInfos: {
+    lastMeasuredRowIndex: number;
+    lastMeasuredColumnIndex: number;
+  };
+}
 
-  // React.useImperativeHandle(
-  //   ref,
-  //   () => ({
-  //     setScroll,
-  //   }),
-  //   [],
-  // );
+export interface GridProps<T = Record<string, unknown>> {
+  rowHeight?: number | ((index: number) => number);
+  columnWidth?: number | ((index: number) => number);
+  rowCount: number;
+  columnCount: number;
+  dataSource: T[];
+  columns: {
+    name: string;
+    width?: number; // 渲染宽度
+    offset?: number; // left / top 偏移量
+  }[];
+  rows: {
+    name: string;
+    width?: number; // 渲染宽度
+    offset?: number; // left / top 偏移量
+  }[];
+  containerHeight: number;
+  containerWidth: number;
+}
+
+function Grid<T = Record<string, unknown>>(props: GridProps<T>, ref) {
+  const { dataSource: data, columns, columnCount, rowCount } = props;
 
   // * 当前内框宽高
-  const [{ width, height }, setContentInfo] = React.useState({
+  const [contentContainerStyle, setContentContainer] = React.useState({
     width: 0,
     height: 0,
   });
-  const [{ rowStartIndex, rowStopIndex }, setRows] = React.useState<{
+  const [
+    { rowStartIndex, rowStopIndex, colStartIndex, colStopIndex },
+    setGrid,
+  ] = React.useState<{
     rowStartIndex: number;
     rowStopIndex: null | number;
-  }>({
-    rowStartIndex: 0,
-    rowStopIndex: null,
-  });
-  const [{ colStartIndex, colStopIndex }, setCols] = React.useState<{
     colStartIndex: number;
     colStopIndex: null | number;
   }>({
+    rowStartIndex: 0,
+    rowStopIndex: null,
     colStartIndex: 0,
     colStopIndex: null,
   });
@@ -69,7 +79,7 @@ function Grid(props, ref) {
     columnMetadataMap: {},
   });
 
-  const innerFlags = React.useRef<{
+  const measuredInfos = React.useRef<{
     // 随着某一个 column 变化后，后续 columns也需要变化
     // 但之前的 column 不需要变化，所以只需要计算后续的column即可
     // 外部出发了 xxx 变化后， last xx 变为 index - 1
@@ -81,85 +91,100 @@ function Grid(props, ref) {
     lastMeasuredRowIndex: -1,
   });
 
-  const accurateTotalWidth = React.useRef(0);
+  const scrollRef = React.useRef({
+    scrollTop: 0,
+    scrollLeft: 0,
+  });
 
-  React.useEffect(() => {
-    let lastMeasuredColumnIndex = 0;
-    let interrupted = false; // * 数据异常造成测量失败
-    const metadata = {};
-    let contentWidth = 0;
-
-    columns.forEach((i, index) => {
-      const { offset, width: curWidth } = i;
-      if (typeof offset === 'number' && typeof curWidth === 'number') {
-        metadata[index] = {
-          itemType: 'col',
-          offset,
-          size: curWidth,
-        };
-        if (!interrupted) lastMeasuredColumnIndex = index;
-        contentWidth += curWidth;
-      } else {
-        interrupted = true;
-      }
-    });
-
-    metaDataMap.current.columnMetadataMap = metadata;
-    innerFlags.current.lastMeasuredColumnIndex = lastMeasuredColumnIndex;
-    // TODO width 变化需要重置
-    if (lastMeasuredColumnIndex === columns.length - 1 && !interrupted)
-      accurateTotalWidth.current = contentWidth;
-  }, [columns]);
-
-  const reCalculate = () => {
+  // const accurateTotalWidth = React.useRef(0); // 准确的内容宽
+  // const accurateTotalHeight = React.useRef(0); // 准确的内容高
+  const reCalculate = (scroll) => {
     const contentHeight = getEstimatedTotalHeight(
       rowCount,
       metaDataMap.current.rowMetadataMap,
-      innerFlags.current,
+      measuredInfos.current,
     );
-    const contentWidth =
-      accurateTotalWidth.current ||
-      getEstimatedTotalWidth(
-        columnCount,
-        metaDataMap.current.columnMetadataMap,
-        innerFlags.current,
-      );
+    const contentWidth = getEstimatedTotalWidth(
+      columnCount,
+      metaDataMap.current.columnMetadataMap,
+      measuredInfos.current,
+    );
 
-    const [curRowStartIndex, curRowStopIndex] = getVerticalRange();
-    const [curColStartIndex, curColStopIndex] = getHorizontalRange();
-
+    const [curRowStartIndex, curRowStopIndex] = getVerticalRange(scroll);
+    const [curColStartIndex, curColStopIndex] = getHorizontalRange(scroll);
+    // console.log('curRows', curRowStartIndex, curRowStopIndex, contentHeight);
     // * 获取当前 可预测的内容容器 渲染 startIndex -> stopIndex
-    setContentInfo({ width: contentWidth, height: contentHeight });
-    setRows({
-      rowStartIndex: curRowStartIndex,
-      rowStopIndex: curRowStopIndex,
+    setGrid((preGrid) => {
+      if (
+        preGrid.rowStartIndex === curRowStartIndex &&
+        preGrid.rowStopIndex === curRowStopIndex &&
+        preGrid.colStartIndex === curColStartIndex &&
+        preGrid.colStopIndex === curColStopIndex
+      ) {
+        return preGrid;
+      }
+      return {
+        rowStartIndex: curRowStartIndex,
+        rowStopIndex: curRowStopIndex,
+        colStartIndex: curColStartIndex,
+        colStopIndex: curColStopIndex,
+      };
     });
-    setCols({
-      colStartIndex: curColStartIndex,
-      colStopIndex: curColStopIndex,
+
+    setContentContainer((preContainer) => {
+      if (
+        preContainer.width === contentWidth &&
+        preContainer.height === contentHeight
+      )
+        return preContainer;
+      return {
+        width: contentWidth,
+        height: contentHeight,
+      };
     });
   };
 
-  // *初始化metaData
+  // *数量变化，先直接重置
   React.useEffect(() => {
-    reCalculate();
-  }, [scroll, columnCount, rowCount, columns]);
+    reCalculate(scrollRef.current);
+  }, [columnCount, rowCount]);
+  // *具体某处变化，先重置measured
+  React.useEffect(() => {
+    reCalculate(scrollRef.current);
+  }, [columns]);
 
-  function getVerticalRange() {
+  const scrollTo = React.useCallback(
+    (scroll: { scrollLeft: number; scrollTop: number }) => {
+      scrollRef.current = scroll;
+      reCalculate(scroll);
+    },
+    [],
+  );
+
+  React.useImperativeHandle(
+    ref,
+    () => ({
+      scrollTo,
+      measuredInfos: measuredInfos.current,
+    }),
+    [],
+  );
+
+  function getVerticalRange(scroll) {
     if (columnCount === 0 || rowCount === 0) {
       return [0, 0, 0, 0];
     }
     const startIndex = getRowStartIndex(
       props,
       metaDataMap.current,
-      innerFlags.current,
+      measuredInfos.current,
       scroll.scrollTop,
     );
 
     const stopIndex = getRowStopIndex(
       props,
       metaDataMap.current,
-      innerFlags.current,
+      measuredInfos.current,
       startIndex,
       scroll.scrollTop,
     );
@@ -175,22 +200,21 @@ function Grid(props, ref) {
     ];
   }
 
-  function getHorizontalRange() {
+  function getHorizontalRange(scroll) {
     if (columnCount === 0 || rowCount === 0) {
       return [0, 0, 0, 0];
     }
-
     const startIndex = getColStartIndex(
       props,
       metaDataMap.current,
-      innerFlags.current,
+      measuredInfos.current,
       scroll.scrollLeft,
     );
 
     const stopIndex = getColStopIndex(
       props,
       metaDataMap.current,
-      innerFlags.current,
+      measuredInfos.current,
       startIndex,
       scroll.scrollLeft,
     );
@@ -207,19 +231,20 @@ function Grid(props, ref) {
   }
 
   function getItemStyle(rowIndex: number, columnIndex: number) {
+    // console.log('get itemStyle', rowIndex, columnIndex);
     const curRow = getItemMetadata(
       'row',
       props,
       rowIndex,
       metaDataMap.current,
-      innerFlags.current,
+      measuredInfos.current,
     );
     const curCol = getItemMetadata(
       'col',
       props,
       columnIndex,
       metaDataMap.current,
-      innerFlags.current,
+      measuredInfos.current,
     );
     const style = {
       position: 'absolute',
@@ -254,7 +279,7 @@ function Grid(props, ref) {
   }
 
   return (
-    <div style={{ height, width }} className="tableInner">
+    <div style={contentContainerStyle} className="tableInner">
       {items}
     </div>
   );
@@ -269,9 +294,9 @@ function getColStopIndex(
   metadata,
   measuredInfo,
   startIndex: number,
-  scrollLeft: number,
+  containerOffset: number,
 ) {
-  const { columnCount, width } = props;
+  const { columnCount, containerWidth } = props;
 
   const itemMetadata = getItemMetadata(
     'col',
@@ -280,15 +305,14 @@ function getColStopIndex(
     metadata,
     measuredInfo,
   );
-  const maxOffset = scrollLeft + width;
-
+  const maxOffset = containerOffset + containerWidth;
   let offset = itemMetadata.offset + itemMetadata.size;
   let stopIndex = startIndex;
 
-  while (stopIndex < columnCount - 1 && offset < maxOffset) {
+  while (stopIndex < columnCount - 1 && offset <= maxOffset) {
+    stopIndex += 1;
     offset += getItemMetadata('col', props, stopIndex, metadata, measuredInfo)
       .size;
-    stopIndex += 1;
   }
 
   return stopIndex;
@@ -305,7 +329,7 @@ function getRowStopIndex(
   startIndex: number,
   scrollTop: number,
 ): number {
-  const { rowCount, height } = props;
+  const { rowCount, containerHeight } = props;
 
   const itemMetadata = getItemMetadata(
     'row',
@@ -314,26 +338,27 @@ function getRowStopIndex(
     metadata,
     measuredInfo,
   );
-  const maxOffset = scrollTop + height;
+  const maxOffset = scrollTop + containerHeight;
 
   let offset = itemMetadata.offset + itemMetadata.size;
   let stopIndex = startIndex;
 
-  while (stopIndex < rowCount - 1 && offset < maxOffset) {
+  while (stopIndex < rowCount - 1 && offset <= maxOffset) {
+    stopIndex += 1;
     offset += getItemMetadata('row', props, stopIndex, metadata, measuredInfo)
       .size;
-    stopIndex += 1;
   }
 
   return stopIndex;
 }
 
-const estimatedRowHeight = 18;
+const estimatedRowHeight = 48;
 function getEstimatedTotalHeight(rowCount, rowMetadataMap, measuredInfo) {
   let totalSizeOfMeasuredRows = 0;
 
   // Edge case check for when the number of items decreases while a scroll is in progress.
   if (measuredInfo.lastMeasuredRowIndex >= rowCount) {
+    console.log('here!!!!!!!!!!!!!!!!!!!!');
     measuredInfo.lastMeasuredRowIndex = rowCount - 1;
   }
 
@@ -343,6 +368,12 @@ function getEstimatedTotalHeight(rowCount, rowMetadataMap, measuredInfo) {
   }
 
   const unmeasuredItemsNum = rowCount - measuredInfo.lastMeasuredRowIndex - 1;
+  // console.log(
+  //   'unmeasure',
+  //   measuredInfo.lastMeasuredRowIndex,
+  //   unmeasuredItemsNum,
+  //   totalSizeOfMeasuredRows,
+  // );
   const totalSizeOfUnmeasuredItems = unmeasuredItemsNum * estimatedRowHeight;
 
   return totalSizeOfMeasuredRows + totalSizeOfUnmeasuredItems;
@@ -377,9 +408,8 @@ function findNearestItem(
   props,
   metadata,
   measuredInfo,
-  curOffset,
+  containerOffset,
 ) {
-  // const { columnWidth, rowHeight } = props;
   const { columnMetadataMap, rowMetadataMap } = metadata;
   const { lastMeasuredColumnIndex, lastMeasuredRowIndex } = measuredInfo;
   let itemMetadataMap;
@@ -392,20 +422,23 @@ function findNearestItem(
     lastMeasuredIndex = lastMeasuredRowIndex;
   }
 
+  // console.log('get measured', itemMetadataMap);
   const lastMeasuredItemOffset =
     lastMeasuredIndex > 0 ? itemMetadataMap[lastMeasuredIndex].offset : 0;
 
-  if (lastMeasuredItemOffset >= curOffset) {
+  if (lastMeasuredItemOffset >= containerOffset) {
     // If we've already measured items within this range just use a binary search as it's faster.
-    return findNearestItemBinarySearch(
+    const binarySearchRes = findNearestItemBinarySearch(
       itemType,
       props,
       metadata,
       measuredInfo,
-      lastMeasuredIndex,
-      0,
-      curOffset,
+      lastMeasuredIndex, // 查找结束点
+      0, // 查找开始点
+      containerOffset,
     );
+
+    return binarySearchRes;
   } else {
     return findNearestItemExponentialSearch(
       itemType,
@@ -413,7 +446,7 @@ function findNearestItem(
       metadata,
       measuredInfo,
       Math.max(0, lastMeasuredIndex),
-      curOffset,
+      containerOffset,
     );
   }
 }
@@ -456,7 +489,7 @@ function findNearestItemBinarySearch(
   measuredInfo,
   high: number,
   low: number,
-  offset: number,
+  containerOffset: number,
 ): number {
   while (low <= high) {
     const middle = low + Math.floor((high - low) / 2);
@@ -468,11 +501,11 @@ function findNearestItemBinarySearch(
       measuredInfo,
     ).offset;
 
-    if (currentOffset === offset) {
+    if (currentOffset === containerOffset) {
       return middle;
-    } else if (currentOffset < offset) {
+    } else if (currentOffset < containerOffset) {
       low = middle + 1;
-    } else if (currentOffset > offset) {
+    } else if (currentOffset > containerOffset) {
       high = middle - 1;
     }
   }
@@ -484,27 +517,27 @@ function findNearestItemBinarySearch(
   }
 }
 
-function getItemMetadata(
+function getItemMetadata<T>(
   itemType: 'col' | 'row',
-  { columnWidth, rowHeight },
+  { columnWidth = 100, rowHeight = 48 }: GridProps<T>,
   index: number,
-  { columnMetadataMap, rowMetadataMap },
+  metaData,
   measuredInfo,
-) {
-  const { lastMeasuredColumnIndex, lastMeasuredRowIndex } = measuredInfo;
+): ColumnMetaData | RowMetaData {
+  // const { lastMeasuredColumnIndex, lastMeasuredRowIndex } = measuredInfo;
   let itemMetadataMap;
   let itemSize;
   let lastMeasuredIndex;
   if (itemType === 'col') {
-    itemMetadataMap = columnMetadataMap;
+    itemMetadataMap = metaData.columnMetadataMap;
     // * 每次获取 Metadata 同时更新值
     itemSize =
       typeof columnWidth === 'function' ? columnWidth(index) : columnWidth;
-    lastMeasuredIndex = lastMeasuredColumnIndex;
+    lastMeasuredIndex = measuredInfo.lastMeasuredColumnIndex;
   } else {
-    itemMetadataMap = rowMetadataMap;
+    itemMetadataMap = metaData.rowMetadataMap;
     itemSize = typeof rowHeight === 'function' ? rowHeight(index) : rowHeight;
-    lastMeasuredIndex = lastMeasuredRowIndex;
+    lastMeasuredIndex = measuredInfo.lastMeasuredRowIndex;
   }
 
   // * 当前属于未 记录 过的metaData内容，需要记录作为缓存
@@ -520,10 +553,8 @@ function getItemMetadata(
         offset,
         size: itemSize,
       };
-
-      // offset += itemSize;
+      offset += itemSize;
     }
-
     if (itemType === 'col') {
       measuredInfo.lastMeasuredColumnIndex = index;
     } else {
