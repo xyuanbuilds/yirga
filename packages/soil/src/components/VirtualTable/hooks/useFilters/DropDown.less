@@ -1,0 +1,67 @@
+.filterColumn {
+  display: flex;
+  align-items: center;
+  position: relative;
+  height: 100%;
+
+  .columnTitle {
+    flex: 1 1 auto;
+    padding: 0px 2.3em 0px 0px;
+    display: block;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  
+  .filterTrigger {
+    width: 2.3em;
+    transition: color 0.3s ease 0s;
+    position: absolute;
+    right: 0;
+    .icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+  }
+}
+
+// * antd 样式
+.dropDown {
+  box-sizing: border-box;
+  color: rgba(0, 0, 0, 0.85);
+  font-size: 14px;
+  line-height: 1.5715;
+  font-feature-settings: "tnum";
+  font-variant: tabular-nums;
+  min-width: 120px;
+  background-color: rgb(255, 255, 255);
+  box-shadow: rgba(0, 0, 0, 0.12) 0px 3px 6px -4px, rgba(0, 0, 0, 0.08) 0px 6px 16px 0px, rgba(0, 0, 0, 0.05) 0px 9px 28px 8px;
+  margin: 0px;
+  padding: 0px;
+  list-style: none;
+  border-radius: 2px;
+  .menu {
+    max-height: 264px;
+    overflow-x: hidden;
+    box-shadow: none;
+    border-width: 0px;
+    border-style: initial;
+    border-color: initial;
+    border-image: initial;
+    :global {
+      .ant-menu-item .ant-checkbox-wrapper + span {
+        padding-left: 8px;
+      }
+    }
+  }
+  .btns {
+    display: flex;
+    justify-content: space-between;
+    background-color: inherit;
+    padding: 7px 8px 7px 3px;
+    overflow: hidden;
+    border-top: 1px solid rgb(240, 240, 240);
+  }
+}

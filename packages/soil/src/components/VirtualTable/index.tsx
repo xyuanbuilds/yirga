@@ -1,186 +1,209 @@
 import * as React from 'react';
 import Grid from './Grid';
 import Header from './Header';
-import bindRaf from './utils/bindRaf';
+import useFilters, { getFilteredData } from './hooks/useFilters/index';
+// import useTimeoutLock from './hooks/useTimeoutLock';
+import { ColumnType, FiltersProps, ColumnWidth } from './interface';
 import './index.css';
 
-type InnerColumn = {
-  name: string;
-  width?: number; // 渲染宽度
-  offset?: number; // left / top 偏移量
-};
-interface DefaultProps<T = Record<string, unknown>> {
-  columns: InnerColumn[];
+const EMPTY_SCROLL_TARGET = {};
+
+interface TableWrapperProps<T = Record<string, unknown>> {
+  columns: ColumnType<T>[];
   dataSource: T[];
-  columnWidth: number | ((index: number) => number);
+  columnWidth: ColumnWidth;
   rowHeight: number | ((index: number) => number);
   height: number; // 表格容器高
   width: number; // 表格容器宽
   headerHeight?: number; // 表头高度
+  filters?: FiltersProps<T>;
 }
 
 const defaultColumns = [];
 const defaultDataSource = [];
-const InitialWrapper = React.memo(
-  ({
-    columns: originColumns = defaultColumns,
-    dataSource = defaultDataSource,
-    columnWidth = 100,
-    rowHeight = 48,
-    height,
-    width,
-    headerHeight = 48,
-  }: DefaultProps) => {
-    const columnCount = originColumns.length;
-    const rowCount = dataSource.length;
+const InitialWrapper = ({
+  columns: originColumns = defaultColumns,
+  dataSource = defaultDataSource,
+  columnWidth = 100,
+  rowHeight = 48,
+  height,
+  width,
+  headerHeight = 48,
+  filters,
+}: TableWrapperProps) => {
+  const bodyContainerRef = React.useRef<HTMLDivElement>(null);
+  const headerRef = React.useRef<HTMLDivElement>(null);
+  const gridRef = React.useRef<import('./Grid').GridRefObj>();
 
-    const bodyContainerRef = React.useRef<HTMLDivElement>(null);
-    const headerRef = React.useRef<HTMLDivElement>(null);
-    const gridRef = React.useRef<import('./Grid').GridRefObj>(null);
+  const [diffedColumns, setColumn] = React.useState(
+    diffColumnsWidth(originColumns, columnWidth),
+  );
 
-    const [diffedColumns, setColumn] = React.useState(
-      diffColumns(originColumns, columnWidth),
+  const headerSetCol = React.useCallback((index, newColumAction) => {
+    if (gridRef.current) {
+      gridRef.current.measuredInfos.current.lastMeasuredColumnIndex = index - 1;
+    }
+
+    setColumn(newColumAction);
+  }, []);
+  React.useEffect(() => {
+    setColumn(diffColumnsWidth(originColumns, columnWidth));
+  }, [originColumns, columnWidth]);
+
+  // const [setScrollTarget, getScrollTarget] = useTimeoutLock<
+  //   EventTarget & HTMLDivElement
+  // >();
+  const setScrollStyles = React.useCallback((target) => {
+    const {
+      clientHeight,
+      clientWidth,
+      scrollLeft,
+      scrollTop,
+      scrollHeight,
+      scrollWidth,
+    } = target;
+    const actualLeft = Math.max(
+      0,
+      Math.min(scrollLeft, scrollWidth - clientWidth),
+    );
+    const actualTop = Math.max(
+      0,
+      Math.min(scrollTop, scrollHeight - clientHeight),
     );
 
-    const headerSetCol = React.useCallback(
-      (index, newColumAction) => {
-        if (gridRef.current)
-          gridRef.current.measuredInfos.lastMeasuredColumnIndex = index - 1;
-        setColumn(newColumAction);
-      },
-      [diffedColumns],
-    );
-    React.useEffect(() => {
-      setColumn(diffColumns(originColumns, columnWidth));
-    }, [originColumns, columnWidth]);
+    if (headerRef.current)
+      headerRef.current.style.transform = `translate3d(${-actualLeft}px, 0px, 0px)`;
+    // headerRef.current.scrollLeft = scrollLeft;
+    // if (bodyContainerRef.current) {
+    //   bodyContainerRef.current.scrollLeft = actualLeft;
+    //   bodyContainerRef.current.scrollTop = actualTop;
+    // }
+    if (gridRef.current) {
+      gridRef.current.scrollTo({
+        scrollTop: actualTop,
+        scrollLeft: actualLeft,
+      });
+    }
+  }, []);
 
-    const setScrollStyles = React.useCallback((target) => {
-      const {
-        clientHeight,
-        clientWidth,
-        scrollLeft,
-        scrollTop,
-        scrollHeight,
-        scrollWidth,
-      } = target;
-      const actualLeft = Math.max(
-        0,
-        Math.min(scrollLeft, scrollWidth - clientWidth),
-      );
-      const actualTop = Math.max(
-        0,
-        Math.min(scrollTop, scrollHeight - clientHeight),
-      );
+  const onScroll = React.useCallback(
+    (event: React.UIEvent<HTMLDivElement, UIEvent>) => {
+      event.preventDefault();
+      event.stopPropagation();
+      // console.log('scroll');
+      const compareTarget =
+        event.currentTarget || event.target || EMPTY_SCROLL_TARGET;
+      setScrollStyles(compareTarget);
+      // if (!getScrollTarget() || getScrollTarget() === compareTarget) {
+      //   setScrollTarget(compareTarget);
+      //   setScrollStyles(compareTarget);
+      // }
+    },
+    [],
+  );
 
-      if (headerRef.current)
-        headerRef.current.style.transform = `translate3d(${-scrollLeft}px, 0px, 0px)`;
-      // headerRef.current.scrollLeft = scrollLeft;
-      if (bodyContainerRef.current) {
-        bodyContainerRef.current.scrollLeft = actualLeft;
-        bodyContainerRef.current.scrollTop = actualTop;
-      }
-      if (gridRef.current) {
-        gridRef.current.scrollTo({
-          scrollTop: actualTop,
-          scrollLeft: actualLeft,
-        });
-      }
-    }, []);
-    const onScroll = React.useCallback(
-      (event: React.UIEvent<HTMLDivElement, UIEvent>) => {
-        event.preventDefault();
-        event.stopPropagation();
-        setScrollStyles(event.currentTarget || event.target);
-      },
-      [],
-    );
-
-    const renderHeader = () => {
-      return (
-        <div
-          style={{ height: headerHeight }}
-          ref={headerRef}
-          className="table-header-translate-wrapper"
-        >
-          <Header columns={diffedColumns} setColumn={headerSetCol} />
-        </div>
-      );
-    };
-
-    const renderBody = () => {
-      return (
-        <div
-          onScroll={onScroll}
-          ref={bodyContainerRef}
-          className="table-scroll-wrapper"
-          style={{
-            height: height - headerHeight - 1,
-            width: width - 1,
-          }}
-        >
-          <Grid
-            ref={gridRef}
-            columns={diffedColumns}
-            columnCount={columnCount}
-            rowCount={rowCount}
-            columnWidth={(index) => {
-              return diffedColumns[index].width || columnWidth;
-            }}
-            rowHeight={rowHeight}
-            dataSource={dataSource}
-            containerHeight={height - headerHeight - 1} // 减去表头 减去外框border-top
-            containerWidth={width - 1} // 减去外框border-left
-          />
-        </div>
-      );
-    };
-
+  const [filterStates, filterRenders] = useFilters({
+    filters,
+    columns: originColumns,
+  });
+  const renderHeader = () => {
     return (
-      <div className="table-wrapper">
-        {renderHeader()}
-        {renderBody()}
+      <div
+        style={{ height: headerHeight }}
+        ref={headerRef}
+        className="table-header-translate-wrapper"
+      >
+        <Header
+          filters={filterRenders}
+          columns={diffedColumns}
+          setColumn={headerSetCol}
+        />
       </div>
     );
-  },
-);
+  };
 
-function diffColumns(originColumns, columnWidth) {
-  const diffed = originColumns.reduce((pre, cur, index) => {
+  const filteredDataSource = React.useMemo(
+    () => getFilteredData(dataSource, filterStates),
+    [dataSource, filterStates],
+  );
+
+  const columnCount = diffedColumns.length;
+  const rowCount = filteredDataSource.length;
+
+  // TODO 需要优化，减少 grid 所需参数的暴露
+  const getColumnWidth = React.useCallback(
+    (index) => {
+      return diffedColumns[index].width;
+    },
+    [diffedColumns],
+  );
+  const renderBody = () => {
+    return (
+      <div
+        onScroll={onScroll}
+        ref={bodyContainerRef}
+        className="table-scroll-wrapper"
+        style={{
+          height: height - headerHeight - 1,
+          width: width - 1,
+        }}
+      >
+        <Grid
+          ref={gridRef}
+          columns={diffedColumns}
+          columnCount={columnCount}
+          rowCount={rowCount}
+          columnWidth={getColumnWidth}
+          container={bodyContainerRef}
+          rowHeight={rowHeight}
+          dataSource={filteredDataSource}
+          containerHeight={height - headerHeight - 1} // 减去表头 减去外框border-top
+          containerWidth={width - 1} // 减去外框border-left
+        />
+      </div>
+    );
+  };
+
+  return (
+    <div className="table-wrapper">
+      {renderHeader()}
+      {renderBody()}
+    </div>
+  );
+};
+
+type InnerColumn = {
+  key: string;
+  width: number; // 渲染宽度
+  offset: number; // left / top 偏移量
+};
+function diffColumnsWidth<T>(
+  originColumns: ColumnType<T>[],
+  columnWidth,
+): InnerColumn[] {
+  const diffed = originColumns.reduce<InnerColumn[]>((pre, cur, index) => {
     const c = Object.defineProperties(cur, {
-      width: {
-        value:
-          typeof columnWidth === 'function' ? columnWidth(index) : columnWidth,
-        writable: true,
-        enumerable: true,
-        configurable: true,
-      },
-      offset: {
-        value: index === 0 ? 0 : pre[index - 1].offset + pre[index - 1].width,
-        writable: true,
-        enumerable: true,
-        configurable: true,
-      },
+      width: defaultDescriptor(
+        typeof columnWidth === 'function' ? columnWidth(index) : columnWidth,
+      ),
+      offset: defaultDescriptor(
+        index === 0 ? 0 : pre[index - 1].offset + pre[index - 1].width,
+      ),
     });
 
     pre.push(c);
     return pre;
-  }, [] as { name: string; width: number; offset: number }[]);
+  }, []);
   return diffed;
 }
 
-// function forceScroll(
-//   scrollLeft: number,
-//   target: HTMLDivElement | ((left: number) => void),
-// ) {
-//   if (!target) {
-//     return;
-//   }
-//   if (typeof target === 'function') {
-//     target(scrollLeft);
-//   } else if (target.scrollLeft !== scrollLeft) {
-//     // eslint-disable-next-line no-param-reassign
-//     target.scrollLeft = scrollLeft;
-//   }
-// }
+function defaultDescriptor(value: unknown) {
+  return {
+    value,
+    writable: true,
+    enumerable: true,
+    configurable: true,
+  };
+}
 
 export default InitialWrapper;

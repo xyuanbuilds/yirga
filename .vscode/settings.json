@@ -89,7 +89,9 @@
   "jest.autoEnable": false,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "cSpell.words": [
+    "btns",
     "bvaughn",
-    "clsx"
+    "clsx",
+    "tnum"
   ]
 }

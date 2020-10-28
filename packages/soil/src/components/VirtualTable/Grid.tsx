@@ -1,8 +1,20 @@
 /* eslint-disable no-param-reassign */
 /* copy from bvaughn/react-window: https://github.com/bvaughn/react-window */
 import * as React from 'react';
-import bindRaf from './utils/bindRaf';
+// import bindRaf from './utils/bindRaf';
 import Cell from './Cell';
+
+const DEFAULT_OUT_OF_VIEW_ITEM_NUM = 1;
+
+// * 构建网格的最基本信息
+type GridBasicInfo = {
+  containerHeight: number;
+  containerWidth: number;
+  columnCount: number;
+  rowCount: number;
+  rowHeight?: number | ((index: number) => number);
+  columnWidth?: number | ((index: number) => number);
+};
 
 type ColumnMetaData = {
   itemType: 'col';
@@ -18,34 +30,40 @@ type RowMetaData = {
 
 export interface GridRefObj {
   scrollTo: (scroll: { scrollLeft: number; scrollTop: number }) => void;
-  measuredInfos: {
+  measuredInfos: React.MutableRefObject<{
     lastMeasuredRowIndex: number;
     lastMeasuredColumnIndex: number;
-  };
+  }>;
 }
 
-export interface GridProps<T = Record<string, unknown>> {
-  rowHeight?: number | ((index: number) => number);
-  columnWidth?: number | ((index: number) => number);
-  rowCount: number;
-  columnCount: number;
+type GridColumn = {
+  key: string;
+  // width: number; // 渲染宽度
+  // offset: number; // left / top 偏移量
+};
+type GridRow = {
+  key: string;
+};
+
+export interface GridProps<T = Record<string, unknown>> extends GridBasicInfo {
+  container: React.RefObject<HTMLDivElement>;
   dataSource: T[];
-  columns: {
-    name: string;
-    width?: number; // 渲染宽度
-    offset?: number; // left / top 偏移量
-  }[];
-  rows: {
-    name: string;
-    width?: number; // 渲染宽度
-    offset?: number; // left / top 偏移量
-  }[];
-  containerHeight: number;
-  containerWidth: number;
+  columns: GridColumn[];
+  rows?: GridRow[];
 }
 
 function Grid<T = Record<string, unknown>>(props: GridProps<T>, ref) {
-  const { dataSource: data, columns, columnCount, rowCount } = props;
+  const {
+    dataSource: data,
+    columns,
+    container,
+    columnWidth,
+    rowHeight,
+    containerHeight,
+    containerWidth,
+  } = props;
+  const rowCount = data.length;
+  const columnCount = columns.length;
 
   // * 当前内框宽高
   const [contentContainerStyle, setContentContainer] = React.useState({
@@ -96,8 +114,6 @@ function Grid<T = Record<string, unknown>>(props: GridProps<T>, ref) {
     scrollLeft: 0,
   });
 
-  // const accurateTotalWidth = React.useRef(0); // 准确的内容宽
-  // const accurateTotalHeight = React.useRef(0); // 准确的内容高
   const reCalculate = (scroll) => {
     const contentHeight = getEstimatedTotalHeight(
       rowCount,
@@ -144,45 +160,73 @@ function Grid<T = Record<string, unknown>>(props: GridProps<T>, ref) {
     });
   };
 
-  // *数量变化，先直接重置
-  React.useEffect(() => {
-    reCalculate(scrollRef.current);
+  const onReset = () => {
+    scrollRef.current = {
+      scrollTop: 0,
+      scrollLeft: 0,
+    };
+    measuredInfos.current.lastMeasuredColumnIndex = -1;
+    measuredInfos.current.lastMeasuredRowIndex = -1;
+  };
+
+  const scrollTo = (scroll: { scrollLeft: number; scrollTop: number }) => {
+    scrollRef.current = scroll;
+
+    reCalculate(scroll);
+    if (container.current) {
+      container.current.scrollLeft = scroll.scrollLeft;
+      container.current.scrollTop = scroll.scrollTop;
+    }
+  };
+
+  // *具体某处变化，外部重置measured
+  React.useLayoutEffect(() => {
+    console.log('重算');
+    scrollTo(scrollRef.current);
+  }, [columnWidth, rowHeight]);
+
+  // *数量结构变化，直接重置
+  React.useLayoutEffect(() => {
+    console.log('重置');
+    onReset();
+    scrollTo({
+      scrollTop: 0,
+      scrollLeft: 0,
+    });
   }, [columnCount, rowCount]);
-  // *具体某处变化，先重置measured
-  React.useEffect(() => {
-    reCalculate(scrollRef.current);
-  }, [columns]);
 
-  const scrollTo = React.useCallback(
-    (scroll: { scrollLeft: number; scrollTop: number }) => {
-      scrollRef.current = scroll;
-      reCalculate(scroll);
-    },
-    [],
-  );
-
-  React.useImperativeHandle(
-    ref,
-    () => ({
-      scrollTo,
-      measuredInfos: measuredInfos.current,
-    }),
-    [],
-  );
+  React.useImperativeHandle(ref, () => ({
+    scrollTo,
+    measuredInfos,
+  }));
 
   function getVerticalRange(scroll) {
     if (columnCount === 0 || rowCount === 0) {
       return [0, 0, 0, 0];
     }
     const startIndex = getRowStartIndex(
-      props,
+      {
+        columnWidth,
+        rowHeight,
+        columnCount,
+        rowCount,
+        containerHeight,
+        containerWidth,
+      },
       metaDataMap.current,
       measuredInfos.current,
       scroll.scrollTop,
     );
 
     const stopIndex = getRowStopIndex(
-      props,
+      {
+        columnWidth,
+        rowHeight,
+        columnCount,
+        rowCount,
+        containerHeight,
+        containerWidth,
+      },
       metaDataMap.current,
       measuredInfos.current,
       startIndex,
@@ -193,8 +237,11 @@ function Grid<T = Record<string, unknown>>(props: GridProps<T>, ref) {
     // If there isn't at least one extra item, tab loops back around.
     // const overScanCount = 1;
     return [
-      Math.max(0, startIndex - 1),
-      Math.max(0, Math.min(rowCount - 1, stopIndex + 1)),
+      Math.max(0, startIndex - DEFAULT_OUT_OF_VIEW_ITEM_NUM),
+      Math.max(
+        0,
+        Math.min(rowCount - 1, stopIndex + DEFAULT_OUT_OF_VIEW_ITEM_NUM),
+      ),
       startIndex,
       stopIndex,
     ];
@@ -205,14 +252,28 @@ function Grid<T = Record<string, unknown>>(props: GridProps<T>, ref) {
       return [0, 0, 0, 0];
     }
     const startIndex = getColStartIndex(
-      props,
+      {
+        columnWidth,
+        rowHeight,
+        columnCount,
+        rowCount,
+        containerHeight,
+        containerWidth,
+      },
       metaDataMap.current,
       measuredInfos.current,
       scroll.scrollLeft,
     );
 
     const stopIndex = getColStopIndex(
-      props,
+      {
+        columnWidth,
+        rowHeight,
+        columnCount,
+        rowCount,
+        containerHeight,
+        containerWidth,
+      },
       metaDataMap.current,
       measuredInfos.current,
       startIndex,
@@ -223,15 +284,17 @@ function Grid<T = Record<string, unknown>>(props: GridProps<T>, ref) {
     // If there isn't at least one extra item, tab loops back around.
     // const overScanCount = 1;
     return [
-      Math.max(0, startIndex - 1),
-      Math.max(0, Math.min(columnCount - 1, stopIndex + 1)),
+      Math.max(0, startIndex - DEFAULT_OUT_OF_VIEW_ITEM_NUM),
+      Math.max(
+        0,
+        Math.min(columnCount - 1, stopIndex + DEFAULT_OUT_OF_VIEW_ITEM_NUM),
+      ),
       startIndex,
       stopIndex,
     ];
   }
 
   function getItemStyle(rowIndex: number, columnIndex: number) {
-    // console.log('get itemStyle', rowIndex, columnIndex);
     const curRow = getItemMetadata(
       'row',
       props,
@@ -257,18 +320,22 @@ function Grid<T = Record<string, unknown>>(props: GridProps<T>, ref) {
     return style;
   }
 
-  const items = [] as any[];
+  const items = [] as unknown[];
   if (columnCount > 0 && rowCount && rowStopIndex && colStopIndex) {
-    for (let rowIndex = rowStartIndex; rowIndex <= rowStopIndex; rowIndex++) {
+    for (
+      let rowIndex = rowStartIndex;
+      rowIndex <= rowStopIndex && rowIndex <= data.length - 1;
+      rowIndex++
+    ) {
       for (
         let columnIndex = colStartIndex;
-        columnIndex <= colStopIndex;
+        columnIndex <= colStopIndex && columnIndex <= columns.length - 1;
         columnIndex++
       ) {
         items.push(
           React.createElement(Cell, {
             columnIndex,
-            data: data[rowIndex][columns[columnIndex].name],
+            data: data[rowIndex][columns[columnIndex].key],
             key: getDefaultCellKey(columnIndex, rowIndex),
             rowIndex,
             style: getItemStyle(rowIndex, columnIndex),
@@ -284,23 +351,33 @@ function Grid<T = Record<string, unknown>>(props: GridProps<T>, ref) {
     </div>
   );
 }
-Grid.displayName = 'virtual_grid';
 
-function getColStartIndex(props, metadata, measuredInfo, scrollLeft) {
-  return findNearestItem('col', props, metadata, measuredInfo, scrollLeft);
+function getColStartIndex(
+  gridBasicInfo: GridBasicInfo,
+  metadata,
+  measuredInfo,
+  scrollLeft,
+) {
+  return findNearestItem(
+    'col',
+    gridBasicInfo,
+    metadata,
+    measuredInfo,
+    scrollLeft,
+  );
 }
 function getColStopIndex(
-  props,
+  gridBasicInfo: GridBasicInfo,
   metadata,
   measuredInfo,
   startIndex: number,
   containerOffset: number,
 ) {
-  const { columnCount, containerWidth } = props;
+  const { columnCount, containerWidth } = gridBasicInfo;
 
   const itemMetadata = getItemMetadata(
     'col',
-    props,
+    gridBasicInfo,
     startIndex,
     metadata,
     measuredInfo,
@@ -311,29 +388,45 @@ function getColStopIndex(
 
   while (stopIndex < columnCount - 1 && offset <= maxOffset) {
     stopIndex += 1;
-    offset += getItemMetadata('col', props, stopIndex, metadata, measuredInfo)
-      .size;
+    offset += getItemMetadata(
+      'col',
+      gridBasicInfo,
+      stopIndex,
+      metadata,
+      measuredInfo,
+    ).size;
   }
 
   return stopIndex;
 }
 
-function getRowStartIndex(props, metadata, measuredInfo, scrollTop) {
-  return findNearestItem('row', props, metadata, measuredInfo, scrollTop);
+function getRowStartIndex(
+  gridBasicInfo: GridBasicInfo,
+  metadata,
+  measuredInfo,
+  scrollTop,
+) {
+  return findNearestItem(
+    'row',
+    gridBasicInfo,
+    metadata,
+    measuredInfo,
+    scrollTop,
+  );
 }
 
 function getRowStopIndex(
-  props,
+  gridBasicInfo: GridBasicInfo,
   metadata,
   measuredInfo,
   startIndex: number,
   scrollTop: number,
 ): number {
-  const { rowCount, containerHeight } = props;
+  const { rowCount, containerHeight } = gridBasicInfo;
 
   const itemMetadata = getItemMetadata(
     'row',
-    props,
+    gridBasicInfo,
     startIndex,
     metadata,
     measuredInfo,
@@ -345,8 +438,13 @@ function getRowStopIndex(
 
   while (stopIndex < rowCount - 1 && offset <= maxOffset) {
     stopIndex += 1;
-    offset += getItemMetadata('row', props, stopIndex, metadata, measuredInfo)
-      .size;
+    offset += getItemMetadata(
+      'row',
+      gridBasicInfo,
+      stopIndex,
+      metadata,
+      measuredInfo,
+    ).size;
   }
 
   return stopIndex;
@@ -358,7 +456,6 @@ function getEstimatedTotalHeight(rowCount, rowMetadataMap, measuredInfo) {
 
   // Edge case check for when the number of items decreases while a scroll is in progress.
   if (measuredInfo.lastMeasuredRowIndex >= rowCount) {
-    console.log('here!!!!!!!!!!!!!!!!!!!!');
     measuredInfo.lastMeasuredRowIndex = rowCount - 1;
   }
 
@@ -368,18 +465,12 @@ function getEstimatedTotalHeight(rowCount, rowMetadataMap, measuredInfo) {
   }
 
   const unmeasuredItemsNum = rowCount - measuredInfo.lastMeasuredRowIndex - 1;
-  // console.log(
-  //   'unmeasure',
-  //   measuredInfo.lastMeasuredRowIndex,
-  //   unmeasuredItemsNum,
-  //   totalSizeOfMeasuredRows,
-  // );
   const totalSizeOfUnmeasuredItems = unmeasuredItemsNum * estimatedRowHeight;
 
   return totalSizeOfMeasuredRows + totalSizeOfUnmeasuredItems;
 }
 
-const estimatedColumnWidth = 20;
+const estimatedColumnWidth = 100;
 function getEstimatedTotalWidth(columnCount, columnMetadataMap, measuredInfo) {
   let totalSizeOfMeasuredRows = 0;
   let measuredColumnIndex = measuredInfo.lastMeasuredColumnIndex;
@@ -405,7 +496,7 @@ function getEstimatedTotalWidth(columnCount, columnMetadataMap, measuredInfo) {
 // !!! 获取当前的最近的 item
 function findNearestItem(
   itemType: 'col' | 'row',
-  props,
+  gridBasicInfo: GridBasicInfo,
   metadata,
   measuredInfo,
   containerOffset,
@@ -430,7 +521,7 @@ function findNearestItem(
     // If we've already measured items within this range just use a binary search as it's faster.
     const binarySearchRes = findNearestItemBinarySearch(
       itemType,
-      props,
+      gridBasicInfo,
       metadata,
       measuredInfo,
       lastMeasuredIndex, // 查找结束点
@@ -442,7 +533,7 @@ function findNearestItem(
   } else {
     return findNearestItemExponentialSearch(
       itemType,
-      props,
+      gridBasicInfo,
       metadata,
       measuredInfo,
       Math.max(0, lastMeasuredIndex),
@@ -453,19 +544,20 @@ function findNearestItem(
 
 function findNearestItemExponentialSearch(
   itemType: 'col' | 'row',
-  props,
+  gridBasicInfo,
   metadata,
   measuredInfo,
   index: number,
   offset: number,
 ) {
-  const itemCount = itemType === 'col' ? props.columnCount : props.rowCount;
+  const itemCount =
+    itemType === 'col' ? gridBasicInfo.columnCount : gridBasicInfo.rowCount;
   let interval = 1;
 
   while (
     index < itemCount &&
-    getItemMetadata(itemType, props, index, metadata, measuredInfo).offset <
-      offset
+    getItemMetadata(itemType, gridBasicInfo, index, metadata, measuredInfo)
+      .offset < offset
   ) {
     index += interval;
     interval *= 2;
@@ -473,7 +565,7 @@ function findNearestItemExponentialSearch(
 
   return findNearestItemBinarySearch(
     itemType,
-    props,
+    gridBasicInfo,
     metadata,
     measuredInfo,
     Math.min(index, itemCount - 1),
@@ -484,7 +576,7 @@ function findNearestItemExponentialSearch(
 
 function findNearestItemBinarySearch(
   itemType: 'col' | 'row',
-  props,
+  gridBasicInfo,
   metadata,
   measuredInfo,
   high: number,
@@ -495,7 +587,7 @@ function findNearestItemBinarySearch(
     const middle = low + Math.floor((high - low) / 2);
     const currentOffset = getItemMetadata(
       itemType,
-      props,
+      gridBasicInfo,
       middle,
       metadata,
       measuredInfo,
@@ -517,9 +609,9 @@ function findNearestItemBinarySearch(
   }
 }
 
-function getItemMetadata<T>(
+function getItemMetadata(
   itemType: 'col' | 'row',
-  { columnWidth = 100, rowHeight = 48 }: GridProps<T>,
+  { columnWidth = 100, rowHeight = 48 }: GridBasicInfo,
   index: number,
   metaData,
   measuredInfo,
@@ -571,15 +663,15 @@ function getItemMetadata<T>(
 // function getColumnWidth(props, index, metadata, measuredInfo) {
 //   return getItemMetadata('col', props, index, metadata, measuredInfo).size;
 // }
-function getColumnOffset(props, index, metadata, measuredInfo) {
-  return getItemMetadata('col', props, index, metadata, measuredInfo).offset;
-}
+// function getColumnOffset(props, index, metadata, measuredInfo) {
+//   return getItemMetadata('col', props, index, metadata, measuredInfo).offset;
+// }
 // function getRowOffset(props, index, metadata, measuredInfo) {
 //   return getItemMetadata('row', props, index, metadata, measuredInfo).offset;
 // }
 
 function getDefaultCellKey(columnIndex, rowIndex) {
-  return `${rowIndex}:${columnIndex}`;
+  return `${rowIndex}_${columnIndex}`;
 }
 
 export default React.memo(React.forwardRef(Grid));

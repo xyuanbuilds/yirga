@@ -1,0 +1,252 @@
+import * as React from 'react';
+import classNames from 'clsx';
+import isEqual from 'lodash/isEqual';
+import { FilterFilled } from '@ant-design/icons';
+import { Button, Menu, Checkbox, Radio, Dropdown } from 'antd';
+import useSyncState from '../useSyncState';
+import { FilterState } from '.';
+import styles from './DropDown.less';
+// import { ColumnType, FiltersProps, FilterType } from '../../interface';
+
+const { Item: MenuItem } = Menu;
+
+function renderFilterItems({
+  filters,
+  filteredKeys,
+  filterMultiple,
+}: {
+  filters: {
+    text: React.ReactNode;
+    value: string | number | boolean;
+  }[];
+  filteredKeys: (string | number | boolean)[];
+  filterMultiple: boolean;
+}) {
+  if (filters.length === 0) {
+    // wrapped with <div /> to avoid react warning
+    // https://github.com/ant-design/ant-design/issues/25979
+    return (
+      <div
+        style={{
+          margin: '16px 0',
+        }}
+      >
+        空
+      </div>
+    );
+  }
+  return filters.map((filter, index) => {
+    const key = String(filter.value);
+
+    const Component = filterMultiple ? Checkbox : Radio;
+
+    return (
+      <MenuItem key={filter.value !== undefined ? key : index}>
+        <Component checked={filteredKeys.includes(key)} />
+        <span>{filter.text}</span>
+      </MenuItem>
+    );
+  });
+}
+
+export interface FilterDropdownProps<RecordType> {
+  // prefixCls: string;
+  // dropdownPrefixCls: string;
+  // column: ColumnType<RecordType>;
+  filterState: FilterState<RecordType>;
+  // filterMultiple: boolean;
+  // columnKey: React.Key;
+  children: React.ReactNode;
+  triggerFilter: (filterState: FilterState<RecordType>) => void;
+  // locale: TableLocale;
+  getPopupContainer?: GetPopupContainer;
+}
+
+function FilterDropdown<RecordType>(props: FilterDropdownProps<RecordType>) {
+  const {
+    // prefixCls,
+    // column,
+    // dropdownPrefixCls,
+    // columnKey,
+    // filterMultiple,
+    filterState,
+    triggerFilter,
+    // locale,
+    children,
+    getPopupContainer,
+  } = props;
+
+  // TODO 控制图标 active 状态
+  const filterActive = !!(
+    filterState &&
+    (filterState.filteredKeys?.length || filterState.forceFiltered)
+  );
+
+  const { key: columnKey, filter } = filterState;
+  const { filterMultiple = true } = filter;
+  const [visible, triggerVisible] = React.useState(false);
+
+  // TODO DropDown visible hook & visible controlled
+  // const triggerVisible = (newVisible: boolean) => {
+  //   setVisible(newVisible);
+  //   if (onFilterDropdownVisibleChange) {
+  //     onFilterDropdownVisibleChange(newVisible);
+  //   }
+  // };
+  // const mergedVisible =
+  //   typeof filterDropdownVisible === 'boolean'
+  //     ? filterDropdownVisible
+  //     : visible;
+
+  // ===================== Select Keys =====================
+  const propFilteredKeys = filterState && filterState.filteredKeys;
+  const [getFilteredKeysSync, setFilteredKeysSync] = useSyncState(
+    propFilteredKeys || [],
+  );
+
+  const onSelectKeys = ({ selectedKeys }: { selectedKeys?: React.Key[] }) => {
+    setFilteredKeysSync(selectedKeys!);
+  };
+
+  React.useEffect(() => {
+    onSelectKeys({ selectedKeys: propFilteredKeys || [] });
+  }, [propFilteredKeys]);
+
+  // ====================== Open Keys ======================
+  const [openKeys, setOpenKeys] = React.useState<string[]>([]);
+  const openRef = React.useRef<number>();
+  const onOpenChange = (keys: string[]) => {
+    openRef.current = window.setTimeout(() => {
+      setOpenKeys(keys);
+    });
+  };
+  const onMenuClick = () => {
+    window.clearTimeout(openRef.current);
+  };
+  React.useEffect(() => {
+    return () => {
+      window.clearTimeout(openRef.current);
+    };
+  }, []);
+
+  // ======================= Submit ========================
+  const internalTriggerFilter = (
+    keys: (string | number | boolean)[] | undefined | null,
+  ) => {
+    triggerVisible(false);
+
+    const mergedKeys = keys && keys.length ? keys : null;
+    if (mergedKeys === null && (!filterState || !filterState.filteredKeys)) {
+      return null;
+    }
+
+    if (isEqual(mergedKeys, filterState?.filteredKeys)) {
+      return null;
+    }
+
+    triggerFilter({
+      ...filterState,
+      filter,
+      key: columnKey,
+      filteredKeys: mergedKeys,
+    });
+  };
+
+  const onConfirm = () => {
+    internalTriggerFilter(getFilteredKeysSync());
+  };
+
+  const onReset = () => {
+    setFilteredKeysSync([]);
+    internalTriggerFilter([]);
+  };
+
+  const onVisibleChange = (newVisible: boolean) => {
+    if (newVisible && propFilteredKeys !== undefined) {
+      // Sync filteredKeys on appear in controlled mode (propFilteredKeys !== undefiend)
+      setFilteredKeysSync(propFilteredKeys || []);
+    }
+
+    triggerVisible(newVisible);
+
+    // Default will filter when closed
+    if (!newVisible) {
+      onConfirm();
+    }
+  };
+
+  // ======================== Style ========================
+  const selectedKeys = (getFilteredKeysSync() || []) as any;
+  const dropdownContent: React.ReactNode = (
+    <>
+      <Menu
+        multiple={filterMultiple}
+        // prefixCls={`${dropdownPrefixCls}-menu`}
+        onClick={onMenuClick}
+        onSelect={onSelectKeys}
+        onDeselect={onSelectKeys}
+        selectedKeys={selectedKeys}
+        getPopupContainer={getPopupContainer}
+        openKeys={openKeys}
+        className={styles.menu}
+        // onOpenChange={onOpenChange}
+      >
+        {renderFilterItems({
+          filters: filter.filters || [],
+          filteredKeys: getFilteredKeysSync(),
+          filterMultiple,
+        })}
+      </Menu>
+      <div className={styles.btns}>
+        <Button
+          type="link"
+          size="small"
+          disabled={selectedKeys.length === 0}
+          onClick={onReset}
+        >
+          重置
+        </Button>
+        <Button type="primary" size="small" onClick={onConfirm}>
+          确认
+        </Button>
+      </div>
+    </>
+  );
+
+  const menu = <div className={styles.dropDown}>{dropdownContent}</div>;
+
+  return (
+    <div className={styles.filterColumn}>
+      <span className={styles.columnTitle}>{children}</span>
+
+      <span
+        className={classNames(styles.filterTrigger, {
+          [`trigger-container-open`]: visible,
+        })}
+        onClick={(e) => {
+          e.stopPropagation();
+        }}
+      >
+        <Dropdown
+          overlay={menu}
+          trigger={['click']}
+          visible={visible}
+          onVisibleChange={onVisibleChange}
+          getPopupContainer={getPopupContainer}
+        >
+          <span
+            role="button"
+            tabIndex={-1}
+            className={classNames(styles.icon, {
+              active: filterActive,
+            })}
+          >
+            <FilterFilled />
+          </span>
+        </Dropdown>
+      </span>
+    </div>
+  );
+}
+
+export default FilterDropdown;
