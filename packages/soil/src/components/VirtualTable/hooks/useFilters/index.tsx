@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as React from 'react';
 import { getColumnKey, getColumnPos } from '../utils';
 import FilterDropDown from './DropDown';
@@ -31,7 +30,6 @@ const useFilters = <T extends unknown>(params: {
     if (
       collectedStates.every(({ filteredKeys }) => filteredKeys === undefined)
     ) {
-      console.log('?');
       return filterStates;
     }
     return collectedStates;
@@ -51,7 +49,6 @@ const useFilters = <T extends unknown>(params: {
 
   const FiltersKeyRenderMap = React.useMemo(() => {
     return mergedFilterStates.reduce((kRMap, filter) => {
-      console.log('cur filter', filter);
       kRMap[filter.key] = (title) => (
         <FilterDropDown triggerFilter={triggerFilter} filterState={filter}>
           {title}

@@ -29,18 +29,22 @@
     &:hover {
       background: rgb(229, 229, 229);
     }
+    .containerOpen {
+      background: rgb(229, 229, 229);
+    }
   }
   .filterTrigger {
     width: 2.3em;
-    transition: color 0.3s ease 0s;
-    color: rgb(191, 191, 191);
-    // position: absolute;
-    // right: 0;
     .icon {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
+      transition: color 0.3s ease 0s;
+      color: rgb(191, 191, 191);
+      &.active {
+        color: rgb(24, 144, 255);
+      }
     }
   }
 }

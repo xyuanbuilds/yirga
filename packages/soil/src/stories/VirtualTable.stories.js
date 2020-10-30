@@ -57,11 +57,17 @@ Virtualized.args = {
   },
   sorters: {
     name0: {
-      sorter: (a, b) => a.name0 - b.name0,
+      sorter: {
+        compare: (a, b) => a.name0 - b.name0,
+        multiple: 1,
+      },
       defaultSortOrder: 'ascend',
     },
     name1: {
-      sorter: (a, b) => a.name1 - b.name1,
+      sorter: {
+        compare: (a, b) => a.name1 - b.name1,
+        multiple: 2,
+      },
     },
   },
   dataSource,

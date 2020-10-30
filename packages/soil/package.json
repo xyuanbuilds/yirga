@@ -31,6 +31,7 @@
     "url": "https://github.com/JhonXY/yirga/issues"
   },
   "dependencies": {
+    "@ant-design/icons": "^4.2.2",
     "antd": "^4.7.0",
     "clsx": "^1.1.1",
     "lodash": "^4.17.20",

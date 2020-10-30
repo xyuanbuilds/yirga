@@ -59,7 +59,7 @@ export interface FilterDropdownProps<RecordType> {
   triggerFilter: (filterState: FilterState<RecordType>) => void;
   // locale: TableLocale;
   // TODO
-  getPopupContainer?: GetPopupContainer;
+  getPopupContainer?: (triggerNode: HTMLElement) => HTMLElement;
 }
 
 function FilterDropdown<RecordType>(props: FilterDropdownProps<RecordType>) {
@@ -116,9 +116,9 @@ function FilterDropdown<RecordType>(props: FilterDropdownProps<RecordType>) {
   }, [propFilteredKeys]);
 
   // ====================== Open Keys ======================
-  const [openKeys, setOpenKeys] = React.useState<string[]>([]);
+  const [openKeys, setOpenKeys] = React.useState<React.Key[]>([]);
   const openRef = React.useRef<number>();
-  const onOpenChange = (keys: string[]) => {
+  const onOpenChange = (keys: React.Key[]) => {
     openRef.current = window.setTimeout(() => {
       setOpenKeys(keys);
     });
@@ -190,6 +190,7 @@ function FilterDropdown<RecordType>(props: FilterDropdownProps<RecordType>) {
         selectedKeys={selectedKeys}
         getPopupContainer={getPopupContainer}
         openKeys={openKeys}
+        onOpenChange={onOpenChange}
         className={styles.menu}
       >
         {renderFilterItems({
@@ -229,7 +230,7 @@ function FilterDropdown<RecordType>(props: FilterDropdownProps<RecordType>) {
         >
           <span
             className={classNames(styles.filterTrigger, {
-              [`trigger-container-open`]: visible,
+              [styles.containerOpen]: visible,
             })}
             onClick={(e) => {
               e.stopPropagation();
@@ -239,7 +240,7 @@ function FilterDropdown<RecordType>(props: FilterDropdownProps<RecordType>) {
               role="button"
               tabIndex={-1}
               className={classNames(styles.icon, {
-                active: filterActive,
+                [styles.active]: filterActive,
               })}
             >
               <FilterFilled />
