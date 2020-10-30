@@ -193,7 +193,7 @@ function Grid<T = Record<string, unknown>>(props: GridProps<T>, ref) {
       scrollTop: 0,
       scrollLeft: 0,
     });
-  }, [columnCount, rowCount]);
+  }, [columnCount, rowCount, containerHeight, containerWidth]);
 
   React.useImperativeHandle(ref, () => ({
     scrollTo,
@@ -333,6 +333,7 @@ function Grid<T = Record<string, unknown>>(props: GridProps<T>, ref) {
         columnIndex++
       ) {
         items.push(
+          // TODO Cell 外部注入
           React.createElement(Cell, {
             columnIndex,
             data: data[rowIndex][columns[columnIndex].key],

@@ -14,10 +14,16 @@
   white-space: nowrap;
   z-index: 1;
 
-  height: 48px;
-  line-height: 48px;
+  /* height: inherit; */
+  /* line-height: 48px; */
 }
 
 .title-container {
   padding: 12px 16px;
+  flex: 1 1 auto;
+  display: block;
+  box-sizing: border-box;
+}
+.title-with-extra {
+  padding: 0;
 }

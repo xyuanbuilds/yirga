@@ -35,7 +35,7 @@ const dataSource = Array(1000)
 export const Virtualized = Template.bind({});
 Virtualized.title = '虚拟滚动';
 Virtualized.args = {
-  columnWidth: (i) => 100 + i,
+  columnWidth: () => 300,
   rowHeight: (i) => 48 + i * 0.1,
   height: 488 + 2, // TODO 容器监听
   width: 1000, // TODO 容器监听
@@ -46,12 +46,22 @@ Virtualized.args = {
       onFilter: (value, record) => {
         return String(record.name0).includes(value);
       },
+      // filteredValue: ['2'],
     },
     name3: {
       filters: [{ text: 'test: 10', value: '10' }],
       onFilter: (value, record) => {
         return String(record.name3).includes(value);
       },
+    },
+  },
+  sorters: {
+    name0: {
+      sorter: (a, b) => a.name0 - b.name0,
+      defaultSortOrder: 'ascend',
+    },
+    name1: {
+      sorter: (a, b) => a.name1 - b.name1,
     },
   },
   dataSource,

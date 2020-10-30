@@ -1,8 +1,8 @@
+/* ---------- Basic ---------- */
 export type DataIndex = string | number | (string | number)[];
 
 export type ColumnWidth = number | ((index: number) => number);
 
-// 单个 列 描述
 export interface ColumnType<RecordType> {
   align?: 'left' | 'middle' | 'right';
   title?:
@@ -21,8 +21,8 @@ export interface RowType {
   // TODO extra相关 // 独立操作栏 编辑 行拖拽等
 }
 
+/* ---------- Filter ---------- */
 type FilterValue = string | number | boolean;
-// 单个 Filter 描述
 export interface FilterType<RecordType> {
   // 筛选项
   filters?: {
@@ -33,19 +33,32 @@ export interface FilterType<RecordType> {
   onFilter?: (value: FilterValue, record: RecordType) => boolean;
   filterMultiple?: boolean; // 是否是多选模式，默认多选
   filteredValue?: FilterValue[]; // 受控 选择的filterValue
-  filtered?: boolean; // 受控强制设置筛选状态
+  filtered?: boolean; // 强制设置筛选状态
 }
 
-type SortOrders = 'descend' | 'ascend' | null | false;
-// 单个 Sorter 描述
+/* ---------- Sorter ---------- */
+export type SortOrder = 'descend' | 'ascend' | null; // 降序，升序,空
+type SorterCompareFn<RecordType> = (
+  a: RecordType,
+  b: RecordType,
+  sortOrder?: SortOrder,
+) => number;
+type SorterWithMultiple<RecordType> = {
+  compare: SorterCompareFn<RecordType>;
+  multiple: number;
+};
 export interface SorterType<RecordType> {
+  key: React.Key;
   sorter?:
     | boolean
-    | ((a: RecordType, b: RecordType, sortOrder?: SortOrders) => number);
-  defaultSortOrder?: SortOrders;
-  // sortOrder?: SortOrders; // 受控
+    | SorterWithMultiple<RecordType>
+    | SorterCompareFn<RecordType>;
+  defaultSortOrder?: SortOrder;
+  // multiple?: number | false;
+  sortOrder?: SortOrder; // 受控 外部控制 sort状态
 }
 
+/* ---------- Props ---------- */
 export interface FiltersProps<RecordType> {
   [columnKey: string]: FilterType<RecordType>;
 }

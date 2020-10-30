@@ -1,0 +1,42 @@
+.sorterColumn {
+  display: flex;
+  cursor: pointer;
+  width: 100%;
+  align-items: center;
+  position: relative;
+  & > span:first-child {
+    flex: 0;
+    padding: 12px 0 12px 16px;
+  }
+
+  .sorter {
+    flex: 1 1 auto;
+    margin-top: 0.15em;
+    margin-bottom: -0.15em;
+    margin-left: 8px;
+    color: rgb(191, 191, 191);
+    &.sorterFull {
+      margin-top: -0.2em;
+      margin-bottom: 0px;
+    }
+  }
+  
+}
+
+.sorterInner {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+    
+  .sorterUp {
+    font-size: 11px;
+  }
+  .sorterDown {
+    font-size: 11px;
+    margin-top: -0.3em
+  }
+  .active {
+    color: rgb(24, 144, 255);
+  }
+}
+

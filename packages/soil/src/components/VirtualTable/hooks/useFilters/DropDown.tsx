@@ -37,7 +37,6 @@ function renderFilterItems({
   }
   return filters.map((filter, index) => {
     const key = String(filter.value);
-
     const Component = filterMultiple ? Checkbox : Radio;
 
     return (
@@ -59,6 +58,7 @@ export interface FilterDropdownProps<RecordType> {
   children: React.ReactNode;
   triggerFilter: (filterState: FilterState<RecordType>) => void;
   // locale: TableLocale;
+  // TODO
   getPopupContainer?: GetPopupContainer;
 }
 
@@ -76,13 +76,11 @@ function FilterDropdown<RecordType>(props: FilterDropdownProps<RecordType>) {
     getPopupContainer,
   } = props;
 
-  // TODO 控制图标 active 状态
+  const { key: columnKey, filter, filteredKeys, forceFiltered } = filterState;
   const filterActive = !!(
     filterState &&
-    (filterState.filteredKeys?.length || filterState.forceFiltered)
+    (filteredKeys?.length || forceFiltered)
   );
-
-  const { key: columnKey, filter } = filterState;
   const { filterMultiple = true } = filter;
   const [visible, triggerVisible] = React.useState(false);
 
@@ -100,11 +98,16 @@ function FilterDropdown<RecordType>(props: FilterDropdownProps<RecordType>) {
 
   // ===================== Select Keys =====================
   const propFilteredKeys = filterState && filterState.filteredKeys;
+
   const [getFilteredKeysSync, setFilteredKeysSync] = useSyncState(
     propFilteredKeys || [],
   );
 
-  const onSelectKeys = ({ selectedKeys }: { selectedKeys?: React.Key[] }) => {
+  const onSelectKeys = ({
+    selectedKeys,
+  }: {
+    selectedKeys?: (string | number | boolean)[];
+  }) => {
     setFilteredKeysSync(selectedKeys!);
   };
 
@@ -181,7 +184,6 @@ function FilterDropdown<RecordType>(props: FilterDropdownProps<RecordType>) {
     <>
       <Menu
         multiple={filterMultiple}
-        // prefixCls={`${dropdownPrefixCls}-menu`}
         onClick={onMenuClick}
         onSelect={onSelectKeys}
         onDeselect={onSelectKeys}
@@ -189,7 +191,6 @@ function FilterDropdown<RecordType>(props: FilterDropdownProps<RecordType>) {
         getPopupContainer={getPopupContainer}
         openKeys={openKeys}
         className={styles.menu}
-        // onOpenChange={onOpenChange}
       >
         {renderFilterItems({
           filters: filter.filters || [],
@@ -218,15 +219,7 @@ function FilterDropdown<RecordType>(props: FilterDropdownProps<RecordType>) {
   return (
     <div className={styles.filterColumn}>
       <span className={styles.columnTitle}>{children}</span>
-
-      <span
-        className={classNames(styles.filterTrigger, {
-          [`trigger-container-open`]: visible,
-        })}
-        onClick={(e) => {
-          e.stopPropagation();
-        }}
-      >
+      <span className={styles.filterTriggerContainer}>
         <Dropdown
           overlay={menu}
           trigger={['click']}
@@ -235,13 +228,22 @@ function FilterDropdown<RecordType>(props: FilterDropdownProps<RecordType>) {
           getPopupContainer={getPopupContainer}
         >
           <span
-            role="button"
-            tabIndex={-1}
-            className={classNames(styles.icon, {
-              active: filterActive,
+            className={classNames(styles.filterTrigger, {
+              [`trigger-container-open`]: visible,
             })}
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
           >
-            <FilterFilled />
+            <span
+              role="button"
+              tabIndex={-1}
+              className={classNames(styles.icon, {
+                active: filterActive,
+              })}
+            >
+              <FilterFilled />
+            </span>
           </span>
         </Dropdown>
       </span>

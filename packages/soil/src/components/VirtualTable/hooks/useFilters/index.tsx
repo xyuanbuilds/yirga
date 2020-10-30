@@ -4,12 +4,10 @@ import { getColumnKey, getColumnPos } from '../utils';
 import FilterDropDown from './DropDown';
 import { ColumnType, FiltersProps, FilterType } from '../../interface';
 
-const { useState } = React;
-
 export interface FilterState<RecordType> {
   filter: FilterType<RecordType>;
   key: React.Key;
-  filteredKeys: (string | number | boolean)[] | null;
+  filteredKeys?: (string | number | boolean)[] | null;
   forceFiltered?: boolean;
 }
 
@@ -20,22 +18,27 @@ const useFilters = <T extends unknown>(params: {
   columns: ColumnType<T>[];
 }) => {
   const { columns, filters } = params;
-  const [filterStates, setFilterStates] = useState(
+  const [filterStates, setFilterStates] = React.useState(
     filters ? collectFilterStates(columns, filters, true) : NO_FILTER,
   );
 
-  React.useEffect(() => {
+  // columns，filters，操作后验证受控是否存在
+  const mergedFilterStates = React.useMemo(() => {
     const collectedStates = filters
       ? collectFilterStates(columns, filters, false)
       : NO_FILTER;
     // Return if not controlled
-    if (collectedStates.every(({ filteredKeys }) => filteredKeys === null)) {
-      return;
+    if (
+      collectedStates.every(({ filteredKeys }) => filteredKeys === undefined)
+    ) {
+      console.log('?');
+      return filterStates;
     }
-    setFilterStates(collectedStates);
-  }, [columns, filters]);
+    return collectedStates;
+  }, [columns, filters, filterStates]);
 
   const triggerFilter = React.useCallback((filterState: FilterState<T>) => {
+    if (filterState.filter.filteredValue !== undefined) return; // 受控 不接受更新
     setFilterStates((preFilterStates) => {
       const newFilterStates = preFilterStates.filter(
         ({ key }) => key !== filterState.key,
@@ -47,7 +50,8 @@ const useFilters = <T extends unknown>(params: {
   }, []);
 
   const FiltersKeyRenderMap = React.useMemo(() => {
-    return filterStates.reduce((kRMap, filter) => {
+    return mergedFilterStates.reduce((kRMap, filter) => {
+      console.log('cur filter', filter);
       kRMap[filter.key] = (title) => (
         <FilterDropDown triggerFilter={triggerFilter} filterState={filter}>
           {title}
@@ -55,9 +59,9 @@ const useFilters = <T extends unknown>(params: {
       );
       return kRMap;
     }, {});
-  }, [filterStates]);
+  }, [mergedFilterStates]);
 
-  return [filterStates, FiltersKeyRenderMap] as const;
+  return [mergedFilterStates, FiltersKeyRenderMap] as const;
 };
 
 function collectFilterStates<RecordType>(
@@ -79,25 +83,26 @@ function collectFilterStates<RecordType>(
         ...filterStates,
         ...collectFilterStates(column.children || [], filters, init, columnPos),
       ];
-    } else if (filterForCurColumn && 'onFilter' in filterForCurColumn) {
-      // * 出现该 key 说明有受控需要，无论是什么值都进入受控逻辑
+    }
+    if (filterForCurColumn && 'onFilter' in filterForCurColumn) {
+      // * 出现该 key 说明 触发受控，无论是什么值都进入受控逻辑
       if ('filteredValue' in filterForCurColumn) {
         // Controlled
         filterStates.push({
           filter: filterForCurColumn,
-          key: column.key || getColumnKey(column, columnPos),
-          filteredKeys: filterForCurColumn.filteredValue || null,
+          key: getColumnKey(column, columnPos),
+          filteredKeys: filterForCurColumn.filteredValue, // 只要不是 undefined，就能够成功受控
           forceFiltered: filterForCurColumn.filtered,
         });
       } else {
         // Uncontrolled
         filterStates.push({
           filter: filterForCurColumn,
-          key: column.key || getColumnKey(column, columnPos),
+          key: getColumnKey(column, columnPos),
           filteredKeys:
             init && filterForCurColumn.defaultFilteredValue
               ? filterForCurColumn.defaultFilteredValue
-              : null,
+              : undefined,
           forceFiltered: filterForCurColumn.filtered,
         });
       }

@@ -2,6 +2,7 @@
   "extends": "@yirga/prelints/lib/tsconfig.default.json",
   "compilerOptions": {
     "resolveJsonModule": true,
+    "module": "es6",
     "outDir": "./lib",
     "rootDir": ".",
     "checkJs": false

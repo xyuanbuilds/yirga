@@ -2,22 +2,40 @@
   display: flex;
   align-items: center;
   position: relative;
-  height: 100%;
 
   .columnTitle {
     flex: 1 1 auto;
     padding: 0px 2.3em 0px 0px;
-    display: block;
+    display: flex;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+    & > span:first-child {
+      flex: 0;
+      padding: 12px 16px;
+    }
   }
-  
+  .filterTriggerContainer {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    bottom: 0px;
+    display: flex;
+    align-items: stretch;
+    align-self: stretch;
+    cursor: pointer;
+    flex: 0 0 auto;
+    transition: background-color 0.3s ease 0s;
+    &:hover {
+      background: rgb(229, 229, 229);
+    }
+  }
   .filterTrigger {
     width: 2.3em;
     transition: color 0.3s ease 0s;
-    position: absolute;
-    right: 0;
+    color: rgb(191, 191, 191);
+    // position: absolute;
+    // right: 0;
     .icon {
       position: absolute;
       top: 50%;
