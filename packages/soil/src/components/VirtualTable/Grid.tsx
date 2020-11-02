@@ -181,13 +181,11 @@ function Grid<T = Record<string, unknown>>(props: GridProps<T>, ref) {
 
   // *具体某处变化，外部重置measured
   React.useLayoutEffect(() => {
-    console.log('重算');
     scrollTo(scrollRef.current);
   }, [columnWidth, rowHeight]);
 
   // *数量结构变化，直接重置
   React.useLayoutEffect(() => {
-    console.log('重置');
     onReset();
     scrollTo({
       scrollTop: 0,

@@ -23,7 +23,9 @@ const useSorters = <T extends unknown>(params: {
 }) => {
   const { sorters, columns } = params;
   const [sortStates, setSortStates] = React.useState<SortState<T>[]>(
-    sorters ? collectSortStates(columns, sorters, true) : NO_SORTER,
+    sorters
+      ? validateStates(collectSortStates(columns, sorters, true))
+      : NO_SORTER,
   );
 
   const mergedSortStates = React.useMemo(() => {
@@ -34,46 +36,17 @@ const useSorters = <T extends unknown>(params: {
     if (collectedStates.every(({ sortOrder }) => sortOrder === undefined)) {
       return sortStates;
     }
-    const newSortStates: SortState<T>[] = [];
-    let isMultipleMode = false;
-    let isSorted = false;
 
-    collectedStates.forEach((sortState) => {
-      if (sortState.sortOrder) {
-        if (sortState.multiplePriority !== false) {
-          isMultipleMode = true;
-          newSortStates.push({
-            ...sortState,
-            sortOrder: isSorted ? null : sortState.sortOrder,
-          });
-        } else {
-          newSortStates.push({
-            ...sortState,
-            sortOrder: isSorted || isMultipleMode ? null : sortState.sortOrder,
-          });
-          isSorted = true;
-        }
-      } else {
-        newSortStates.push({
-          ...sortState,
-          sortOrder: null,
-        });
-      }
-    });
-
-    return newSortStates;
+    return validateStates(collectedStates);
   }, [sorters, columns, sortStates]);
 
-  // TODO 注入到 Cell上 ？
   const triggerSorter = React.useCallback((sortState: SortState<T>) => {
     if (sortState.sorter.sortOrder !== undefined) return;
+    const isMultipleMode = sortState.multiplePriority !== false;
     setSortStates((preSortStates) => {
       let newSortStates: SortState<T>[];
-      if (
-        sortState.multiplePriority === false ||
-        !sortStates.length ||
-        sortStates[0].multiplePriority === false
-      ) {
+      if (!isMultipleMode || !sortStates.length) {
+        // 单排
         newSortStates = [
           ...preSortStates.filter((preState) => {
             preState.sortOrder = null;
@@ -82,8 +55,14 @@ const useSorters = <T extends unknown>(params: {
           sortState,
         ];
       } else {
+        // 多排
         newSortStates = [
-          ...preSortStates.filter(({ key }) => key !== sortState.key),
+          ...preSortStates.filter((preState) => {
+            if (preState.multiplePriority === false) {
+              preState.sortOrder = null;
+            }
+            return preState.key !== sortState.key;
+          }),
           sortState,
         ];
       }
@@ -199,6 +178,42 @@ export function getSortData<RecordType>(
 
     return 0;
   });
+}
+
+function validateStates<T>(collectedStates: SortState<T>[]) {
+  const newSortStates: SortState<T>[] = [];
+  let isMultipleMode = false;
+  let isSorted = false;
+
+  collectedStates.sort((a, b) => {
+    if (a.multiplePriority === false || b.multiplePriority === false) {
+      return a.multiplePriority === false ? -1 : 1;
+    }
+    return a.multiplePriority - b.multiplePriority;
+  });
+  collectedStates.forEach((sortState) => {
+    if (sortState.sortOrder) {
+      if (sortState.multiplePriority !== false) {
+        isMultipleMode = true;
+        newSortStates.push({
+          ...sortState,
+          sortOrder: isSorted ? null : sortState.sortOrder,
+        });
+      } else {
+        newSortStates.push({
+          ...sortState,
+          sortOrder: isSorted || isMultipleMode ? null : sortState.sortOrder,
+        });
+        isSorted = true;
+      }
+    } else {
+      newSortStates.push({
+        ...sortState,
+        sortOrder: null,
+      });
+    }
+  });
+  return newSortStates;
 }
 
 function getSortFunction<RecordType>(sorter: SorterType<RecordType>['sorter']) {

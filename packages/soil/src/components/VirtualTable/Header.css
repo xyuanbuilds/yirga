@@ -13,7 +13,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   z-index: 1;
-
+  background: rgb(250, 250, 250);
   /* height: inherit; */
   /* line-height: 48px; */
 }

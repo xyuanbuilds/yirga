@@ -110,7 +110,7 @@ const InitialWrapper = ({
     sorters,
     columns: originColumns,
   });
-  console.log('filterStates', filterStates);
+
   const renderHeader = () => {
     return (
       <div

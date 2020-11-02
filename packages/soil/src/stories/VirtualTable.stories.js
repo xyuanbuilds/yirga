@@ -68,6 +68,11 @@ Virtualized.args = {
         compare: (a, b) => a.name1 - b.name1,
         multiple: 2,
       },
+      defaultSortOrder: 'descend',
+    },
+    name2: {
+      sorter: (a, b) => a.name1 - b.name1,
+      // defaultSortOrder: 'ascend',
     },
   },
   dataSource,

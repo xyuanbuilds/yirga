@@ -12,9 +12,6 @@
   opacity: 0;
   /* -webkit-user-drag: auto; */
 }
-/* .drag-stuff:hover {
-  opacity: 1;
-} */
 
 .stuff-dragging {
   z-index: 100000;
