@@ -5,10 +5,10 @@ const globalThis = window as Window;
 //     ? globalThis.requestIdleCallback
 //     : globalThis.requestAnimationFrame;
 
-function bindRaf(fn: (...args: any) => void, throttle?: boolean) {
+function bindRaf(fn: (...args: unknown[]) => void, throttle?: boolean) {
   if (!globalThis.requestAnimationFrame) return fn;
   let isRunning = false;
-  let args: any[];
+  let args: unknown[];
 
   const run = () => {
     isRunning = false;
