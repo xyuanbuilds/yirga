@@ -31,9 +31,11 @@
     "url": "https://github.com/JhonXY/yirga/issues"
   },
   "dependencies": {
+    "@ant-design/compatible": "^1.0.8",
     "@ant-design/icons": "^4.2.2",
     "antd": "^4.7.0",
     "clsx": "^1.1.1",
+    "dva": "2.6.0-beta.21",
     "lodash": "^4.17.20",
     "rc-resize-observer": "^0.2.5",
     "react": "^16.13.1",
@@ -52,6 +54,8 @@
     "@types/lodash": "^4.14.161",
     "@types/react": "^16.9.53",
     "@types/react-dom": "^16.9.8",
+    "@types/react-redux": "^7.1.9",
+    "@types/redux": "^3.6.0",
     "@yirga/prelints": "^0.0.4",
     "babel-loader": "^8.1.0",
     "fork-ts-checker-webpack-plugin": "^5.2.0",
