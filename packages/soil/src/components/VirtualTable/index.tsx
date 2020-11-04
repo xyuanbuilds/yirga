@@ -2,8 +2,7 @@ import * as React from 'react';
 import Grid from './Grid';
 import Header from './Header';
 import useFilters, { getFilteredData } from './hooks/useFilters/index';
-import useSorters, { getSortData } from './hooks/useSorters/index';
-// import useTimeoutLock from './hooks/useTimeoutLock';
+import useSorters, { getSortedData } from './hooks/useSorters/index';
 import {
   ColumnType,
   FiltersProps,
@@ -31,7 +30,7 @@ const defaultDataSource = [];
 const InitialWrapper = ({
   columns: originColumns = defaultColumns,
   dataSource = defaultDataSource,
-  columnWidth = 100,
+  columnWidth = 120,
   rowHeight = 48,
   height,
   width,
@@ -41,24 +40,26 @@ const InitialWrapper = ({
 }: TableWrapperProps) => {
   const bodyContainerRef = React.useRef<HTMLDivElement>(null);
   const headerRef = React.useRef<HTMLDivElement>(null);
-  const gridRef = React.useRef<import('./Grid').GridRefObj>();
+  const gridRef = React.useRef<React.ElementRef<typeof Grid>>(null!);
 
-  const [diffedColumns, setColumn] = React.useState(
+  const [diffedColumns, setColumn] = React.useState(() =>
     diffColumnsWidth(originColumns, columnWidth),
   );
 
+  // * 头部 cell 改变 columns
   const headerSetCol = React.useCallback((index, newColumAction) => {
-    if (gridRef.current) {
-      gridRef.current.measuredInfos.current.lastMeasuredColumnIndex = index - 1;
-    }
-
+    // if (gridRef.current) {
+    gridRef.current.measuredInfos.current.lastMeasuredColumnIndex = index - 1;
+    // }
     setColumn(newColumAction);
   }, []);
-  React.useEffect(() => {
+
+  // * 重算 column width
+  React.useLayoutEffect(() => {
     setColumn(diffColumnsWidth(originColumns, columnWidth));
   }, [originColumns, columnWidth]);
 
-  // ---------- scroll ----------
+  // ---------- scroll -----------
   const setScrollStyles = React.useCallback((target) => {
     const {
       clientHeight,
@@ -106,6 +107,7 @@ const InitialWrapper = ({
     columns: originColumns,
   });
 
+  // ---------- Sorters ----------
   const [sortStates, sorterRenders] = useSorters({
     sorters,
     columns: originColumns,
@@ -129,10 +131,9 @@ const InitialWrapper = ({
   };
 
   const diffedDataSource = React.useMemo(
-    () => getSortData(getFilteredData(dataSource, filterStates), sortStates),
-    [dataSource, filterStates, sortStates, getSortData],
+    () => getSortedData(getFilteredData(dataSource, filterStates), sortStates),
+    [dataSource, filterStates, sortStates],
   );
-
   const columnCount = diffedColumns.length;
   const rowCount = diffedDataSource.length;
 
@@ -143,16 +144,19 @@ const InitialWrapper = ({
     },
     [diffedColumns],
   );
+  const bodyStyle = React.useMemo(() => {
+    return {
+      height: height - headerHeight - 1,
+      width: width - 1,
+    };
+  }, [height, headerHeight, width]);
   const renderBody = () => {
     return (
       <div
         onScroll={onScroll}
         ref={bodyContainerRef}
         className="table-scroll-wrapper"
-        style={{
-          height: height - headerHeight - 1,
-          width: width - 1,
-        }}
+        style={bodyStyle}
       >
         <Grid
           ref={gridRef}

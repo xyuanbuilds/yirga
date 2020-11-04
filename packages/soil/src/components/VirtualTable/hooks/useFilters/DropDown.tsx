@@ -49,32 +49,14 @@ function renderFilterItems({
 }
 
 export interface FilterDropdownProps<RecordType> {
-  // prefixCls: string;
-  // dropdownPrefixCls: string;
-  // column: ColumnType<RecordType>;
   filterState: FilterState<RecordType>;
-  // filterMultiple: boolean;
-  // columnKey: React.Key;
   children: React.ReactNode;
   triggerFilter: (filterState: FilterState<RecordType>) => void;
-  // locale: TableLocale;
-  // TODO
   getPopupContainer?: (triggerNode: HTMLElement) => HTMLElement;
 }
 
 function FilterDropdown<RecordType>(props: FilterDropdownProps<RecordType>) {
-  const {
-    // prefixCls,
-    // column,
-    // dropdownPrefixCls,
-    // columnKey,
-    // filterMultiple,
-    filterState,
-    triggerFilter,
-    // locale,
-    children,
-    getPopupContainer,
-  } = props;
+  const { filterState, triggerFilter, children, getPopupContainer } = props;
 
   const { key: columnKey, filter, filteredKeys, forceFiltered } = filterState;
   const filterActive = !!(
@@ -83,18 +65,6 @@ function FilterDropdown<RecordType>(props: FilterDropdownProps<RecordType>) {
   );
   const { filterMultiple = true } = filter;
   const [visible, triggerVisible] = React.useState(false);
-
-  // TODO DropDown visible hook & visible controlled
-  // const triggerVisible = (newVisible: boolean) => {
-  //   setVisible(newVisible);
-  //   if (onFilterDropdownVisibleChange) {
-  //     onFilterDropdownVisibleChange(newVisible);
-  //   }
-  // };
-  // const mergedVisible =
-  //   typeof filterDropdownVisible === 'boolean'
-  //     ? filterDropdownVisible
-  //     : visible;
 
   // ===================== Select Keys =====================
   const propFilteredKeys = filterState && filterState.filteredKeys;
@@ -147,7 +117,7 @@ function FilterDropdown<RecordType>(props: FilterDropdownProps<RecordType>) {
       return null;
     }
 
-    triggerFilter({
+    return triggerFilter({
       ...filterState,
       filter,
       key: columnKey,
@@ -189,7 +159,7 @@ function FilterDropdown<RecordType>(props: FilterDropdownProps<RecordType>) {
         onDeselect={onSelectKeys}
         selectedKeys={selectedKeys}
         getPopupContainer={getPopupContainer}
-        openKeys={openKeys}
+        openKeys={openKeys as string[]}
         onOpenChange={onOpenChange}
         className={styles.menu}
       >

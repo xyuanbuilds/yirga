@@ -85,7 +85,7 @@ const useSorters = <T extends unknown>(params: {
     }, {});
   }, [mergedSortStates]);
 
-  return [sortStates, sortersKeyRenderMap] as const;
+  return [mergedSortStates, sortersKeyRenderMap] as const;
 };
 
 function collectSortStates<RecordType>(
@@ -134,7 +134,7 @@ function collectSortStates<RecordType>(
   return sorterStates;
 }
 
-export function getSortData<RecordType>(
+export function getSortedData<RecordType>(
   data: RecordType[],
   sortStates: SortState<RecordType>[],
 ): RecordType[] {

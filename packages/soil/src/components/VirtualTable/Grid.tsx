@@ -28,7 +28,23 @@ type RowMetaData = {
   size: number;
 };
 
-export interface GridRefObj {
+type GridColumn = {
+  key: string;
+  // width: number; // 渲染宽度
+  // offset: number; // left / top 偏移量
+};
+// type GridRow = {
+//   key: string;
+// };
+
+export interface GridProps<T = Record<string, unknown>> extends GridBasicInfo {
+  container: React.RefObject<HTMLDivElement>;
+  dataSource: T[];
+  columns: GridColumn[];
+  // rows?: GridRow[];
+}
+
+export interface GridRef {
   scrollTo: (scroll: { scrollLeft: number; scrollTop: number }) => void;
   measuredInfos: React.MutableRefObject<{
     lastMeasuredRowIndex: number;
@@ -36,23 +52,10 @@ export interface GridRefObj {
   }>;
 }
 
-type GridColumn = {
-  key: string;
-  // width: number; // 渲染宽度
-  // offset: number; // left / top 偏移量
-};
-type GridRow = {
-  key: string;
-};
-
-export interface GridProps<T = Record<string, unknown>> extends GridBasicInfo {
-  container: React.RefObject<HTMLDivElement>;
-  dataSource: T[];
-  columns: GridColumn[];
-  rows?: GridRow[];
-}
-
-function Grid<T = Record<string, unknown>>(props: GridProps<T>, ref) {
+function Grid<T = Record<string, unknown>>(
+  props: GridProps<T>,
+  ref: React.Ref<GridRef>,
+) {
   const {
     dataSource: data,
     columns,
@@ -491,8 +494,8 @@ function getEstimatedTotalWidth(columnCount, columnMetadataMap, measuredInfo) {
   return totalSizeOfMeasuredRows + totalSizeOfUnmeasuredItems;
 }
 
-// !!! 重点算法: 根据当前的 scrollTop 或 scrollLeft
-// !!! 获取当前的最近的 item
+// ! 根据当前的 scrollTop 或 scrollLeft
+// ! 获取当前的最近的 item
 function findNearestItem(
   itemType: 'col' | 'row',
   gridBasicInfo: GridBasicInfo,
@@ -617,8 +620,8 @@ function getItemMetadata(
 ): ColumnMetaData | RowMetaData {
   // const { lastMeasuredColumnIndex, lastMeasuredRowIndex } = measuredInfo;
   let itemMetadataMap;
-  let itemSize;
-  let lastMeasuredIndex;
+  let itemSize: number;
+  let lastMeasuredIndex: number;
   if (itemType === 'col') {
     itemMetadataMap = metaData.columnMetadataMap;
     // * 每次获取 Metadata 同时更新值
@@ -669,7 +672,7 @@ function getItemMetadata(
 //   return getItemMetadata('row', props, index, metadata, measuredInfo).offset;
 // }
 
-function getDefaultCellKey(columnIndex, rowIndex) {
+function getDefaultCellKey(columnIndex: React.Key, rowIndex: React.Key) {
   return `${rowIndex}_${columnIndex}`;
 }
 

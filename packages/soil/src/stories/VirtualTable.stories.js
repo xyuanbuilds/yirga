@@ -14,47 +14,106 @@ const Template = (args) => {
   );
 };
 
-const columns = Array(100)
-  .fill({})
-  .map((i, index) => ({ key: `name${index}` }));
-const dataSource = Array(1000)
-  .fill(null)
-  .map((i, lineIndex) => {
-    const curData = columns
-      .map((column) => column.key)
-      .reduce((pre, cur) => {
-        pre[cur] = '';
-        return pre;
-      }, {});
-    Object.keys(curData).forEach((key) => {
-      curData[key] = lineIndex;
+const createColumns = (num) => {
+  return Array(num)
+    .fill({})
+    .map((i, index) => ({ key: `name${index}` }));
+};
+
+const createDataSource = (num, columns) => {
+  return Array(num)
+    .fill(null)
+    .map((i, lineIndex) => {
+      const curData = columns
+        .map((column) => column.key)
+        .reduce((pre, cur) => {
+          pre[cur] = '';
+          return pre;
+        }, {});
+      Object.keys(curData).forEach((key) => {
+        curData[key] = lineIndex;
+      });
+      return curData;
     });
-    return curData;
-  });
+};
 
 export const Virtualized = Template.bind({});
-Virtualized.title = '虚拟滚动';
+let curColumns;
+let normalDataSource;
+let longDataSource;
 Virtualized.args = {
-  columnWidth: () => 300,
-  rowHeight: (i) => 48 + i * 0.1,
   height: 488 + 2, // TODO 容器监听
   width: 1000, // TODO 容器监听
-  columns,
+  columns: (curColumns = createColumns(10)),
+  curColumns,
+  dataSource: (longDataSource = createDataSource(10000, curColumns)),
+  longDataSource,
+};
+
+export const 筛选器 = Template.bind({});
+筛选器.args = {
+  height: 488 + 2, // TODO 容器监听
+  width: 1000, // TODO 容器监听
+  columns: curColumns,
   filters: {
     name0: {
       filters: [{ text: 'test: 2', value: '2' }],
       onFilter: (value, record) => {
         return String(record.name0).includes(value);
       },
-      // filteredValue: ['2'],
     },
-    name3: {
+    name1: {
       filters: [{ text: 'test: 10', value: '10' }],
       onFilter: (value, record) => {
-        return String(record.name3).includes(value);
+        return String(record.name1).includes(value);
       },
     },
   },
+  dataSource: (normalDataSource = createDataSource(1000, curColumns)),
+  normalDataSource,
+};
+export const 筛选器受控 = Template.bind({});
+筛选器受控.args = {
+  height: 488 + 2, // TODO 容器监听
+  width: 1000, // TODO 容器监听
+  columns: curColumns,
+  filters: {
+    name0: {
+      filters: [{ text: 'test: 2', value: '2' }],
+      onFilter: (value, record) => {
+        return String(record.name0).includes(value);
+      },
+      filteredValue: ['2'],
+    },
+    name1: {
+      filters: [{ text: 'test: 10', value: '10' }],
+      onFilter: (value, record) => {
+        return String(record.name1).includes(value);
+      },
+    },
+  },
+  dataSource: (normalDataSource = createDataSource(1000, curColumns)),
+  normalDataSource,
+};
+
+export const 排序 = Template.bind({});
+排序.args = {
+  height: 488 + 2, // TODO 容器监听
+  width: 1000, // TODO 容器监听
+  columns: curColumns,
+  sorters: {
+    name2: {
+      sorter: (a, b) => a.name1 - b.name1,
+    },
+  },
+  dataSource: normalDataSource,
+};
+
+export const 多级排序 = Template.bind({});
+多级排序.args = {
+  height: 488 + 2, // TODO 容器监听
+  width: 1000, // TODO 容器监听
+  columns: curColumns,
   sorters: {
     name0: {
       sorter: {
@@ -72,8 +131,72 @@ Virtualized.args = {
     },
     name2: {
       sorter: (a, b) => a.name1 - b.name1,
-      // defaultSortOrder: 'ascend',
     },
   },
-  dataSource,
+  dataSource: normalDataSource,
+};
+export const 排序受控 = Template.bind({});
+排序受控.args = {
+  height: 488 + 2, // TODO 容器监听
+  width: 1000, // TODO 容器监听
+  columns: curColumns,
+  sorters: {
+    name0: {
+      sorter: {
+        compare: (a, b) => a.name0 - b.name0,
+        multiple: 1,
+      },
+      sortOrder: 'descend',
+    },
+    name1: {
+      sorter: {
+        compare: (a, b) => a.name1 - b.name1,
+        multiple: 2,
+      },
+      defaultSortOrder: 'descend',
+    },
+    name2: {
+      sorter: (a, b) => a.name1 - b.name1,
+    },
+  },
+  dataSource: normalDataSource,
+};
+export const 综合 = Template.bind({});
+综合.args = {
+  height: 488 + 2, // TODO 容器监听
+  width: 1000, // TODO 容器监听
+  columns: curColumns,
+  filters: {
+    name0: {
+      filters: [{ text: 'test: 2', value: '2' }],
+      onFilter: (value, record) => {
+        return String(record.name0).includes(value);
+      },
+    },
+    name1: {
+      filters: [{ text: 'test: 10', value: '10' }],
+      onFilter: (value, record) => {
+        return String(record.name1).includes(value);
+      },
+    },
+  },
+  sorters: {
+    name0: {
+      sorter: {
+        compare: (a, b) => a.name0 - b.name0,
+        multiple: 1,
+      },
+    },
+    name1: {
+      sorter: {
+        compare: (a, b) => a.name1 - b.name1,
+        multiple: 2,
+      },
+      defaultSortOrder: 'descend',
+    },
+    name2: {
+      sorter: (a, b) => a.name1 - b.name1,
+    },
+  },
+  dataSource: normalDataSource,
 };
