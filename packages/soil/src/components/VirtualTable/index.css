@@ -25,11 +25,11 @@
   /* height: calc(100% - 48px); */
   width: 100%;
   overflow: auto;
-  /* -webkit-overflow-scrolling: auto; */
+  will-change: transform;
   position: relative;
 }
 
-.table-scroll-wrapper::-webkit-scrollbar {
+/* .table-scroll-wrapper::-webkit-scrollbar {
   width: 8px;
   height: 8px;
   background-color: initial;
@@ -60,4 +60,4 @@
 
 .table-scroll-wrapper:hover::-webkit-scrollbar-thumb {
   visibility: visible;
-}
+} */

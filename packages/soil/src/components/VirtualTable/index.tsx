@@ -1,5 +1,6 @@
 import * as React from 'react';
 import Grid from './Grid';
+// import GridRe from './GridRe';
 import Header from './Header';
 import useFilters, { getFilteredData } from './hooks/useFilters/index';
 import useSorters, { getSortedData } from './hooks/useSorters/index';
@@ -38,8 +39,8 @@ const InitialWrapper = ({
   filters,
   sorters,
 }: TableWrapperProps) => {
-  const bodyContainerRef = React.useRef<HTMLDivElement>(null);
-  const headerRef = React.useRef<HTMLDivElement>(null);
+  const bodyContainerRef = React.useRef<HTMLDivElement>(null!);
+  const headerRef = React.useRef<HTMLDivElement>(null!);
   const gridRef = React.useRef<React.ElementRef<typeof Grid>>(null!);
 
   const [diffedColumns, setColumn] = React.useState(() =>
@@ -60,35 +61,40 @@ const InitialWrapper = ({
   }, [originColumns, columnWidth]);
 
   // ---------- scroll -----------
-  const setScrollStyles = React.useCallback((target) => {
-    const {
+  const setScrollStyles = React.useCallback(
+    ({
       clientHeight,
       clientWidth,
       scrollLeft,
       scrollTop,
       scrollHeight,
       scrollWidth,
-    } = target;
-    const actualLeft = Math.max(
-      0,
-      Math.min(scrollLeft, scrollWidth - clientWidth),
-    );
-    const actualTop = Math.max(
-      0,
-      Math.min(scrollTop, scrollHeight - clientHeight),
-    );
+    }) => {
+      const actualLeft = Math.max(
+        0,
+        Math.min(scrollLeft, scrollWidth - clientWidth),
+      );
+      const actualTop = Math.max(
+        0,
+        Math.min(scrollTop, scrollHeight - clientHeight),
+      );
 
-    if (headerRef.current)
-      // headerRef.current.style.transform = `translate3d(${-actualLeft}px, 0px, 0px)`;
-      headerRef.current.scrollLeft = actualLeft;
+      if (headerRef.current)
+        // headerRef.current.style.transform = `translate3d(${-actualLeft}px, 0px, 0px)`;
+        headerRef.current.scrollLeft = actualLeft;
 
-    if (gridRef.current) {
-      gridRef.current.scrollTo({
-        scrollTop: actualTop,
-        scrollLeft: actualLeft,
-      });
-    }
-  }, []);
+      // bodyContainerRef.current.scrollLeft = actualLeft;
+      // bodyContainerRef.current.scrollTop = actualTop;
+      if (gridRef.current) {
+        gridRef.current.scrollTo({
+          scrollTop: actualTop,
+          scrollLeft: actualLeft,
+        });
+      }
+    },
+    [],
+  );
+
   const onScroll = React.useCallback(
     (event: React.UIEvent<HTMLDivElement, UIEvent>) => {
       event.preventDefault();
@@ -96,6 +102,7 @@ const InitialWrapper = ({
 
       const compareTarget =
         event.currentTarget || event.target || EMPTY_SCROLL_TARGET;
+
       setScrollStyles(compareTarget);
     },
     [],
@@ -150,8 +157,20 @@ const InitialWrapper = ({
       width: width - 1,
     };
   }, [height, headerHeight, width]);
+
   const renderBody = () => {
     return (
+      // <GridRe
+      //   columnCount={columnCount}
+      //   rowCount={rowCount}
+      //   columnWidth={getColumnWidth}
+      //   rowHeight={() => 48}
+      //   onScroll={onScroll}
+      //   {...bodyStyle}
+      // >
+      //   {({ style }) => <div style={style}>111</div>}
+      // </GridRe>
+
       <div
         onScroll={onScroll}
         ref={bodyContainerRef}

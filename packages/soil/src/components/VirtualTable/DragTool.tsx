@@ -7,7 +7,11 @@ import './DragTool.css';
 
 function DragStuff(props) {
   const dragBasic = React.useRef<HTMLDivElement>(null);
-  const drag = React.useRef({ state: { x: 0 } });
+  const drag = React.useRef<
+    React.ElementRef<typeof Draggable> & {
+      state: { x: number };
+    }
+  >(null!);
   const [isDragging, setDrag] = React.useState(false);
 
   React.useEffect(() => {
@@ -44,11 +48,11 @@ function DragStuff(props) {
     }
   };
 
-  const handleDrag: DraggableEventHandler = (_, ui) => {
+  const handleDrag: DraggableEventHandler = bindRaf((_, ui) => {
     const dragInfo = dragStuffRef.current;
     const { left } = ui.node.getBoundingClientRect();
     if (dragInfo.node !== null) dragInfo.node.style.left = `${left}px`;
-  };
+  });
 
   const handleDragStop: DraggableEventHandler = (_, ui) => {
     const { lastX } = ui;
@@ -85,7 +89,7 @@ function DragStuff(props) {
       ref={drag}
       axis="x"
       onStart={handleDragStart}
-      onDrag={bindRaf(handleDrag)}
+      onDrag={handleDrag}
       onStop={handleDragStop}
     >
       <div ref={dragBasic} {...props} className="drag-stuff" />

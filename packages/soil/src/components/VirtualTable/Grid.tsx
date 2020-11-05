@@ -1,10 +1,11 @@
 /* eslint-disable no-param-reassign */
 /* copy from bvaughn/react-window: https://github.com/bvaughn/react-window */
+import memoizeOne from 'memoize-one';
 import * as React from 'react';
 // import bindRaf from './utils/bindRaf';
 import Cell from './Cell';
 
-const DEFAULT_OUT_OF_VIEW_ITEM_NUM = 1;
+const DEFAULT_OUT_OF_VIEW_ITEM_NUM = 2;
 
 // * 构建网格的最基本信息
 type GridBasicInfo = {
@@ -68,15 +69,12 @@ function Grid<T = Record<string, unknown>>(
   const rowCount = data.length;
   const columnCount = columns.length;
 
-  // * 当前内框宽高
-  const [contentContainerStyle, setContentContainer] = React.useState({
-    width: 0,
-    height: 0,
-  });
-  const [
-    { rowStartIndex, rowStopIndex, colStartIndex, colStopIndex },
-    setGrid,
-  ] = React.useState<{
+  // // * 当前内框宽高
+  // const [contentContainerStyle, setContentContainer] = React.useState({
+  //   width: 0,
+  //   height: 0,
+  // });
+  const [gridInfo, setGrid] = React.useState<{
     rowStartIndex: number;
     rowStopIndex: null | number;
     colStartIndex: number;
@@ -87,6 +85,7 @@ function Grid<T = Record<string, unknown>>(
     colStartIndex: 0,
     colStopIndex: null,
   });
+  const { rowStartIndex, rowStopIndex, colStartIndex, colStopIndex } = gridInfo;
 
   const metaDataMap = React.useRef<{
     rowMetadataMap: {
@@ -118,19 +117,9 @@ function Grid<T = Record<string, unknown>>(
   });
 
   const reCalculate = (scroll) => {
-    const contentHeight = getEstimatedTotalHeight(
-      rowCount,
-      metaDataMap.current.rowMetadataMap,
-      measuredInfos.current,
-    );
-    const contentWidth = getEstimatedTotalWidth(
-      columnCount,
-      metaDataMap.current.columnMetadataMap,
-      measuredInfos.current,
-    );
-
     const [curRowStartIndex, curRowStopIndex] = getVerticalRange(scroll);
     const [curColStartIndex, curColStopIndex] = getHorizontalRange(scroll);
+
     // console.log('curRows', curRowStartIndex, curRowStopIndex, contentHeight);
     // * 获取当前 可预测的内容容器 渲染 startIndex -> stopIndex
     setGrid((preGrid) => {
@@ -150,17 +139,17 @@ function Grid<T = Record<string, unknown>>(
       };
     });
 
-    setContentContainer((preContainer) => {
-      if (
-        preContainer.width === contentWidth &&
-        preContainer.height === contentHeight
-      )
-        return preContainer;
-      return {
-        width: contentWidth,
-        height: contentHeight,
-      };
-    });
+    // setContentContainer((preContainer) => {
+    //   if (
+    //     preContainer.width === contentWidth &&
+    //     preContainer.height === contentHeight
+    //   )
+    //     return preContainer;
+    //   return {
+    //     width: contentWidth,
+    //     height: contentHeight,
+    //   };
+    // });
   };
 
   const onReset = () => {
@@ -174,7 +163,6 @@ function Grid<T = Record<string, unknown>>(
 
   const scrollTo = (scroll: { scrollLeft: number; scrollTop: number }) => {
     scrollRef.current = scroll;
-
     reCalculate(scroll);
     if (container.current) {
       container.current.scrollLeft = scroll.scrollLeft;
@@ -295,7 +283,16 @@ function Grid<T = Record<string, unknown>>(
     ];
   }
 
+  const getItemStyleCache = React.useRef(
+    memoizeOne((_: typeof columnWidth, __: typeof rowHeight) => ({})),
+  );
   function getItemStyle(rowIndex: number, columnIndex: number) {
+    const itemStyleCache = getItemStyleCache.current(columnWidth, rowHeight);
+    const key = `${rowIndex}:${columnIndex}`;
+
+    if (itemStyleCache.hasOwnProperty(key)) {
+      return itemStyleCache[key];
+    }
     const curRow = getItemMetadata(
       'row',
       props,
@@ -310,15 +307,14 @@ function Grid<T = Record<string, unknown>>(
       metaDataMap.current,
       measuredInfos.current,
     );
-    const style = {
+    itemStyleCache[key] = {
       position: 'absolute',
       left: curCol.offset,
       top: curRow.offset,
       height: curRow.size,
       width: curCol.size,
     };
-
-    return style;
+    return itemStyleCache[key];
   }
 
   const items = [] as unknown[];
@@ -347,8 +343,25 @@ function Grid<T = Record<string, unknown>>(
     }
   }
 
+  const contentHeight = getEstimatedTotalHeight(
+    rowCount,
+    metaDataMap.current.rowMetadataMap,
+    measuredInfos.current,
+  );
+  const contentWidth = getEstimatedTotalWidth(
+    columnCount,
+    metaDataMap.current.columnMetadataMap,
+    measuredInfos.current,
+  );
+
   return (
-    <div style={contentContainerStyle} className="tableInner">
+    <div
+      style={{
+        height: contentHeight,
+        width: contentWidth,
+      }}
+      className="tableInner"
+    >
       {items}
     </div>
   );
@@ -438,8 +451,7 @@ function getRowStopIndex(
   let offset = itemMetadata.offset + itemMetadata.size;
   let stopIndex = startIndex;
 
-  while (stopIndex < rowCount - 1 && offset <= maxOffset) {
-    stopIndex += 1;
+  while (stopIndex < rowCount - 1 && offset < maxOffset) {
     offset += getItemMetadata(
       'row',
       gridBasicInfo,
@@ -447,6 +459,7 @@ function getRowStopIndex(
       metadata,
       measuredInfo,
     ).size;
+    stopIndex += 1;
   }
 
   return stopIndex;
