@@ -1,6 +1,6 @@
 import * as React from 'react';
 import Grid from './Grid';
-// import GridRe from './GridRe';
+// import bindRaf from './utils/bindRaf';
 import Header from './Header';
 import useFilters, { getFilteredData } from './hooks/useFilters/index';
 import useSorters, { getSortedData } from './hooks/useSorters/index';
@@ -55,6 +55,13 @@ const InitialWrapper = ({
     setColumn(newColumAction);
   }, []);
 
+  const gridScroll = React.useCallback((actualTop, actualLeft) => {
+    gridRef.current.scrollTo({
+      scrollTop: actualTop,
+      scrollLeft: actualLeft,
+    });
+  }, []);
+
   // * 重算 column width
   React.useLayoutEffect(() => {
     setColumn(diffColumnsWidth(originColumns, columnWidth));
@@ -85,23 +92,18 @@ const InitialWrapper = ({
 
       // bodyContainerRef.current.scrollLeft = actualLeft;
       // bodyContainerRef.current.scrollTop = actualTop;
-      if (gridRef.current) {
-        gridRef.current.scrollTo({
-          scrollTop: actualTop,
-          scrollLeft: actualLeft,
-        });
-      }
+      gridScroll(actualTop, actualLeft);
     },
     [],
   );
+
+  // const [setScrollTarget, getScrollTarget] = useTimeoutLock();
 
   const onScroll = React.useCallback(
     (event: React.UIEvent<HTMLDivElement, UIEvent>) => {
       event.preventDefault();
       event.stopPropagation();
-
-      const compareTarget =
-        event.currentTarget || event.target || EMPTY_SCROLL_TARGET;
+      const compareTarget = event.currentTarget || EMPTY_SCROLL_TARGET;
 
       setScrollStyles(compareTarget);
     },
@@ -120,7 +122,7 @@ const InitialWrapper = ({
     columns: originColumns,
   });
 
-  const renderHeader = () => {
+  const renderHeader = React.useMemo(() => {
     return (
       <div
         style={{ height: headerHeight }}
@@ -135,7 +137,7 @@ const InitialWrapper = ({
         />
       </div>
     );
-  };
+  }, [headerHeight, filterRenders, sorterRenders, diffedColumns]);
 
   const diffedDataSource = React.useMemo(
     () => getSortedData(getFilteredData(dataSource, filterStates), sortStates),
@@ -178,6 +180,7 @@ const InitialWrapper = ({
         style={bodyStyle}
       >
         <Grid
+          // header={renderHeader}
           ref={gridRef}
           columns={diffedColumns}
           columnCount={columnCount}
@@ -195,7 +198,7 @@ const InitialWrapper = ({
 
   return (
     <div className="table-wrapper">
-      {renderHeader()}
+      {renderHeader}
       {renderBody()}
     </div>
   );

@@ -29,6 +29,7 @@ function DragStuff(props) {
 
   const handleDragStart: DraggableEventHandler = (_, ui) => {
     setDrag(true);
+    // TODO 完善高度获取机制
     const wrapper = document.getElementsByClassName(
       'table-wrapper',
     )[0] as HTMLElement;

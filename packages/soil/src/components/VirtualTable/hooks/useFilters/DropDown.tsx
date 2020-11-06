@@ -6,7 +6,6 @@ import { Button, Menu, Checkbox, Radio, Dropdown } from 'antd';
 import useSyncState from '../useSyncState';
 import { FilterState } from '.';
 import styles from './DropDown.less';
-// import { ColumnType, FiltersProps, FilterType } from '../../interface';
 
 const { Item: MenuItem } = Menu;
 
@@ -136,7 +135,7 @@ function FilterDropdown<RecordType>(props: FilterDropdownProps<RecordType>) {
 
   const onVisibleChange = (newVisible: boolean) => {
     if (newVisible && propFilteredKeys !== undefined) {
-      // Sync filteredKeys on appear in controlled mode (propFilteredKeys !== undefiend)
+      // Sync filteredKeys on appear in controlled mode (propFilteredKeys !== undefined)
       setFilteredKeysSync(propFilteredKeys || []);
     }
 

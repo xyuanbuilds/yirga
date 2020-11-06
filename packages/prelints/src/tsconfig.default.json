@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "target": "esnext",
-    "module": "commonjs",
-    "lib": ["esnext", "dom"],
+    "module": "esnext",
+    "lib": ["esnext", "DOM", "DOM.Iterable"],
     "outDir": "dist",
     "allowSyntheticDefaultImports": true,
     "allowUnreachableCode": false,
@@ -12,6 +12,7 @@
     "esModuleInterop": true,
     "experimentalDecorators": true,
     "moduleResolution": "node",
+    "noEmit": false,
     "noImplicitReturns": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
@@ -21,6 +22,7 @@
     "newLine": "LF",
     "jsx": "react",
     "stripInternal": true,
+    "forceConsistentCasingInFileNames": true,
     "downlevelIteration": true,
     "resolveJsonModule": true
   }

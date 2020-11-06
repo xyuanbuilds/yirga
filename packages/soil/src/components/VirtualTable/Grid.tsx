@@ -5,7 +5,7 @@ import * as React from 'react';
 // import bindRaf from './utils/bindRaf';
 import Cell from './Cell';
 
-const DEFAULT_OUT_OF_VIEW_ITEM_NUM = 2;
+const DEFAULT_OUT_OF_VIEW_ITEM_NUM = 1;
 
 // * 构建网格的最基本信息
 type GridBasicInfo = {
@@ -45,8 +45,9 @@ export interface GridProps<T = Record<string, unknown>> extends GridBasicInfo {
   // rows?: GridRow[];
 }
 
+type ScrollInfo = { scrollLeft: number; scrollTop: number };
 export interface GridRef {
-  scrollTo: (scroll: { scrollLeft: number; scrollTop: number }) => void;
+  scrollTo: (scroll: ScrollInfo) => void;
   measuredInfos: React.MutableRefObject<{
     lastMeasuredRowIndex: number;
     lastMeasuredColumnIndex: number;
@@ -61,6 +62,7 @@ function Grid<T = Record<string, unknown>>(
     dataSource: data,
     columns,
     container,
+    // header,
     columnWidth,
     rowHeight,
     containerHeight,
@@ -116,11 +118,10 @@ function Grid<T = Record<string, unknown>>(
     scrollLeft: 0,
   });
 
-  const reCalculate = (scroll) => {
+  const reCalculate = (scroll: ScrollInfo) => {
     const [curRowStartIndex, curRowStopIndex] = getVerticalRange(scroll);
     const [curColStartIndex, curColStopIndex] = getHorizontalRange(scroll);
 
-    // console.log('curRows', curRowStartIndex, curRowStopIndex, contentHeight);
     // * 获取当前 可预测的内容容器 渲染 startIndex -> stopIndex
     setGrid((preGrid) => {
       if (
@@ -138,18 +139,6 @@ function Grid<T = Record<string, unknown>>(
         colStopIndex: curColStopIndex,
       };
     });
-
-    // setContentContainer((preContainer) => {
-    //   if (
-    //     preContainer.width === contentWidth &&
-    //     preContainer.height === contentHeight
-    //   )
-    //     return preContainer;
-    //   return {
-    //     width: contentWidth,
-    //     height: contentHeight,
-    //   };
-    // });
   };
 
   const onReset = () => {
@@ -162,12 +151,12 @@ function Grid<T = Record<string, unknown>>(
   };
 
   const scrollTo = (scroll: { scrollLeft: number; scrollTop: number }) => {
+    // if (container.current) {
+    //   container.current.scrollLeft = scrollRef.current.scrollLeft;
+    //   container.current.scrollTop = scrollRef.current.scrollTop;
+    // }
     scrollRef.current = scroll;
     reCalculate(scroll);
-    if (container.current) {
-      container.current.scrollLeft = scroll.scrollLeft;
-      container.current.scrollTop = scroll.scrollTop;
-    }
   };
 
   // *具体某处变化，外部重置measured
@@ -354,14 +343,16 @@ function Grid<T = Record<string, unknown>>(
     measuredInfos.current,
   );
 
+  const innerStyle = React.useMemo(() => {
+    return {
+      height: contentHeight,
+      width: contentWidth,
+    };
+  }, [contentHeight, contentWidth]);
+
   return (
-    <div
-      style={{
-        height: contentHeight,
-        width: contentWidth,
-      }}
-      className="tableInner"
-    >
+    <div style={innerStyle} className="tableInner">
+      {/* {header} */}
       {items}
     </div>
   );

@@ -5,26 +5,29 @@ const globalThis = window as Window;
 //     ? globalThis.requestIdleCallback
 //     : globalThis.requestAnimationFrame;
 
-function bindRaf(fn: (...args: any) => void, throttle?: boolean) {
+function bindRaf(
+  fn: (...args: any) => void,
+  // useIdle = true,
+  throttle?: boolean,
+) {
   if (!globalThis.requestAnimationFrame) return fn;
   let isRunning = false;
   let args: Parameters<typeof fn>;
-
-  const run = () => {
-    isRunning = false;
-    fn.call(null, ...args);
-  };
+  const request = globalThis.requestAnimationFrame;
 
   return (...params) => {
     args = params;
 
-    if (isRunning && throttle) {
+    if (isRunning || throttle) {
       return;
     }
 
     isRunning = true;
-    globalThis.requestAnimationFrame(run);
-    // frame(run);
+    request(() => {
+      // console.log('run');
+      fn.call(null, ...args);
+      isRunning = false;
+    });
   };
 }
 
