@@ -66,7 +66,9 @@ export default WrappedComponent;
 
 // 使用当前组件的 ref
 const Demo = () => {
-  const componentRef = React.useRef<InstanceType<typeof Test>>(null!);
+  const componentRef = React.useRef<React.ElementRef<typeof WrappedComponent>>(
+    null!,
+  );
   React.useEffect(() => {
     // 可以正常获取所有的 ref 内容
     componentRef.current.props.dispatch({ type: 'test' });

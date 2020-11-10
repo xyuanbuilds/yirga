@@ -4,6 +4,7 @@ import Grid from './Grid';
 import Header from './Header';
 import useFilters, { getFilteredData } from './hooks/useFilters/index';
 import useSorters, { getSortedData } from './hooks/useSorters/index';
+import { getColumnKey } from './hooks/utils';
 import {
   ColumnType,
   FiltersProps,
@@ -17,8 +18,8 @@ const EMPTY_SCROLL_TARGET = {};
 interface TableWrapperProps<T = Record<string, unknown>> {
   columns: ColumnType<T>[];
   dataSource: T[];
-  columnWidth: ColumnWidth;
-  rowHeight: number | ((index: number) => number);
+  columnWidth?: ColumnWidth;
+  rowHeight?: number | ((index: number) => number);
   height: number; // 表格容器高
   width: number; // 表格容器宽
   headerHeight?: number; // 表头高度
@@ -86,12 +87,8 @@ const InitialWrapper = ({
         Math.min(scrollTop, scrollHeight - clientHeight),
       );
 
-      if (headerRef.current)
-        // headerRef.current.style.transform = `translate3d(${-actualLeft}px, 0px, 0px)`;
-        headerRef.current.scrollLeft = actualLeft;
-
-      // bodyContainerRef.current.scrollLeft = actualLeft;
-      // bodyContainerRef.current.scrollTop = actualTop;
+      // headerRef.current.style.transform = `translate3d(${-actualLeft}px, 0px, 0px)`;
+      forceScroll(actualLeft, headerRef.current);
       gridScroll(actualTop, actualLeft);
     },
     [],
@@ -103,8 +100,8 @@ const InitialWrapper = ({
     (event: React.UIEvent<HTMLDivElement, UIEvent>) => {
       event.preventDefault();
       event.stopPropagation();
-      const compareTarget = event.currentTarget || EMPTY_SCROLL_TARGET;
 
+      const compareTarget = event.currentTarget || EMPTY_SCROLL_TARGET;
       setScrollStyles(compareTarget);
     },
     [],
@@ -221,6 +218,7 @@ function diffColumnsWidth<T>(
       offset: defaultDescriptor(
         index === 0 ? 0 : pre[index - 1].offset + pre[index - 1].width,
       ),
+      key: defaultDescriptor(getColumnKey(cur, String(index))),
     });
 
     pre.push(c);
@@ -236,6 +234,21 @@ function defaultDescriptor(value: unknown) {
     enumerable: true,
     configurable: true,
   };
+}
+
+function forceScroll(
+  scrollLeft: number,
+  target: HTMLDivElement | ((left: number) => void),
+) {
+  if (!target) {
+    return;
+  }
+  if (typeof target === 'function') {
+    target(scrollLeft);
+  } else if (target.scrollLeft !== scrollLeft) {
+    // eslint-disable-next-line no-param-reassign
+    target.scrollLeft = scrollLeft;
+  }
 }
 
 export default InitialWrapper;

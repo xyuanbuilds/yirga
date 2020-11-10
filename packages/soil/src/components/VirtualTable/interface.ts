@@ -4,12 +4,12 @@ export type DataIndex = string | number | (string | number)[];
 export type ColumnWidth = number | ((index: number) => number);
 
 export interface ColumnType<RecordType> {
-  align?: 'left' | 'middle' | 'right';
+  align?: 'left' | 'right' | 'center' | undefined;
   title?:
     | React.ReactNode
     | (({ sortOrder, sortColumn, filters }) => React.ReactNode);
   key?: React.Key; // 列自身key
-  dataIndex: DataIndex; // 列 -> 数据映射 key
+  dataIndex?: DataIndex; // 列 -> 数据映射 key
   children?: ColumnType<RecordType>[]; // TODO 表头分组相关
 }
 

@@ -68,7 +68,6 @@
   "less.validate": false,
   "css.validate": false,
   "scss.validate": false,
-  "editor.formatOnSave": true,
   "stylelint.configOverrides": {
     "ignoreFiles": ["**/*.js", "**/*.tsx", "**/*.ts"]
   },
@@ -79,7 +78,6 @@
     "source.fixAll": true
   },
   "eslint.lintTask.enable": true,
-  // "eslint.run": "onSave",
   "[less]": {
     "editor.defaultFormatter": "stylelint.vscode-stylelint",
     "editor.codeActionsOnSave": {
@@ -87,6 +85,7 @@
     }
   },
   "jest.autoEnable": false,
+  "editor.formatOnSave": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "cSpell.words": [
     "btns",
