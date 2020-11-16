@@ -2,6 +2,7 @@ import * as React from 'react';
 
 interface PropsForTest {
   props1: number | string;
+  props2?: number;
 }
 
 interface TestState {
@@ -14,6 +15,8 @@ export default class Test extends React.PureComponent<PropsForTest, TestState> {
 
   private InnerVariable = 'inner value'; // 私有属性
 
+  #originPrivate = 'test origin';
+
   domRef = React.createRef<HTMLDivElement>(); // domRef
 
   domStyle?: HTMLDivElement['style']; // 实例属性（默认公有）
@@ -22,6 +25,7 @@ export default class Test extends React.PureComponent<PropsForTest, TestState> {
     super(props);
 
     console.log(this.InnerVariable);
+    console.log(this.#originPrivate);
     console.log(Test.prototypeVariable);
   }
 

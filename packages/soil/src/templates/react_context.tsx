@@ -50,3 +50,5 @@ const DemoRenderProps = () => {
     </TestContext.Consumer>
   );
 };
+
+export { Demo, DemoClass, DemoRenderProps };

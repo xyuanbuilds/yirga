@@ -43,21 +43,9 @@ function Test(props: PropsForTest, ref: React.Ref<TestRef>) {
 
   return <div>11</div>;
 }
-const WrappedComponent = React.memo(
-  React.forwardRef<TestRef, PropsForTest>(Test),
-);
+const WrappedComponent = React.forwardRef<TestRef, PropsForTest>(Test);
 
 export default WrappedComponent;
-
-// type RefType<T> = T extends React.RefObject<any>
-//   ? T extends { current: infer R }
-//     ? NonNullable<R>
-//     : never
-//   : never;
-
-// type NoNeedImportRef = RefType<
-//   React.ComponentPropsWithRef<typeof WrappedComponent>['ref']
-// >;
 
 const Demo = () => {
   const test = React.useRef<React.ElementRef<typeof WrappedComponent>>(null!);
