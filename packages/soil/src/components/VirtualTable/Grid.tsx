@@ -1,8 +1,6 @@
-/* eslint-disable no-param-reassign */
-/* copy from bvaughn/react-window: https://github.com/bvaughn/react-window */
+/* eslint-disable no-param-reassign, import/no-extraneous-dependencies */
 import memoizeOne from 'memoize-one';
 import * as React from 'react';
-// import bindRaf from './utils/bindRaf';
 import Cell from './Cell';
 
 const DEFAULT_OUT_OF_VIEW_ITEM_NUM = 1;
@@ -11,8 +9,8 @@ const DEFAULT_OUT_OF_VIEW_ITEM_NUM = 1;
 type GridBasicInfo = {
   containerHeight: number;
   containerWidth: number;
-  columnCount: number;
-  rowCount: number;
+  columnCount?: number;
+  rowCount?: number;
   rowHeight?: number | ((index: number) => number);
   columnWidth?: number | ((index: number) => number);
 };
@@ -31,6 +29,7 @@ type RowMetaData = {
 
 type GridColumn = {
   key: string;
+  minWidth: number; // 最小宽度，拖拽不可低于最小宽
   // width: number; // 渲染宽度
   // offset: number; // left / top 偏移量
 };
@@ -61,7 +60,6 @@ function Grid<T = Record<string, unknown>>(
   const {
     dataSource: data,
     columns,
-    container,
     // header,
     columnWidth,
     rowHeight,
@@ -78,14 +76,14 @@ function Grid<T = Record<string, unknown>>(
   // });
   const [gridInfo, setGrid] = React.useState<{
     rowStartIndex: number;
-    rowStopIndex: null | number;
+    rowStopIndex: number;
     colStartIndex: number;
-    colStopIndex: null | number;
+    colStopIndex: number;
   }>({
     rowStartIndex: 0,
-    rowStopIndex: null,
+    rowStopIndex: 0,
     colStartIndex: 0,
-    colStopIndex: null,
+    colStopIndex: 0,
   });
   const { rowStartIndex, rowStopIndex, colStartIndex, colStopIndex } = gridInfo;
 
@@ -166,6 +164,7 @@ function Grid<T = Record<string, unknown>>(
 
   // *数量结构变化，直接重置
   React.useLayoutEffect(() => {
+    console.log('row change', rowCount);
     onReset();
     scrollTo({
       scrollTop: 0,
@@ -272,9 +271,11 @@ function Grid<T = Record<string, unknown>>(
     ];
   }
 
+  /* eslint-disable @typescript-eslint/no-unused-vars */
   const getItemStyleCache = React.useRef(
     memoizeOne((_: typeof columnWidth, __: typeof rowHeight) => ({})),
   );
+  /* eslint-disable @typescript-eslint/no-unused-vars */
   function getItemStyle(rowIndex: number, columnIndex: number) {
     const itemStyleCache = getItemStyleCache.current(columnWidth, rowHeight);
     const key = `${rowIndex}:${columnIndex}`;
@@ -306,8 +307,8 @@ function Grid<T = Record<string, unknown>>(
     return itemStyleCache[key];
   }
 
-  const items = [] as unknown[];
-  if (columnCount > 0 && rowCount && rowStopIndex && colStopIndex) {
+  let items = [] as React.ReactElement[];
+  if (columnCount > 0 && rowCount && rowStopIndex >= 0 && colStopIndex >= 0) {
     for (
       let rowIndex = rowStartIndex;
       rowIndex <= rowStopIndex && rowIndex <= data.length - 1;
@@ -321,10 +322,12 @@ function Grid<T = Record<string, unknown>>(
         items.push(
           // TODO Cell 外部注入
           React.createElement(Cell, {
-            columnIndex,
+            rowIndex,
+            // columnIndex,
+            curColumn: columns[columnIndex],
+            record: data[rowIndex],
             data: data[rowIndex][columns[columnIndex].key],
             key: getDefaultCellKey(columnIndex, rowIndex),
-            rowIndex,
             style: getItemStyle(rowIndex, columnIndex),
           }),
         );
@@ -343,16 +346,43 @@ function Grid<T = Record<string, unknown>>(
     measuredInfos.current,
   );
 
-  const innerStyle = React.useMemo(() => {
-    return {
-      height: contentHeight,
-      width: contentWidth,
-    };
-  }, [contentHeight, contentWidth]);
+  const isScrollBarY =
+    containerHeight < contentHeight && contentWidth <= containerWidth;
+
+  const isScrollBarX =
+    containerWidth < contentWidth && contentHeight <= containerHeight;
+
+  if (isScrollBarY) {
+    items = items.map((item, index) => {
+      if ((index % columnCount) - columnCount === -1) {
+        return React.cloneElement(item, {
+          hasScrollBarY: true,
+        });
+      }
+      return item;
+    });
+  }
+  if (isScrollBarX) {
+    items = items.map((item, index) => {
+      if (
+        index >=
+        (colStopIndex - colStartIndex + 1) * (rowStopIndex - rowStartIndex)
+      ) {
+        return React.cloneElement(item, {
+          hasScrollBarX: true,
+        });
+      }
+      return item;
+    });
+  }
 
   return (
-    <div style={innerStyle} className="tableInner">
-      {/* {header} */}
+    <div
+      style={{
+        height: isScrollBarX ? contentHeight - 8 : contentHeight,
+        width: isScrollBarY ? contentWidth - 8 : contentWidth,
+      }}
+    >
       {items}
     </div>
   );

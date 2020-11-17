@@ -1,8 +1,7 @@
 import * as React from 'react';
-// import useHover from './hooks/useHover';
-import classNames from 'clsx';
+import classNames from 'classnames';
 import DragStuff from './DragTool';
-import './Header.css';
+import styles from './Header.less';
 
 function Empty({ style, ...reset }) {
   return (
@@ -33,8 +32,8 @@ function TitleContainer({
   return (
     <span
       {...propsForContainer}
-      className={classNames('title-container', {
-        'title-with-extra': hasFilter || hasSorter,
+      className={classNames(styles.titleContainer, {
+        [styles.titleWithExtra]: hasFilter || hasSorter,
       })}
     >
       {children}
@@ -53,7 +52,7 @@ function renderSorter(titleContent, sorterRender) {
     : titleContent;
 }
 
-function Header({ columns, setColumn, filters, sorters }) {
+function Header({ columns, setColumn, filters, sorters, wrapperHeight }) {
   return (
     // <div>
     columns
@@ -68,6 +67,7 @@ function Header({ columns, setColumn, filters, sorters }) {
           </TitleContainer>
         );
         return React.createElement(Th, {
+          wrapperHeight,
           key: i.key,
           id: i.key,
           content: renderFilter(
@@ -100,10 +100,10 @@ function Header({ columns, setColumn, filters, sorters }) {
   );
 }
 
-function Th({ id, content, style, setColumn, columnIndex }) {
+function Th({ id, content, style, setColumn, columnIndex, wrapperHeight }) {
   return (
     <>
-      <div className="table-header-th" style={style}>
+      <div className={styles.tableHeaderTh} style={style}>
         {content}
       </div>
       <DragStuff
@@ -111,6 +111,7 @@ function Th({ id, content, style, setColumn, columnIndex }) {
           left: style.left + style.width - 5,
         }}
         id={id}
+        wrapperHeight={wrapperHeight}
         columnIndex={columnIndex}
         setColumn={setColumn}
       />

@@ -5,36 +5,42 @@
 
   .columnTitle {
     flex: 1 1 auto;
-    padding: 0px 2.3em 0px 0px;
+    padding: 0 2.3em 0 0;
     display: flex;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+
     & > span:first-child {
       flex: 0;
       padding: 12px 16px;
     }
   }
+
   .filterTriggerContainer {
     position: absolute;
-    top: 0px;
-    right: 0px;
-    bottom: 0px;
+    top: 0;
+    right: 0;
+    bottom: 0;
     display: flex;
     align-items: stretch;
     align-self: stretch;
     cursor: pointer;
     flex: 0 0 auto;
     transition: background-color 0.3s ease 0s;
+
     &:hover {
       background: rgb(229, 229, 229);
     }
+
     .containerOpen {
       background: rgb(229, 229, 229);
     }
   }
+
   .filterTrigger {
     width: 2.3em;
+
     .icon {
       position: absolute;
       top: 50%;
@@ -42,6 +48,7 @@
       transform: translate(-50%, -50%);
       transition: color 0.3s ease 0s;
       color: rgb(191, 191, 191);
+
       &.active {
         color: rgb(24, 144, 255);
       }
@@ -59,25 +66,28 @@
   font-variant: tabular-nums;
   min-width: 120px;
   background-color: rgb(255, 255, 255);
-  box-shadow: rgba(0, 0, 0, 0.12) 0px 3px 6px -4px, rgba(0, 0, 0, 0.08) 0px 6px 16px 0px, rgba(0, 0, 0, 0.05) 0px 9px 28px 8px;
-  margin: 0px;
-  padding: 0px;
+  box-shadow: rgba(0, 0, 0, 0.12) 0 3px 6px -4px, rgba(0, 0, 0, 0.08) 0 6px 16px 0, rgba(0, 0, 0, 0.05) 0 9px 28px 8px;
+  margin: 0;
+  padding: 0;
   list-style: none;
   border-radius: 2px;
+
   .menu {
     max-height: 264px;
     overflow-x: hidden;
     box-shadow: none;
-    border-width: 0px;
+    border-width: 0;
     border-style: initial;
     border-color: initial;
     border-image: initial;
+
     :global {
       .ant-menu-item .ant-checkbox-wrapper + span {
         padding-left: 8px;
       }
     }
   }
+
   .btns {
     display: flex;
     justify-content: space-between;

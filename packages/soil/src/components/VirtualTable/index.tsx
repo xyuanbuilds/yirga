@@ -1,17 +1,18 @@
 import * as React from 'react';
+import { Empty } from 'antd';
 import Grid from './Grid';
 // import bindRaf from './utils/bindRaf';
 import Header from './Header';
+import useColumns from './hooks/useColumns';
 import useFilters, { getFilteredData } from './hooks/useFilters/index';
 import useSorters, { getSortedData } from './hooks/useSorters/index';
-import { getColumnKey } from './hooks/utils';
 import {
   ColumnType,
   FiltersProps,
   ColumnWidth,
   SortersProps,
 } from './interface';
-import './index.css';
+import styles from './index.less';
 
 const EMPTY_SCROLL_TARGET = {};
 
@@ -29,7 +30,7 @@ interface TableWrapperProps<T = Record<string, unknown>> {
 
 const defaultColumns = [];
 const defaultDataSource = [];
-const InitialWrapper = ({
+const InitialWrapper = <T extends unknown>({
   columns: originColumns = defaultColumns,
   dataSource = defaultDataSource,
   columnWidth = 120,
@@ -39,34 +40,36 @@ const InitialWrapper = ({
   headerHeight = 48,
   filters,
   sorters,
-}: TableWrapperProps) => {
+}: TableWrapperProps<T>) => {
   const bodyContainerRef = React.useRef<HTMLDivElement>(null!);
   const headerRef = React.useRef<HTMLDivElement>(null!);
   const gridRef = React.useRef<React.ElementRef<typeof Grid>>(null!);
 
-  const [diffedColumns, setColumn] = React.useState(() =>
-    diffColumnsWidth(originColumns, columnWidth),
+  const [diffedColumns, setColumn] = useColumns<T>(
+    originColumns,
+    width - 1,
+    columnWidth,
   );
 
   // * 头部 cell 改变 columns
   const headerSetCol = React.useCallback((index, newColumAction) => {
-    // if (gridRef.current) {
-    gridRef.current.measuredInfos.current.lastMeasuredColumnIndex = index - 1;
-    // }
+    if (gridRef.current)
+      gridRef.current.measuredInfos.current.lastMeasuredColumnIndex = index - 1;
     setColumn(newColumAction);
   }, []);
 
   const gridScroll = React.useCallback((actualTop, actualLeft) => {
-    gridRef.current.scrollTo({
-      scrollTop: actualTop,
-      scrollLeft: actualLeft,
-    });
+    if (gridRef.current)
+      gridRef.current.scrollTo({
+        scrollTop: actualTop,
+        scrollLeft: actualLeft,
+      });
   }, []);
 
-  // * 重算 column width
-  React.useLayoutEffect(() => {
-    setColumn(diffColumnsWidth(originColumns, columnWidth));
-  }, [originColumns, columnWidth]);
+  // // * 重算 column width
+  // React.useLayoutEffect(() => {
+  //   setColumn(diffColumns(originColumns, width, columnWidth));
+  // }, [originColumns, columnWidth, width]);
 
   // ---------- scroll -----------
   const setScrollStyles = React.useCallback(
@@ -119,23 +122,6 @@ const InitialWrapper = ({
     columns: originColumns,
   });
 
-  const renderHeader = React.useMemo(() => {
-    return (
-      <div
-        style={{ height: headerHeight }}
-        ref={headerRef}
-        className="table-header-translate-wrapper"
-      >
-        <Header
-          filters={filterRenders}
-          sorters={sorterRenders}
-          columns={diffedColumns}
-          setColumn={headerSetCol}
-        />
-      </div>
-    );
-  }, [headerHeight, filterRenders, sorterRenders, diffedColumns]);
-
   const diffedDataSource = React.useMemo(
     () => getSortedData(getFilteredData(dataSource, filterStates), sortStates),
     [dataSource, filterStates, sortStates],
@@ -143,98 +129,89 @@ const InitialWrapper = ({
   const columnCount = diffedColumns.length;
   const rowCount = diffedDataSource.length;
 
-  // TODO 需要优化，减少 grid 所需参数的暴露
   const getColumnWidth = React.useCallback(
     (index) => {
       return diffedColumns[index].width;
     },
     [diffedColumns],
   );
+
   const bodyStyle = React.useMemo(() => {
+    let actualContentHeight = 0;
+    if (typeof rowHeight === 'number') {
+      actualContentHeight = diffedDataSource.length * rowHeight;
+    }
+    const bodyHeight = height - headerHeight - 1;
+
     return {
-      height: height - headerHeight - 1,
+      height:
+        bodyHeight > actualContentHeight && actualContentHeight !== 0
+          ? actualContentHeight
+          : diffedDataSource.length === 0
+          ? 200
+          : bodyHeight,
       width: width - 1,
     };
-  }, [height, headerHeight, width]);
+  }, [height, headerHeight, width, rowHeight, diffedDataSource]);
+
+  const renderHeader = React.useMemo(() => {
+    return (
+      <div
+        style={{ height: headerHeight }}
+        ref={headerRef}
+        className={styles.tableHeaderTranslateWrapper}
+      >
+        <Header
+          wrapperHeight={bodyStyle.height + headerHeight}
+          filters={filterRenders}
+          sorters={sorterRenders}
+          columns={diffedColumns}
+          setColumn={headerSetCol}
+        />
+      </div>
+    );
+  }, [filterRenders, sorterRenders, diffedColumns, bodyStyle]);
+
+  const empty =
+    !Array.isArray(diffedDataSource) || diffedDataSource.length === 0;
 
   const renderBody = () => {
     return (
-      // <GridRe
-      //   columnCount={columnCount}
-      //   rowCount={rowCount}
-      //   columnWidth={getColumnWidth}
-      //   rowHeight={() => 48}
-      //   onScroll={onScroll}
-      //   {...bodyStyle}
-      // >
-      //   {({ style }) => <div style={style}>111</div>}
-      // </GridRe>
-
       <div
         onScroll={onScroll}
         ref={bodyContainerRef}
-        className="table-scroll-wrapper"
+        className={styles.tableScrollWrapper}
         style={bodyStyle}
       >
-        <Grid
-          // header={renderHeader}
-          ref={gridRef}
-          columns={diffedColumns}
-          columnCount={columnCount}
-          rowCount={rowCount}
-          columnWidth={getColumnWidth}
-          container={bodyContainerRef}
-          rowHeight={rowHeight}
-          dataSource={diffedDataSource}
-          containerHeight={height - headerHeight - 1} // 减去表头 减去外框border-top
-          containerWidth={width - 1} // 减去外框border-left
-        />
+        {empty ? (
+          <Empty
+            className={styles.tableEmpty}
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+          />
+        ) : (
+          <Grid
+            ref={gridRef}
+            columns={diffedColumns}
+            rowCount={rowCount}
+            columnWidth={getColumnWidth}
+            container={bodyContainerRef}
+            rowHeight={rowHeight}
+            dataSource={diffedDataSource}
+            containerHeight={bodyStyle.height} // 减去表头 减去外框border-top
+            containerWidth={bodyStyle.width} // 减去外框border-left
+          />
+        )}
       </div>
     );
   };
 
   return (
-    <div className="table-wrapper">
+    <div className={styles.tableWrapper}>
       {renderHeader}
       {renderBody()}
     </div>
   );
 };
-
-type InnerColumn = {
-  key: string;
-  width: number; // 渲染宽度
-  offset: number; // left / top 偏移量
-};
-function diffColumnsWidth<T>(
-  originColumns: ColumnType<T>[],
-  columnWidth,
-): InnerColumn[] {
-  const diffed = originColumns.reduce<InnerColumn[]>((pre, cur, index) => {
-    const c = Object.defineProperties(cur, {
-      width: defaultDescriptor(
-        typeof columnWidth === 'function' ? columnWidth(index) : columnWidth,
-      ),
-      offset: defaultDescriptor(
-        index === 0 ? 0 : pre[index - 1].offset + pre[index - 1].width,
-      ),
-      key: defaultDescriptor(getColumnKey(cur, String(index))),
-    });
-
-    pre.push(c);
-    return pre;
-  }, []);
-  return diffed;
-}
-
-function defaultDescriptor(value: unknown) {
-  return {
-    value,
-    writable: true,
-    enumerable: true,
-    configurable: true,
-  };
-}
 
 function forceScroll(
   scrollLeft: number,

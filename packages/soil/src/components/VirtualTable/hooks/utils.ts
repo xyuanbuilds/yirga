@@ -32,3 +32,28 @@ export function getRowKey<RecordType>(
 export function getRowPos(index: number, pos?: string) {
   return pos ? `${pos}-${index}` : `${index}`;
 }
+
+export const hasProperty = (i: object, property: string): boolean =>
+  Object.prototype.hasOwnProperty.call(i, property);
+
+export const defineProperty = (
+  i: object,
+  property: string,
+  value: any,
+): boolean => {
+  return Reflect.defineProperty(i, property, {
+    value,
+    enumerable: true,
+    configurable: true,
+    writable: true,
+  });
+};
+
+export function defaultDescriptor(value: unknown) {
+  return {
+    value,
+    writable: true,
+    enumerable: true,
+    configurable: true,
+  };
+}

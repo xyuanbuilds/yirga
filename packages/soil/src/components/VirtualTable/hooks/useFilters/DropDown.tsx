@@ -1,5 +1,5 @@
 import * as React from 'react';
-import classNames from 'clsx';
+import classNames from 'classnames';
 import isEqual from 'lodash/isEqual';
 import { FilterFilled } from '@ant-design/icons';
 import { Button, Menu, Checkbox, Radio, Dropdown } from 'antd';

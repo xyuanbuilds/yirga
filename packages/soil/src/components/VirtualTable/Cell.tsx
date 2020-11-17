@@ -1,10 +1,49 @@
 import * as React from 'react';
-import './Cell.css';
+import classNames from 'classnames';
+import styles from './Cell.less';
 
-function Cell({ style, data }) {
+interface DefaultCellProps<RecordType> {
+  style: {
+    width: number;
+    height: number;
+  };
+  curColumn: import('./interface').ColumnType<RecordType>;
+  record: RecordType;
+  data: React.ReactNode;
+  className?: string;
+  hasScrollBarX?: boolean;
+  hasScrollBarY?: boolean;
+  rowIndex: number;
+  // columnIndex?: number;
+}
+
+function Cell<RecordType>({
+  style,
+  curColumn: { render },
+  record,
+  data,
+  className,
+  hasScrollBarX,
+  hasScrollBarY,
+  rowIndex,
+}: DefaultCellProps<RecordType>) {
+  const mergedClassName = classNames(
+    {
+      [styles.noBorderRight]: hasScrollBarY,
+    },
+    styles.tableCellContainer,
+    className,
+  );
   return (
-    <div style={style} className="table-cell-container">
-      {data}
+    <div
+      style={{
+        ...style,
+        width: hasScrollBarY ? style.width - 8 : style.width,
+        height: hasScrollBarX ? style.height - 8 : style.height,
+      }}
+      className={mergedClassName}
+    >
+      {typeof render === 'function' ? render(data, record, rowIndex) : data}
     </div>
   );
 }

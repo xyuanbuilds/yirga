@@ -1,4 +1,4 @@
-.table-wrapper {
+.tableWrapper {
   line-height: 1.5715;
   font-size: 14px;
   overflow: hidden;
@@ -6,22 +6,17 @@
   width: 100%;
   box-sizing: border-box;
   border-left: 1px solid #e8e8e8;
-  border-top: 1px solid #e8e8e8;
 }
 
-.table-header-translate-wrapper {
+.tableHeaderTranslateWrapper {
   height: 48px;
   position: relative;
   width: auto;
   will-change: transform;
   overflow: hidden;
 }
-/* TODO 更兼容的方式取消滚动条
-.table-header-translate-wrapper::-webkit-scrollbar {
-  display: none;
-} */
 
-.table-scroll-wrapper {
+.tableScrollWrapper {
   /* height: calc(100% - 48px); */
   width: 100%;
   overflow: auto;
@@ -29,20 +24,30 @@
   position: relative;
 }
 
-.table-scroll-wrapper::-webkit-scrollbar {
+.tableEmpty {
+  height: 100%;
+  border-right: 1px solid #e8e8e8;
+  border-bottom: 1px solid #e8e8e8;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tableScrollWrapper::-webkit-scrollbar {
   width: 8px;
   height: 8px;
   background-color: initial;
   visibility: hidden;
 }
 
-.table-scroll-wrapper::-webkit-scrollbar-track {
+.tableScrollWrapper::-webkit-scrollbar-track {
   background-color: initial;
   width: auto;
   visibility: hidden;
 }
 
-.table-scroll-wrapper::-webkit-scrollbar-thumb {
+.tableScrollWrapper::-webkit-scrollbar-thumb {
   width: 8px;
   height: 8px;
   border-radius: 8px;
@@ -50,14 +55,14 @@
   visibility: hidden;
 }
 
-.table-scroll-wrapper:hover::-webkit-scrollbar {
+.tableScrollWrapper:hover::-webkit-scrollbar {
   visibility: visible;
 }
 
-.table-scroll-wrapper:hover::-webkit-scrollbar-track {
+.tableScrollWrapper:hover::-webkit-scrollbar-track {
   visibility: visible;
 }
 
-.table-scroll-wrapper:hover::-webkit-scrollbar-thumb {
+.tableScrollWrapper:hover::-webkit-scrollbar-thumb {
   visibility: visible;
 }
