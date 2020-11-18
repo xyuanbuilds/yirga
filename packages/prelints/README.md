@@ -31,13 +31,14 @@ module.exports = {
 
 ## lib/tsconfig.default.json
 
-great useful tsconfig.base.json for build and editor interaction times.
+great useful tsconfig.base.json for editor interaction times.
 
 ### Usage
-tsconfig.json in your root dir
+tsconfig.eslint.json in your root dir
 ```
 {
-  "extends": "@yirga/prelints/lib/tsconfig.default.json"
+  "extends": "@yirga/prelints/lib/tsconfig.default.json",
+  "include": [".eslintrc.js"]
 }
 
 ```
@@ -75,3 +76,7 @@ then your tsconfig.dev.json
 
 ```
 you can debug the focusing .ts/.tsx file with vscode debug now!
+
+## lib/tsconfig.build.json
+
+great useful tsconfig.build.json for tsc build.
