@@ -1,21 +1,19 @@
 {
+  "extends": "@tsconfig/node12/tsconfig.json",
   "compilerOptions": {
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
     "allowSyntheticDefaultImports": true,
     "allowUnreachableCode": false,
     "allowUnusedLabels": true,
-    "noImplicitAny": false,
-    "declaration": true,
-    "declarationMap": true,
-    "esModuleInterop": true,
-    "module": "commonjs",
+    "experimentalDecorators": true,
     "moduleResolution": "node",
     "noImplicitReturns": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
+    "noImplicitAny": false,
     "pretty": true,
-    "sourceMap": true,
-    "strict": false,
-    "target": "es5",
-    "lib": ["esnext"]
+    "resolveJsonModule": true
   }
 }

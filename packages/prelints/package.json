@@ -44,6 +44,9 @@
     "clean:es": "tsc -b tsconfig.build.es.json --clean"
   },
   "dependencies": {
+    "@tsconfig/node12": "^1.0.7",
+    "@tsconfig/node14": "^1.0.0",
+    "@tsconfig/recommended": "^1.0.1",
     "@typescript-eslint/eslint-plugin": "^4.5.0",
     "debug": "^4.2.0",
     "eslint": "^7.11.0",

@@ -1,14 +1,6 @@
 {
   "extends": "./tsconfig.build.json",
   "compilerOptions": {
-    "plugins": [
-      {
-        "name": "typescript-plugin-css-modules",
-        "options": {
-          "customMatcher": "(\\.module|)\\.(le|sa|sc)ss$"
-        }
-      }
-    ],
     "composite": false,
     "allowJs": true,
     "rootDir": ".",

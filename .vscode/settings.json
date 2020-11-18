@@ -91,6 +91,7 @@
     "btns",
     "bvaughn",
     "clsx",
+    "esmodules",
     "tnum"
   ],
   "typescript.tsdk": "node_modules/typescript/lib",

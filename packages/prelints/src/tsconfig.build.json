@@ -1,0 +1,25 @@
+{
+  "extends": "@tsconfig/recommended/tsconfig.json",
+  "compilerOptions": {
+    "declaration": true,
+    "declarationMap": true,
+    "removeComments": false,
+    "preserveConstEnums": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "allowUnusedLabels": true,
+    "noUnusedParameters": true,
+    "noUnusedLocals": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noEmitHelpers": true,
+    "moduleResolution": "node",
+    "lib": ["ES2015", "DOM", "DOM.Iterable"],
+    "jsx": "react",
+    "outDir": "./dist",
+    "composite": true,
+    "incremental": true,
+    "tsBuildInfoFile": "./dist/.ts_build_info"
+  }
+}

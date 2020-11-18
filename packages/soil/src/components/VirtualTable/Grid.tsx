@@ -1,6 +1,7 @@
 /* eslint-disable no-param-reassign, import/no-extraneous-dependencies */
 import memoizeOne from 'memoize-one';
 import * as React from 'react';
+import usePrevious from './hooks/usePrevious';
 import Cell from './Cell';
 
 const DEFAULT_OUT_OF_VIEW_ITEM_NUM = 1;
@@ -9,8 +10,8 @@ const DEFAULT_OUT_OF_VIEW_ITEM_NUM = 1;
 type GridBasicInfo = {
   containerHeight: number;
   containerWidth: number;
-  columnCount?: number;
-  rowCount?: number;
+  columnCount: number;
+  rowCount: number;
   rowHeight?: number | ((index: number) => number);
   columnWidth?: number | ((index: number) => number);
 };
@@ -37,10 +38,16 @@ type GridColumn = {
 //   key: string;
 // };
 
-export interface GridProps<T = Record<string, unknown>> extends GridBasicInfo {
+export interface GridProps<T = Record<string, unknown>> {
   container: React.RefObject<HTMLDivElement>;
   dataSource: T[];
   columns: GridColumn[];
+  columnCount?: number;
+  rowCount?: number;
+  rowHeight?: number | ((index: number) => number);
+  columnWidth?: number | ((index: number) => number);
+  containerHeight: number;
+  containerWidth: number;
   // rows?: GridRow[];
 }
 
@@ -119,7 +126,6 @@ function Grid<T = Record<string, unknown>>(
   const reCalculate = (scroll: ScrollInfo) => {
     const [curRowStartIndex, curRowStopIndex] = getVerticalRange(scroll);
     const [curColStartIndex, curColStopIndex] = getHorizontalRange(scroll);
-
     // * 获取当前 可预测的内容容器 渲染 startIndex -> stopIndex
     setGrid((preGrid) => {
       if (
@@ -140,36 +146,36 @@ function Grid<T = Record<string, unknown>>(
   };
 
   const onReset = () => {
-    scrollRef.current = {
-      scrollTop: 0,
-      scrollLeft: 0,
-    };
     measuredInfos.current.lastMeasuredColumnIndex = -1;
     measuredInfos.current.lastMeasuredRowIndex = -1;
   };
 
   const scrollTo = (scroll: { scrollLeft: number; scrollTop: number }) => {
-    // if (container.current) {
-    //   container.current.scrollLeft = scrollRef.current.scrollLeft;
-    //   container.current.scrollTop = scrollRef.current.scrollTop;
-    // }
     scrollRef.current = scroll;
     reCalculate(scroll);
   };
 
   // *具体某处变化，外部重置measured
+  // * 具体某一 column 或 具体某一 row 的形变
+  // TODO 这里需要外部做 measured 的具体变化，可能有更好的方式
   React.useLayoutEffect(() => {
     scrollTo(scrollRef.current);
   }, [columnWidth, rowHeight]);
 
+  const prevCount = usePrevious({
+    columnCount,
+    rowCount,
+  });
+
   // *数量结构变化，直接重置
   React.useLayoutEffect(() => {
-    console.log('row change', rowCount);
-    onReset();
-    scrollTo({
-      scrollTop: 0,
-      scrollLeft: 0,
-    });
+    if (
+      prevCount !== undefined &&
+      (prevCount.columnCount !== columnCount || prevCount.rowCount !== rowCount)
+    ) {
+      onReset();
+    }
+    scrollTo(scrollRef.current);
   }, [columnCount, rowCount, containerHeight, containerWidth]);
 
   React.useImperativeHandle(ref, () => ({
@@ -285,14 +291,28 @@ function Grid<T = Record<string, unknown>>(
     }
     const curRow = getItemMetadata(
       'row',
-      props,
+      {
+        columnWidth,
+        rowHeight,
+        containerHeight,
+        containerWidth,
+        columnCount,
+        rowCount,
+      },
       rowIndex,
       metaDataMap.current,
       measuredInfos.current,
     );
     const curCol = getItemMetadata(
       'col',
-      props,
+      {
+        columnWidth,
+        rowHeight,
+        containerHeight,
+        containerWidth,
+        columnCount,
+        rowCount,
+      },
       columnIndex,
       metaDataMap.current,
       measuredInfos.current,

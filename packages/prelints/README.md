@@ -47,6 +47,7 @@ tsconfig.json in your root dir
 great useful tsconfig.dev.json for vscode debug.
 before that, you should global add [ts-node](https://www.npmjs.com/package/ts-node)
 
+node version >= 12
 ### Usage
 .vscode/launch.json
 
