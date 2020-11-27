@@ -58,17 +58,32 @@ const connector = connect(mapState, null, null, {
   forwardRef: true,
 });
 
-const WrappedComponent = compose<
-  React.ComponentClass<
-    PropsNeeded & {
-      // wrappedComponentRef: React.ClassAttributes<Test>['ref'];
-      wrappedComponentRef: React.Ref<Test>;
-    }
-  >
->(
+export type FakeClassComponent = React.ComponentClass<
+  PropsNeeded & {
+    // wrappedComponentRef: React.ClassAttributes<Test>['ref'];
+    wrappedComponentRef: React.Ref<Test>;
+  }
+>;
+
+export type FakeFunctionComponent = React.ForwardRefExoticComponent<
+  PropsNeeded & {
+    wrappedComponentRef: React.Ref<Test>;
+  }
+>;
+
+// * 伪造的类组件
+const WrappedComponent = compose<FakeClassComponent>(
   formWrapper,
   connector,
 )(Test);
+
+// * 伪装的函数组件
+// const WrappedComponent = compose<
+//   FakeFunctionComponent
+// >(
+//   formWrapper,
+//   connector,
+// )(Test);
 
 export default WrappedComponent;
 
