@@ -60,7 +60,6 @@ const connector = connect(mapState, null, null, {
 
 export type FakeClassComponent = React.ComponentClass<
   PropsNeeded & {
-    // wrappedComponentRef: React.ClassAttributes<Test>['ref'];
     wrappedComponentRef: React.Ref<Test>;
   }
 >;

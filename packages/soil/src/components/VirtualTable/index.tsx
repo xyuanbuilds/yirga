@@ -179,6 +179,7 @@ const InitialWrapper = <T extends unknown>({
     return (
       <div
         onScroll={onScroll}
+        onWheel={(e) => e.preventDefault()}
         ref={bodyContainerRef}
         className={styles.tableScrollWrapper}
         style={bodyStyle}

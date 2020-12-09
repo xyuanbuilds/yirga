@@ -30,7 +30,7 @@ function Test(props: PropsForTest, ref: React.Ref<TestRef>) {
     return res;
   }, []);
 
-  React.useImperativeHandle<TestRef, TestRef>(
+  React.useImperativeHandle(
     ref,
     () => ({
       method: asyncCB,
@@ -43,7 +43,7 @@ function Test(props: PropsForTest, ref: React.Ref<TestRef>) {
 
   return <div>11</div>;
 }
-const WrappedComponent = React.forwardRef<TestRef, PropsForTest>(Test);
+const WrappedComponent = React.forwardRef(Test);
 
 export default WrappedComponent;
 
