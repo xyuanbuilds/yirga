@@ -63,7 +63,7 @@ function Header({ columns, setColumn, filters, sorters, wrapperHeight }) {
         // TODO 注入sorter处
         const titleContent = (
           <TitleContainer hasSorter={!!sorterRender} hasFilter={!!filterRender}>
-            {i.key || i.title}
+            {i.title || i.key}
           </TitleContainer>
         );
         return React.createElement(Th, {
@@ -108,7 +108,7 @@ function Th({ id, content, style, setColumn, columnIndex, wrapperHeight }) {
       </div>
       <DragStuff
         style={{
-          left: style.left + style.width - 5,
+          left: style.left + style.width - 12,
         }}
         id={id}
         wrapperHeight={wrapperHeight}

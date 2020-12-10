@@ -2,7 +2,7 @@ import * as React from 'react';
 import classNames from 'classnames';
 import styles from './Cell.less';
 
-interface DefaultCellProps<RecordType> {
+export interface DefaultCellProps<RecordType> {
   style: {
     width: number;
     height: number;
@@ -10,11 +10,13 @@ interface DefaultCellProps<RecordType> {
   curColumn: import('./interface').ColumnType<RecordType>;
   record: RecordType;
   data: React.ReactNode;
-  className?: string;
   hasScrollBarX?: boolean;
   hasScrollBarY?: boolean;
   rowIndex: number;
-  // columnIndex?: number;
+  columnIndex: number;
+  className?: string;
+  rowClassName?: (record: RecordType, rowIndex: number) => string;
+  colClassName?: (record: RecordType, columnIndex: number) => string;
 }
 
 function Cell<RecordType>({
@@ -22,18 +24,30 @@ function Cell<RecordType>({
   curColumn: { render },
   record,
   data,
-  className,
   hasScrollBarX,
   hasScrollBarY,
   rowIndex,
+  columnIndex,
+  className,
+  rowClassName,
+  colClassName,
 }: DefaultCellProps<RecordType>) {
+  // * 定制 className
+  const rowClassNameStr =
+    typeof rowClassName === 'function' && rowClassName(record, rowIndex);
+  const colClassNameStr =
+    typeof colClassName === 'function' && colClassName(record, columnIndex);
+
   const mergedClassName = classNames(
     {
       [styles.noBorderRight]: hasScrollBarY,
     },
     styles.tableCellContainer,
     className,
+    colClassNameStr,
+    rowClassNameStr,
   );
+
   return (
     <div
       style={{
@@ -48,4 +62,4 @@ function Cell<RecordType>({
   );
 }
 
-export default Cell;
+export default React.memo(Cell);

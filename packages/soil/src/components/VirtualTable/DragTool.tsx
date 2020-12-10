@@ -94,4 +94,4 @@ function DragStuff(props) {
   );
 }
 
-export default DragStuff;
+export default React.memo(DragStuff);

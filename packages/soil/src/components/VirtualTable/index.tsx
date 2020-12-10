@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { Empty } from 'antd';
-import Grid from './Grid';
-// import bindRaf from './utils/bindRaf';
+import Grid from './GridClass';
 import Header from './Header';
 import useColumns from './hooks/useColumns';
+import useTimeoutLock from './hooks/useTimeoutLock';
 import useFilters, { getFilteredData } from './hooks/useFilters/index';
 import useSorters, { getSortedData } from './hooks/useSorters/index';
 import {
@@ -54,62 +54,42 @@ const InitialWrapper = <T extends unknown>({
   // * 头部 cell 改变 columns
   const headerSetCol = React.useCallback((index, newColumAction) => {
     if (gridRef.current)
-      gridRef.current.measuredInfos.current.lastMeasuredColumnIndex = index - 1;
+      gridRef.current.measuredInfos.lastMeasuredColumnIndex = index - 1;
     setColumn(newColumAction);
   }, []);
 
-  const gridScroll = React.useCallback((actualTop, actualLeft) => {
-    if (gridRef.current)
-      gridRef.current.scrollTo({
-        scrollTop: actualTop,
-        scrollLeft: actualLeft,
-      });
-  }, []);
-
-  // // * 重算 column width
-  // React.useLayoutEffect(() => {
-  //   setColumn(diffColumns(originColumns, width, columnWidth));
-  // }, [originColumns, columnWidth, width]);
-
   // ---------- scroll -----------
-  const setScrollStyles = React.useCallback(
-    ({
-      clientHeight,
-      clientWidth,
-      scrollLeft,
-      scrollTop,
-      scrollHeight,
-      scrollWidth,
-    }) => {
-      const actualLeft = Math.max(
-        0,
-        Math.min(scrollLeft, scrollWidth - clientWidth),
-      );
-      const actualTop = Math.max(
-        0,
-        Math.min(scrollTop, scrollHeight - clientHeight),
-      );
-
-      // headerRef.current.style.transform = `translate3d(${-actualLeft}px, 0px, 0px)`;
-      forceScroll(actualLeft, headerRef.current);
-      gridScroll(actualTop, actualLeft);
-    },
-    [],
-  );
-
-  // const [setScrollTarget, getScrollTarget] = useTimeoutLock();
+  const [setScrollTarget, getScrollTarget] = useTimeoutLock<
+    HTMLElement | typeof EMPTY_SCROLL_TARGET
+  >();
 
   const onScroll = React.useCallback(
-    (event: React.UIEvent<HTMLDivElement, UIEvent>) => {
-      event.preventDefault();
-      event.stopPropagation();
+    ({
+      currentTarget,
+      scrollLeft,
+    }: {
+      currentTarget: HTMLElement;
+      scrollLeft?: number;
+    }) => {
+      const mergedScrollLeft =
+        typeof scrollLeft === 'number'
+          ? scrollLeft
+          : (currentTarget as HTMLElement).scrollLeft;
 
-      const compareTarget = event.currentTarget || EMPTY_SCROLL_TARGET;
-      setScrollStyles(compareTarget);
+      const compareTarget = currentTarget || EMPTY_SCROLL_TARGET;
+      if (!getScrollTarget() || getScrollTarget() === compareTarget) {
+        setScrollTarget(compareTarget);
+
+        forceScroll(mergedScrollLeft, headerRef.current);
+        // forceScroll(mergedScrollLeft, bodyContainerRef.current);
+        if (gridRef.current)
+          gridRef.current.scrollTo({
+            scrollLeft: mergedScrollLeft,
+          });
+      }
     },
     [],
   );
-
   // ---------- Filters ----------
   const [filterStates, filterRenders] = useFilters({
     filters,
@@ -126,8 +106,6 @@ const InitialWrapper = <T extends unknown>({
     () => getSortedData(getFilteredData(dataSource, filterStates), sortStates),
     [dataSource, filterStates, sortStates],
   );
-  const columnCount = diffedColumns.length;
-  const rowCount = diffedDataSource.length;
 
   const getColumnWidth = React.useCallback(
     (index) => {
@@ -154,20 +132,55 @@ const InitialWrapper = <T extends unknown>({
     };
   }, [height, headerHeight, width, rowHeight, diffedDataSource]);
 
-  const renderHeader = React.useMemo(() => {
+  // const [connectObject] = React.useState(() => {
+  //   const obj = {};
+  //   Object.defineProperty(obj, 'scrollLeft', {
+  //     get: () => null,
+  //     set: (scrollLeft) => {
+  //       if (gridRef.current) {
+  //         console.log('what get ', scrollLeft);
+  //         gridRef.current.scrollTo({
+  //           scrollLeft,
+  //         });
+  //       }
+  //     },
+  //   });
+  //   return obj;
+  // });
+  // const triggerOnScroll = () => {
+  //   if (bodyContainerRef.current) {
+  //     onScroll({ currentTarget: bodyContainerRef.current } as React.UIEvent<
+  //       HTMLDivElement
+  //     >);
+  //   }
+  // };
+  // React.useEffect(() => {
+  //   bodyContainerRef.current = connectObject;
+  //   triggerOnScroll();
+  // }, []);
+
+  const headerEl = React.useMemo(() => {
     return (
       <div
         style={{ height: headerHeight }}
         ref={headerRef}
         className={styles.tableHeaderTranslateWrapper}
+        onScroll={onScroll}
       >
-        <Header
-          wrapperHeight={bodyStyle.height + headerHeight}
-          filters={filterRenders}
-          sorters={sorterRenders}
-          columns={diffedColumns}
-          setColumn={headerSetCol}
-        />
+        <div
+          style={{
+            height: '100%',
+            width: diffedColumns.reduce((res, cur) => res + cur.width, 0),
+          }}
+        >
+          <Header
+            wrapperHeight={bodyStyle.height + headerHeight}
+            filters={filterRenders}
+            sorters={sorterRenders}
+            columns={diffedColumns}
+            setColumn={headerSetCol}
+          />
+        </div>
       </div>
     );
   }, [filterRenders, sorterRenders, diffedColumns, bodyStyle]);
@@ -177,13 +190,7 @@ const InitialWrapper = <T extends unknown>({
 
   const renderBody = () => {
     return (
-      <div
-        onScroll={onScroll}
-        onWheel={(e) => e.preventDefault()}
-        ref={bodyContainerRef}
-        className={styles.tableScrollWrapper}
-        style={bodyStyle}
-      >
+      <>
         {empty ? (
           <Empty
             className={styles.tableEmpty}
@@ -193,22 +200,26 @@ const InitialWrapper = <T extends unknown>({
           <Grid
             ref={gridRef}
             columns={diffedColumns}
-            rowCount={rowCount}
             columnWidth={getColumnWidth}
             container={bodyContainerRef}
             rowHeight={rowHeight}
             dataSource={diffedDataSource}
             containerHeight={bodyStyle.height} // 减去表头 减去外框border-top
             containerWidth={bodyStyle.width} // 减去外框border-left
+            onScroll={({ scrollLeft }) => {
+              onScroll({ scrollLeft });
+            }}
+            className={styles.tableScrollWrapper}
+            style={bodyStyle}
           />
         )}
-      </div>
+      </>
     );
   };
 
   return (
     <div className={styles.tableWrapper}>
-      {renderHeader}
+      {headerEl}
       {renderBody()}
     </div>
   );
