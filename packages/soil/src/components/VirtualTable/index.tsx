@@ -6,7 +6,7 @@ import useColumns from './hooks/useColumns';
 import useTimeoutLock from './hooks/useTimeoutLock';
 import useFilters, { getFilteredData } from './hooks/useFilters/index';
 import useSorters, { getSortedData } from './hooks/useSorters/index';
-import {
+import type {
   ColumnType,
   FiltersProps,
   ColumnWidth,
@@ -14,7 +14,10 @@ import {
 } from './interface';
 import styles from './index.less';
 
+/* -------- basic -------- */
 const EMPTY_SCROLL_TARGET = {};
+const defaultColumns = [];
+const defaultDataSource = [];
 
 interface TableWrapperProps<T = Record<string, unknown>> {
   columns: ColumnType<T>[];
@@ -28,9 +31,7 @@ interface TableWrapperProps<T = Record<string, unknown>> {
   sorters?: SortersProps<T>;
 }
 
-const defaultColumns = [];
-const defaultDataSource = [];
-const InitialWrapper = <T extends unknown>({
+const BasicWrapper = <T extends Record<string, React.ReactNode>>({
   columns: originColumns = defaultColumns,
   dataSource = defaultDataSource,
   columnWidth = 120,
@@ -42,7 +43,7 @@ const InitialWrapper = <T extends unknown>({
   sorters,
 }: TableWrapperProps<T>) => {
   const bodyContainerRef = React.useRef<HTMLDivElement>(null!);
-  const headerRef = React.useRef<HTMLDivElement>(null!);
+  const headerContainerRef = React.useRef<HTMLDivElement>(null!);
   const gridRef = React.useRef<React.ElementRef<typeof Grid>>(null!);
 
   const [diffedColumns, setColumn] = useColumns<T>(
@@ -63,6 +64,32 @@ const InitialWrapper = <T extends unknown>({
     HTMLElement | typeof EMPTY_SCROLL_TARGET
   >();
 
+  const leftScrollingSync = (triggerArea: 'header' | 'body') => ({
+    currentTarget,
+    scrollLeft,
+  }: {
+    currentTarget: HTMLElement;
+    scrollLeft?: number;
+  }) => {
+    const mergedScrollLeft =
+      typeof scrollLeft === 'number'
+        ? scrollLeft
+        : (currentTarget as HTMLElement).scrollLeft;
+
+    const compareTarget = currentTarget || EMPTY_SCROLL_TARGET;
+    if (!getScrollTarget() || getScrollTarget() === compareTarget) {
+      setScrollTarget(compareTarget);
+
+      if (triggerArea !== 'header')
+        forceScroll(mergedScrollLeft, headerContainerRef.current);
+
+      if (triggerArea !== 'body' && gridRef.current)
+        gridRef.current.scrollTo({
+          scrollLeft: mergedScrollLeft,
+        });
+    }
+  };
+
   const onScroll = React.useCallback(
     ({
       currentTarget,
@@ -80,8 +107,8 @@ const InitialWrapper = <T extends unknown>({
       if (!getScrollTarget() || getScrollTarget() === compareTarget) {
         setScrollTarget(compareTarget);
 
-        forceScroll(mergedScrollLeft, headerRef.current);
-        // forceScroll(mergedScrollLeft, bodyContainerRef.current);
+        forceScroll(mergedScrollLeft, headerContainerRef.current);
+
         if (gridRef.current)
           gridRef.current.scrollTo({
             scrollLeft: mergedScrollLeft,
@@ -132,40 +159,13 @@ const InitialWrapper = <T extends unknown>({
     };
   }, [height, headerHeight, width, rowHeight, diffedDataSource]);
 
-  // const [connectObject] = React.useState(() => {
-  //   const obj = {};
-  //   Object.defineProperty(obj, 'scrollLeft', {
-  //     get: () => null,
-  //     set: (scrollLeft) => {
-  //       if (gridRef.current) {
-  //         console.log('what get ', scrollLeft);
-  //         gridRef.current.scrollTo({
-  //           scrollLeft,
-  //         });
-  //       }
-  //     },
-  //   });
-  //   return obj;
-  // });
-  // const triggerOnScroll = () => {
-  //   if (bodyContainerRef.current) {
-  //     onScroll({ currentTarget: bodyContainerRef.current } as React.UIEvent<
-  //       HTMLDivElement
-  //     >);
-  //   }
-  // };
-  // React.useEffect(() => {
-  //   bodyContainerRef.current = connectObject;
-  //   triggerOnScroll();
-  // }, []);
-
   const headerEl = React.useMemo(() => {
     return (
       <div
         style={{ height: headerHeight }}
-        ref={headerRef}
+        ref={headerContainerRef}
         className={styles.tableHeaderTranslateWrapper}
-        onScroll={onScroll}
+        onScroll={leftScrollingSync('header')}
       >
         <div
           style={{
@@ -203,6 +203,7 @@ const InitialWrapper = <T extends unknown>({
             columnWidth={getColumnWidth}
             container={bodyContainerRef}
             rowHeight={rowHeight}
+            syncScrollLeft={leftScrollingSync('body')}
             dataSource={diffedDataSource}
             containerHeight={bodyStyle.height} // 减去表头 减去外框border-top
             containerWidth={bodyStyle.width} // 减去外框border-left
@@ -240,4 +241,4 @@ function forceScroll(
   }
 }
 
-export default InitialWrapper;
+export default BasicWrapper;

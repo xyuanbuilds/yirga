@@ -3,8 +3,21 @@ import * as React from 'react';
 import Draggable, { DraggableEventHandler } from 'react-draggable';
 import bindRaf from './utils/bindRaf';
 import styles from './DragTool.less';
+import type { ColumnDiffedData } from './interface';
 
-function DragStuff(props) {
+interface DragStuffProps {
+  setColumn: (
+    index: number,
+    action: React.SetStateAction<ColumnDiffedData[]>,
+  ) => void;
+}
+
+function DragStuff({
+  setColumn,
+  wrapperHeight,
+  columnIndex,
+  ...elementAttributes
+}: DragStuffProps) {
   const dragBasic = React.useRef<HTMLDivElement>(null);
   const drag = React.useRef<
     React.ElementRef<typeof Draggable> & {
@@ -35,7 +48,7 @@ function DragStuff(props) {
 
     if (!dragInfo.appended) {
       el.className = styles.stuffDragging;
-      el.style.height = `${props.wrapperHeight}px`;
+      el.style.height = `${wrapperHeight}px`;
       el.style.top = `${top}px`;
       dragInfo.appended = true;
       document.body.appendChild(el);
@@ -53,14 +66,14 @@ function DragStuff(props) {
 
     let difference = lastX;
     drag.current.state.x = 0;
-    props.setColumn(props.columnIndex, (preColumns) =>
-      preColumns.reduce((pre, cur, i) => {
-        if (i > props.columnIndex) {
+    setColumn(columnIndex, (preColumns) =>
+      preColumns.reduce<ColumnDiffedData[]>((pre, cur, i) => {
+        if (i > columnIndex) {
           pre.push({
             ...cur,
             offset: cur.offset + difference,
           });
-        } else if (i === props.columnIndex) {
+        } else if (i === columnIndex) {
           difference =
             cur.width + lastX < cur.minWidth ? cur.minWidth - cur.width : lastX;
           pre.push({
@@ -89,7 +102,11 @@ function DragStuff(props) {
       onDrag={handleDrag}
       onStop={handleDragStop}
     >
-      <div ref={dragBasic} {...props} className={styles.dragStuff} />
+      <div
+        ref={dragBasic}
+        {...elementAttributes}
+        className={styles.dragStuff}
+      />
     </Draggable>
   );
 }

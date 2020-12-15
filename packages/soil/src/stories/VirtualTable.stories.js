@@ -44,9 +44,9 @@ let longDataSource;
 Virtualized.args = {
   height: 488 + 2, // TODO 容器监听
   width: 1000, // TODO 容器监听
-  columns: (curColumns = createColumns(10)),
+  columns: (curColumns = createColumns(100)),
   curColumns,
-  dataSource: (longDataSource = createDataSource(10000, curColumns)),
+  dataSource: (longDataSource = createDataSource(1000, curColumns)),
   longDataSource,
 };
 

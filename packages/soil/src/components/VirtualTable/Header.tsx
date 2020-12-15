@@ -108,7 +108,7 @@ function Th({ id, content, style, setColumn, columnIndex, wrapperHeight }) {
       </div>
       <DragStuff
         style={{
-          left: style.left + style.width - 12,
+          left: style.left + style.width - 5,
         }}
         id={id}
         wrapperHeight={wrapperHeight}

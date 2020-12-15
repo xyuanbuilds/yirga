@@ -7,7 +7,7 @@ export interface ColumnType<RecordType> {
   align?: 'left' | 'right' | 'center' | undefined;
   title?:
     | React.ReactNode
-    | (({ sortOrder, sortColumn, filters }) => React.ReactNode);
+    | (({ sortOrder, sortColumn, filters }) => React.ReactNode); // TODO
   key?: React.Key; // 列自身key
   dataIndex?: DataIndex; // 列 -> 数据映射 key
   children?: ColumnType<RecordType>[]; // TODO 表头分组相关
@@ -70,4 +70,14 @@ export interface FiltersProps<RecordType> {
 }
 export interface SortersProps<RecordType> {
   [columnKey: string]: SorterType<RecordType>;
+}
+
+/* ---------- Inner ---------- */
+export interface ColumnRawData {
+  minWidth: number;
+  width: number;
+}
+
+export interface ColumnDiffedData extends ColumnRawData {
+  offset: number;
 }

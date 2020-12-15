@@ -2,7 +2,6 @@
 import memoizeOne from 'memoize-one';
 import * as React from 'react';
 import Cell from './Cell';
-import bindRaf from './utils/bindRaf';
 
 const DEFAULT_OUT_OF_VIEW_ITEM_NUM = 1;
 
@@ -37,7 +36,7 @@ interface GridColumn {
 //   key: string;
 // };
 
-export interface GridProps<T = Record<string, unknown>> {
+export interface GridProps<T = Record<string, React.ReactNode>> {
   container: React.RefObject<HTMLDivElement>;
   dataSource: T[];
   columns: GridColumn[];
@@ -78,26 +77,38 @@ class Grid extends React.PureComponent<GridProps, ScrollInfo> {
 
   wrapper = React.createRef<HTMLDivElement>();
 
-  callOnScroll = memoizeOne((scrollLeft: number, scrollTop: number) =>
-    this.props.onScroll({
-      scrollLeft,
-      scrollTop,
-    }),
+  callOnScroll = memoizeOne(
+    (scrollLeft: number, scrollTop: number) =>
+      this.props.onScroll &&
+      this.props.onScroll({
+        scrollLeft,
+        scrollTop,
+      }),
   );
 
   componentDidMount() {
     const { scrollLeft, scrollTop } = this.state;
     this.callOnScroll(scrollLeft, scrollTop);
+    if (this.wrapper.current) {
+      this.wrapper.current.scrollLeft = Math.max(0, scrollLeft);
+      this.wrapper.current.scrollTop = Math.max(0, scrollTop);
+      this.wrapper.current.addEventListener('wheel', this.#onWheel, {
+        passive: false,
+      });
+    }
   }
 
   componentDidUpdate() {
     const { scrollLeft, scrollTop } = this.state;
+    this.callOnScroll(scrollLeft, scrollTop);
     if (this.wrapper.current) {
       this.wrapper.current.scrollLeft = Math.max(0, scrollLeft);
       this.wrapper.current.scrollTop = Math.max(0, scrollTop);
     }
+  }
 
-    this.callOnScroll(scrollLeft, scrollTop);
+  componentWillUnmount() {
+    this.wrapper.current?.removeEventListener('wheel', this.#onWheel);
   }
 
   onReset = () => {
@@ -135,6 +146,37 @@ class Grid extends React.PureComponent<GridProps, ScrollInfo> {
     });
   };
 
+  offsetBatchRef = {
+    x: 0,
+    y: 0,
+  };
+
+  nextFrameId?: number;
+
+  #onWheel = (event: WheelEvent) => {
+    event.preventDefault();
+
+    if (typeof this.nextFrameId === 'number')
+      cancelAnimationFrame(this.nextFrameId);
+    this.offsetBatchRef = {
+      y: (this.offsetBatchRef.y += event.deltaY),
+      x: (this.offsetBatchRef.x += event.deltaX),
+    };
+    this.nextFrameId = requestAnimationFrame(() => {
+      if (this.wrapper.current) {
+        this.wrapper.current.scrollLeft += this.offsetBatchRef.x;
+        this.wrapper.current.scrollTop += this.offsetBatchRef.y;
+      }
+      this.props.syncScrollLeft({
+        scrollLeft: this.wrapper.current.scrollLeft,
+      });
+      this.offsetBatchRef = {
+        x: 0,
+        y: 0,
+      };
+    });
+  };
+
   #onScroll = (event: React.UIEvent<HTMLDivElement, UIEvent>) => {
     const {
       clientHeight,
@@ -144,6 +186,7 @@ class Grid extends React.PureComponent<GridProps, ScrollInfo> {
       scrollHeight,
       scrollWidth,
     } = event.currentTarget;
+
     this.setState((prev) => {
       if (scrollLeft === prev.scrollLeft && scrollTop === prev.scrollTop)
         return null;
@@ -155,7 +198,6 @@ class Grid extends React.PureComponent<GridProps, ScrollInfo> {
         0,
         Math.min(scrollTop, scrollHeight - clientHeight),
       );
-
       return {
         scrollTop: actualTop,
         scrollLeft: actualLeft,
@@ -334,30 +376,6 @@ class Grid extends React.PureComponent<GridProps, ScrollInfo> {
     return itemStyleCache[key];
   };
 
-  // offset = {
-  //   x: 0,
-  //   y: 0,
-  // };
-
-  // nextFrame: number | null = null;
-
-  // #onWheel = ({ deltaX, deltaY }) => {
-  //   const { nextFrame } = this;
-  //   if (nextFrame !== null) cancelAnimationFrame(nextFrame);
-  //   this.offset = {
-  //     x: deltaX,
-  //     y: deltaY,
-  //   };
-  //   nextFrame = requestAnimationFrame(() => {
-  //     this.wrapper.current.scrollTop += this.offset.x;
-  //     this.wrapper.current.scrollLeft += this.offset.y;
-  //     this.offset = {
-  //       x: 0,
-  //       y: 0,
-  //     };
-  //   });
-  // };
-
   render() {
     const {
       dataSource: data,
@@ -426,7 +444,7 @@ class Grid extends React.PureComponent<GridProps, ScrollInfo> {
       <div
         ref={this.wrapper}
         onScroll={this.#onScroll}
-        // onWheel={this.#onWheel}
+        onWheel={this.#onWheel}
         className={wrapperClassName}
         style={bodyStyle}
       >
@@ -563,7 +581,7 @@ function getEstimatedTotalHeight(rowCount, rowMetadataMap, measuredInfo) {
   return totalSizeOfMeasuredRows + totalSizeOfUnmeasuredItems;
 }
 
-const estimatedColumnWidth = 100;
+const estimatedColumnWidth = 120;
 function getEstimatedTotalWidth(columnCount, columnMetadataMap, measuredInfo) {
   let totalSizeOfMeasuredRows = 0;
   let measuredColumnIndex = measuredInfo.lastMeasuredColumnIndex;
