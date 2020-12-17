@@ -1,6 +1,7 @@
 /* eslint-disable no-param-reassign, import/no-extraneous-dependencies */
 import memoizeOne from 'memoize-one';
 import * as React from 'react';
+import { useCallback } from 'react';
 import usePrevious from './hooks/usePrevious';
 import Cell from './Cell';
 
@@ -47,17 +48,18 @@ export interface GridProps<T = Record<string, unknown>> {
   columnWidth?: number | ((index: number) => number);
   containerHeight: number;
   containerWidth: number;
-  onScroll: (scroll: ScrollInfo) => void;
+  onScroll?: (scroll: ScrollInfo) => void;
   style?: React.CSSProperties;
   className?: string;
+  syncScrollLeft?: ({ scrollLeft: number, currentTarget: HTMLElement }) => void;
   // rows?: GridRow[];
 }
 export interface GridRef {
   scrollTo: (scroll: Partial<ScrollInfo>) => void;
-  measuredInfos: React.MutableRefObject<{
+  measuredInfos: {
     lastMeasuredRowIndex: number;
     lastMeasuredColumnIndex: number;
-  }>;
+  };
 }
 
 function Grid<T = Record<string, unknown>>(
@@ -74,19 +76,21 @@ function Grid<T = Record<string, unknown>>(
     onScroll,
     style: bodyStyle,
     className: wrapperClassName,
+    syncScrollLeft,
   } = props;
   React.useEffect(() => {
     console.error('props change');
   }, [props]);
   const rowCount = data.length || props.rowCount || 0;
   const columnCount = columns.length || props.columnCount || 0;
-
+  /* --------- Dom ---------- */
+  const wrapper = React.useRef<HTMLDivElement>(null!);
+  /* ----- Render State ----- */
   const [gridScroll, setScroll] = React.useState<ScrollInfo>({
     scrollLeft: 0,
     scrollTop: 0,
   });
-
-  const wrapper = React.useRef<HTMLDivElement>(null!);
+  /* -------- Cache --------- */
   const metaDataMap = React.useRef<{
     rowMetadataMap: {
       [index: number]: RowMetaData;
@@ -98,58 +102,32 @@ function Grid<T = Record<string, unknown>>(
     rowMetadataMap: {},
     columnMetadataMap: {},
   });
-
-  const measuredInfos = React.useRef<{
-    // 随着某一个 column 变化后，后续 columns也需要变化
-    // 但之前的 column 不需要变化，所以只需要计算后续的column即可
-    // 外部出发了 xxx 变化后， last xx 变为 index - 1
-    // row 同理
-    lastMeasuredRowIndex: number;
-    lastMeasuredColumnIndex: number;
-  }>({
+  const measuredInfos = React.useRef({
     lastMeasuredColumnIndex: -1,
     lastMeasuredRowIndex: -1,
   });
-
   const scrollRef = React.useRef({
     scrollTop: 0,
     scrollLeft: 0,
   });
-
-  // const reCalculate = bindRaf((scroll: ScrollInfo) => {
-  //   const [curRowStartIndex, curRowStopIndex] = getVerticalRange(scroll);
-  //   const [curColStartIndex, curColStopIndex] = getHorizontalRange(scroll);
-  //   // * 获取当前 可预测的内容容器 渲染 startIndex -> stopIndex
-  //   setGrid((preGrid) => {
-  //     if (
-  //       preGrid.rowStartIndex === curRowStartIndex &&
-  //       preGrid.rowStopIndex === curRowStopIndex &&
-  //       preGrid.colStartIndex === curColStartIndex &&
-  //       preGrid.colStopIndex === curColStopIndex
-  //     ) {
-  //       return preGrid;
-  //     }
-  //     return {
-  //       rowStartIndex: curRowStartIndex,
-  //       rowStopIndex: curRowStopIndex,
-  //       colStartIndex: curColStartIndex,
-  //       colStopIndex: curColStopIndex,
-  //     };
-  //   });
-  // });
   const callOnScroll = React.useRef(
-    memoizeOne((scrollLeft: number, scrollTop: number) =>
-      onScroll({
-        scrollLeft,
-        scrollTop,
-      }),
-    ),
+    memoizeOne((scrollLeft: number, scrollTop: number) => {
+      if (onScroll) {
+        onScroll({
+          scrollLeft,
+          scrollTop,
+        });
+      }
+    }),
   );
   React.useEffect(() => {
     scrollRef.current = gridScroll;
     wrapper.current.scrollLeft = Math.max(0, gridScroll.scrollLeft);
     wrapper.current.scrollTop = Math.max(0, gridScroll.scrollTop);
-
+    syncScroll({
+      scrollLeft: wrapper.current.scrollLeft,
+      currentTarget: wrapper.current,
+    });
     callOnScroll.current(gridScroll.scrollLeft, gridScroll.scrollTop);
   }, [gridScroll]);
 
@@ -162,32 +140,47 @@ function Grid<T = Record<string, unknown>>(
     });
   };
 
-  const scrollTo = ({ scrollLeft, scrollTop }: Partial<ScrollInfo>) => {
-    console.log('inner scroll', scrollLeft, scrollTop);
-    setScroll((prev) => {
-      if (scrollLeft !== undefined) {
-        scrollLeft = Math.max(0, scrollLeft);
-      }
-      if (scrollTop !== undefined) {
-        scrollTop = Math.max(0, scrollTop);
-      }
-      if (scrollLeft === undefined) {
-        scrollLeft = prev.scrollLeft;
-      }
-      if (scrollTop === undefined) {
-        scrollTop = prev.scrollTop;
-      }
+  function syncScroll(
+    scrollInfo: Partial<ScrollInfo> & { currentTarget: HTMLElement },
+  ) {
+    const { currentTarget } = scrollInfo;
+    if (syncScrollLeft) {
+      syncScrollLeft({
+        scrollLeft: scrollInfo.scrollLeft,
+        currentTarget,
+      });
+    }
+  }
 
-      if (scrollLeft === prev.scrollLeft && scrollTop === prev.scrollTop)
-        return prev;
+  const scrollTo = useCallback(
+    ({ scrollLeft, scrollTop }: Partial<ScrollInfo>) => {
+      setScroll((prev) => {
+        if (scrollLeft !== undefined) {
+          scrollLeft = Math.max(0, scrollLeft);
+        }
+        if (scrollTop !== undefined) {
+          scrollTop = Math.max(0, scrollTop);
+        }
+        if (scrollLeft === undefined) {
+          scrollLeft = prev.scrollLeft;
+        }
+        if (scrollTop === undefined) {
+          scrollTop = prev.scrollTop;
+        }
 
-      return {
-        scrollTop,
-        scrollLeft,
-      };
-    });
-  };
+        if (scrollLeft === prev.scrollLeft && scrollTop === prev.scrollTop)
+          return prev;
 
+        return {
+          scrollTop,
+          scrollLeft,
+        };
+      });
+    },
+    [],
+  );
+
+  // const isWheeling = React.useRef(false);
   const _onScroll = React.useCallback(
     (event: React.UIEvent<HTMLDivElement, UIEvent>) => {
       const {
@@ -209,9 +202,6 @@ function Grid<T = Record<string, unknown>>(
           0,
           Math.min(scrollTop, scrollHeight - clientHeight),
         );
-
-        console.log('truly scroll Left', actualLeft);
-
         return {
           scrollTop: actualTop,
           scrollLeft: actualLeft,
@@ -221,6 +211,49 @@ function Grid<T = Record<string, unknown>>(
     [],
   );
 
+  const frameBatch = React.useRef({
+    frameId: NaN,
+    x: 0,
+    y: 0,
+  });
+  const _onWheel = useCallback((event: WheelEvent) => {
+    const { deltaX, deltaY } = event;
+    event.preventDefault();
+
+    const batch = frameBatch.current;
+
+    cancelAnimationFrame(batch.frameId);
+    batch.x += deltaX;
+    batch.y += deltaY;
+
+    batch.frameId = requestAnimationFrame(() => {
+      if (wrapper.current) {
+        scrollTo({
+          scrollLeft: (wrapper.current.scrollLeft += frameBatch.current.x),
+          scrollTop: (wrapper.current.scrollTop += frameBatch.current.y),
+        });
+        syncScroll({
+          scrollLeft: wrapper.current.scrollLeft,
+          currentTarget: wrapper.current,
+        });
+      }
+      frameBatch.current.x = 0;
+      frameBatch.current.y = 0;
+    });
+  }, []);
+  React.useLayoutEffect(() => {
+    if (wrapper.current) {
+      wrapper.current.scrollLeft = Math.max(0, gridScroll.scrollLeft);
+      wrapper.current.scrollTop = Math.max(0, gridScroll.scrollTop);
+      wrapper.current.addEventListener('wheel', _onWheel, {
+        passive: false,
+      });
+    }
+    return wrapper.current.addEventListener('wheel', _onWheel, {
+      passive: false,
+    });
+  }, []);
+
   // *具体某处变化，外部重置measured
   // * 具体某一 column 或 具体某一 row 的形变
   // TODO 这里需要外部做 measured 的具体变化，可能有更好的方式
@@ -228,13 +261,13 @@ function Grid<T = Record<string, unknown>>(
     scrollTo(scrollRef.current);
   }, [columnWidth, rowHeight]);
 
+  // *数量结构变化，直接重置
   const prevCount = usePrevious({
     columnCount,
     rowCount,
   });
-
-  // *数量结构变化，直接重置
   React.useLayoutEffect(() => {
+    console.log('layout  change');
     if (
       prevCount !== undefined &&
       (prevCount.columnCount !== columnCount || prevCount.rowCount !== rowCount)
@@ -243,10 +276,14 @@ function Grid<T = Record<string, unknown>>(
     }
   }, [columnCount, rowCount, containerHeight, containerWidth]);
 
-  React.useImperativeHandle(ref, () => ({
-    scrollTo,
-    measuredInfos,
-  }));
+  React.useImperativeHandle(
+    ref,
+    () => ({
+      scrollTo,
+      measuredInfos: measuredInfos.current,
+    }),
+    [],
+  );
 
   function getVerticalRange(scroll: ScrollInfo) {
     if (columnCount === 0 || rowCount === 0) {

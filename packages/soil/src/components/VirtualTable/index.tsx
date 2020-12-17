@@ -19,8 +19,9 @@ const EMPTY_SCROLL_TARGET = {};
 const defaultColumns = [];
 const defaultDataSource = [];
 
-interface TableWrapperProps<T = Record<string, unknown>> {
+interface TableWrapperProps<T = Record<string, React.ReactNode>> {
   columns: ColumnType<T>[];
+  rowClassName?: string;
   dataSource: T[];
   columnWidth?: ColumnWidth;
   rowHeight?: number | ((index: number) => number);
@@ -31,7 +32,7 @@ interface TableWrapperProps<T = Record<string, unknown>> {
   sorters?: SortersProps<T>;
 }
 
-const BasicWrapper = <T extends Record<string, React.ReactNode>>({
+const BasicWrapper = <RecordType extends Record<string, React.ReactNode>>({
   columns: originColumns = defaultColumns,
   dataSource = defaultDataSource,
   columnWidth = 120,
@@ -41,12 +42,14 @@ const BasicWrapper = <T extends Record<string, React.ReactNode>>({
   headerHeight = 48,
   filters,
   sorters,
-}: TableWrapperProps<T>) => {
+  rowClassName,
+}: TableWrapperProps<RecordType>) => {
   const bodyContainerRef = React.useRef<HTMLDivElement>(null!);
   const headerContainerRef = React.useRef<HTMLDivElement>(null!);
-  const gridRef = React.useRef<React.ElementRef<typeof Grid>>(null!);
 
-  const [diffedColumns, setColumn] = useColumns<T>(
+  const gridRef = React.useRef<Grid<RecordType>>(null!);
+
+  const [diffedColumns, setColumn] = useColumns<RecordType>(
     originColumns,
     width - 1,
     columnWidth,
@@ -80,43 +83,20 @@ const BasicWrapper = <T extends Record<string, React.ReactNode>>({
     if (!getScrollTarget() || getScrollTarget() === compareTarget) {
       setScrollTarget(compareTarget);
 
-      if (triggerArea !== 'header')
-        forceScroll(mergedScrollLeft, headerContainerRef.current);
+      // if (triggerArea !== 'header')
+      forceScroll(mergedScrollLeft, headerContainerRef.current);
 
-      if (triggerArea !== 'body' && gridRef.current)
+      // if (triggerArea !== 'body' && gridRef.current)
+      if (gridRef.current)
         gridRef.current.scrollTo({
           scrollLeft: mergedScrollLeft,
         });
     }
+    // } else {
+    //   console.log('out', triggerArea);
+    // }
   };
 
-  const onScroll = React.useCallback(
-    ({
-      currentTarget,
-      scrollLeft,
-    }: {
-      currentTarget: HTMLElement;
-      scrollLeft?: number;
-    }) => {
-      const mergedScrollLeft =
-        typeof scrollLeft === 'number'
-          ? scrollLeft
-          : (currentTarget as HTMLElement).scrollLeft;
-
-      const compareTarget = currentTarget || EMPTY_SCROLL_TARGET;
-      if (!getScrollTarget() || getScrollTarget() === compareTarget) {
-        setScrollTarget(compareTarget);
-
-        forceScroll(mergedScrollLeft, headerContainerRef.current);
-
-        if (gridRef.current)
-          gridRef.current.scrollTo({
-            scrollLeft: mergedScrollLeft,
-          });
-      }
-    },
-    [],
-  );
   // ---------- Filters ----------
   const [filterStates, filterRenders] = useFilters({
     filters,
@@ -197,9 +177,10 @@ const BasicWrapper = <T extends Record<string, React.ReactNode>>({
             image={Empty.PRESENTED_IMAGE_SIMPLE}
           />
         ) : (
-          <Grid
+          <Grid<RecordType>
             ref={gridRef}
             columns={diffedColumns}
+            rowClassName={rowClassName}
             columnWidth={getColumnWidth}
             container={bodyContainerRef}
             rowHeight={rowHeight}
@@ -207,9 +188,6 @@ const BasicWrapper = <T extends Record<string, React.ReactNode>>({
             dataSource={diffedDataSource}
             containerHeight={bodyStyle.height} // 减去表头 减去外框border-top
             containerWidth={bodyStyle.width} // 减去外框border-left
-            onScroll={({ scrollLeft }) => {
-              onScroll({ scrollLeft });
-            }}
             className={styles.tableScrollWrapper}
             style={bodyStyle}
           />

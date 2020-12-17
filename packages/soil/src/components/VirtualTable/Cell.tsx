@@ -7,7 +7,8 @@ export interface DefaultCellProps<RecordType> {
     width: number;
     height: number;
   };
-  curColumn: import('./interface').ColumnType<RecordType>;
+  curColumn: import('./GridClass').GridColumn<RecordType>;
+  curRow: import('./GridClass').GridRow<RecordType>;
   record: RecordType;
   data: React.ReactNode;
   hasScrollBarX?: boolean;
@@ -15,13 +16,12 @@ export interface DefaultCellProps<RecordType> {
   rowIndex: number;
   columnIndex: number;
   className?: string;
-  rowClassName?: (record: RecordType, rowIndex: number) => string;
-  colClassName?: (record: RecordType, columnIndex: number) => string;
 }
 
-function Cell<RecordType>({
+function Cell<RecordType = Record<string, React.ReactNode>>({
   style,
-  curColumn: { render },
+  curColumn,
+  curRow,
   record,
   data,
   hasScrollBarX,
@@ -29,9 +29,9 @@ function Cell<RecordType>({
   rowIndex,
   columnIndex,
   className,
-  rowClassName,
-  colClassName,
 }: DefaultCellProps<RecordType>) {
+  const { className: colClassName, render: colRender } = curColumn;
+  const { className: rowClassName } = curRow;
   // * 定制 className
   const rowClassNameStr =
     typeof rowClassName === 'function' && rowClassName(record, rowIndex);
@@ -41,6 +41,7 @@ function Cell<RecordType>({
   const mergedClassName = classNames(
     {
       [styles.noBorderRight]: hasScrollBarY,
+      [styles.noBorderBottom]: hasScrollBarX,
     },
     styles.tableCellContainer,
     className,
@@ -57,7 +58,9 @@ function Cell<RecordType>({
       }}
       className={mergedClassName}
     >
-      {typeof render === 'function' ? render(data, record, rowIndex) : data}
+      {typeof colRender === 'function'
+        ? colRender(data, record, rowIndex)
+        : data}
     </div>
   );
 }

@@ -27,40 +27,41 @@ type RowMetaData = {
   size: number;
 };
 
-interface GridColumn {
+type ColumnType<T> = import('./interface').ColumnType<T>;
+export interface GridColumn<T> extends ColumnType<T> {
   key: string;
   minWidth: number; // 最小宽度，拖拽不可低于最小宽
-  // width: number; // 由 columnWidth 计算获得暂不可传递
+  // width: number; //! grid中 column width 由 columnWidth 计算获得暂不可传递
 }
-// type GridRow = {
-//   key: string;
-// };
+export interface GridRow<T> {
+  key: string;
+  className?: (record: T, index: number) => string;
+}
 
-export interface GridProps<T = Record<string, React.ReactNode>> {
+export interface GridProps<T> {
   container: React.RefObject<HTMLDivElement>;
   dataSource: T[];
-  columns: GridColumn[];
+  columns: GridColumn<T>[];
+  rows?: GridRow<T>[];
   columnCount?: number;
   rowCount?: number;
   rowHeight?: number | ((index: number) => number);
   columnWidth?: number | ((index: number) => number);
   containerHeight: number;
   containerWidth: number;
-  onScroll: (scroll: ScrollInfo) => void;
+  onScroll?: (scroll: ScrollInfo) => void;
   style?: React.CSSProperties;
   className?: string;
+  rowClassName?: (record: T, rowIndex: number) => string;
+  syncScrollLeft?: ({ scrollLeft: number, currentTarget: HTMLElement }) => void;
   // rows?: GridRow[];
 }
-export interface GridRef {
-  scrollTo: (scroll: Partial<ScrollInfo>) => void;
-  measuredInfos: React.MutableRefObject<{
-    lastMeasuredRowIndex: number;
-    lastMeasuredColumnIndex: number;
-  }>;
-}
 
-class Grid extends React.PureComponent<GridProps, ScrollInfo> {
-  state = {
+class Grid<RecordType> extends React.PureComponent<
+  GridProps<RecordType>,
+  ScrollInfo
+> {
+  state: ScrollInfo = {
     scrollLeft: 0,
     scrollTop: 0,
   };
@@ -88,10 +89,9 @@ class Grid extends React.PureComponent<GridProps, ScrollInfo> {
 
   componentDidMount() {
     const { scrollLeft, scrollTop } = this.state;
-    this.callOnScroll(scrollLeft, scrollTop);
+
+    this.layoutUpdate(scrollLeft, scrollTop);
     if (this.wrapper.current) {
-      this.wrapper.current.scrollLeft = Math.max(0, scrollLeft);
-      this.wrapper.current.scrollTop = Math.max(0, scrollTop);
       this.wrapper.current.addEventListener('wheel', this.#onWheel, {
         passive: false,
       });
@@ -100,11 +100,7 @@ class Grid extends React.PureComponent<GridProps, ScrollInfo> {
 
   componentDidUpdate() {
     const { scrollLeft, scrollTop } = this.state;
-    this.callOnScroll(scrollLeft, scrollTop);
-    if (this.wrapper.current) {
-      this.wrapper.current.scrollLeft = Math.max(0, scrollLeft);
-      this.wrapper.current.scrollTop = Math.max(0, scrollTop);
-    }
+    this.layoutUpdate(scrollLeft, scrollTop);
   }
 
   componentWillUnmount() {
@@ -146,31 +142,37 @@ class Grid extends React.PureComponent<GridProps, ScrollInfo> {
     });
   };
 
-  offsetBatchRef = {
+  // eslint-disable-next-line react/sort-comp
+  frameOffsetBatch = {
     x: 0,
     y: 0,
   };
 
   nextFrameId?: number;
 
+  onlyScrollBarX = false;
+
+  onlyScrollBarY = false;
+
   #onWheel = (event: WheelEvent) => {
     event.preventDefault();
 
     if (typeof this.nextFrameId === 'number')
       cancelAnimationFrame(this.nextFrameId);
-    this.offsetBatchRef = {
-      y: (this.offsetBatchRef.y += event.deltaY),
-      x: (this.offsetBatchRef.x += event.deltaX),
+    this.frameOffsetBatch = {
+      y: (this.frameOffsetBatch.y += event.deltaY),
+      x: (this.frameOffsetBatch.x += event.deltaX),
     };
     this.nextFrameId = requestAnimationFrame(() => {
       if (this.wrapper.current) {
-        this.wrapper.current.scrollLeft += this.offsetBatchRef.x;
-        this.wrapper.current.scrollTop += this.offsetBatchRef.y;
+        this.scrollTo({
+          scrollLeft: this.onlyScrollBarY
+            ? 0
+            : (this.wrapper.current.scrollLeft += this.frameOffsetBatch.x),
+          scrollTop: (this.wrapper.current.scrollTop += this.frameOffsetBatch.y),
+        });
       }
-      this.props.syncScrollLeft({
-        scrollLeft: this.wrapper.current.scrollLeft,
-      });
-      this.offsetBatchRef = {
+      this.frameOffsetBatch = {
         x: 0,
         y: 0,
       };
@@ -321,6 +323,35 @@ class Grid extends React.PureComponent<GridProps, ScrollInfo> {
 
   getItemStyleCache = memoizeOne((_, __) => ({}));
 
+  // * 重绘融合
+  layoutUpdate = (scrollLeft: number, scrollTop: number) => {
+    const actualScrollLeft = Math.max(0, scrollLeft);
+    const actualScrollTop = Math.max(0, scrollTop);
+    if (this.wrapper.current) {
+      this.wrapper.current.scrollLeft = actualScrollLeft;
+      this.wrapper.current.scrollTop = actualScrollTop;
+      this.syncScroll({
+        scrollLeft: actualScrollLeft,
+        currentTarget: this.wrapper.current,
+      });
+    }
+    this.callOnScroll(actualScrollLeft, actualScrollTop);
+  };
+
+  // * 滚动同步
+  syncScroll = (
+    scrollInfo: Partial<ScrollInfo> & { currentTarget: HTMLElement },
+  ) => {
+    const { currentTarget } = scrollInfo;
+    const { syncScrollLeft } = this.props;
+    if (syncScrollLeft) {
+      syncScrollLeft({
+        scrollLeft: scrollInfo.scrollLeft,
+        currentTarget,
+      });
+    }
+  };
+
   getItemStyle = (rowIndex: number, columnIndex: number) => {
     const {
       dataSource,
@@ -380,21 +411,20 @@ class Grid extends React.PureComponent<GridProps, ScrollInfo> {
     const {
       dataSource: data,
       columns,
+      rows,
       style: bodyStyle,
       className: wrapperClassName,
+      rowClassName,
+      containerHeight,
+      containerWidth,
     } = this.props;
 
     const rowCount = data.length || this.props.rowCount || 0;
     const columnCount = columns.length || this.props.columnCount || 0;
     const [rowStartIndex, rowStopIndex] = this.getVerticalRange(this.state);
     const [colStartIndex, colStopIndex] = this.getHorizontalRange(this.state);
-    // const isScrollBarY =
-    //   containerHeight < contentHeight && contentWidth <= containerWidth;
 
-    // const isScrollBarX =
-    //   containerWidth < contentWidth && contentHeight <= containerHeight;
-
-    const items = [] as React.ReactElement[];
+    let items = [] as React.ReactElement[];
     if (columnCount > 0 && rowCount && rowStopIndex >= 0 && colStopIndex >= 0) {
       for (
         let rowIndex = rowStartIndex;
@@ -406,25 +436,38 @@ class Grid extends React.PureComponent<GridProps, ScrollInfo> {
           columnIndex <= colStopIndex && columnIndex <= columns.length - 1;
           columnIndex++
         ) {
-          // const curItemIndex = items.length;
+          const curColumn = columns[columnIndex];
+          const curRow = rows && rows[rowIndex];
+
           items.push(
             // TODO Cell 外部注入
-            React.createElement(Cell, {
-              /** 内部使用 */
-              rowIndex,
-              columnIndex,
-              key: getDefaultCellKey(columnIndex, rowIndex),
-              style: this.getItemStyle(rowIndex, columnIndex),
-              /** 外部传递 */
-              curColumn: columns[columnIndex],
-              record: data[rowIndex],
-              data: data[rowIndex][columns[columnIndex].key],
-              // hasScrollBarX:
-              //   curItemIndex >=
-              //   (colStopIndex - colStartIndex + 1) *
-              //     (rowStopIndex - rowStartIndex),
-              // hasScrollBarY: (curItemIndex % columnCount) - columnCount === -1,
-            }),
+            React.createElement(
+              Cell as React.FunctionComponent<
+                import('./Cell').DefaultCellProps<RecordType>
+              >,
+              {
+                /** 内部使用 */
+                rowIndex,
+                columnIndex,
+                key: getDefaultCellKey(columnIndex, rowIndex),
+                style: this.getItemStyle(rowIndex, columnIndex),
+                /** 外部传递 */
+                curColumn,
+                curRow: {
+                  // TODO 自定义row后修改
+                  ...curRow,
+                  key: String(rowIndex),
+                  className: rowClassName,
+                },
+                record: data[rowIndex],
+                data: data[rowIndex][columns[columnIndex].key],
+                // hasScrollBarX:
+                //   curItemIndex >=
+                //   (colStopIndex - colStartIndex + 1) *
+                //     (rowStopIndex - rowStartIndex),
+                // hasScrollBarY: (curItemIndex % columnCount) - columnCount === -1,
+              },
+            ),
           );
         }
       }
@@ -439,19 +482,51 @@ class Grid extends React.PureComponent<GridProps, ScrollInfo> {
       this.metaDataMap.columnMetadataMap,
       this.measuredInfos,
     );
+    this.onlyScrollBarY =
+      containerHeight < contentHeight && contentWidth <= containerWidth;
+
+    this.onlyScrollBarX =
+      containerWidth < contentWidth && contentHeight <= containerHeight;
+
+    if (this.onlyScrollBarY) {
+      items = items.map((item, index) => {
+        if ((index % columnCount) - columnCount === -1) {
+          return React.cloneElement(item, {
+            hasScrollBarY: true,
+          });
+        }
+        return item;
+      });
+    }
+    if (this.onlyScrollBarX) {
+      items = items.map((item, index) => {
+        if (
+          index >=
+          (colStopIndex - colStartIndex + 1) * (rowStopIndex - rowStartIndex)
+        ) {
+          return React.cloneElement(item, {
+            hasScrollBarX: true,
+          });
+        }
+        return item;
+      });
+    }
 
     return (
       <div
         ref={this.wrapper}
         onScroll={this.#onScroll}
-        onWheel={this.#onWheel}
         className={wrapperClassName}
-        style={bodyStyle}
+        style={
+          bodyStyle
+          // borderRight: this.onlyScrollBarY ? '1px solid  #e8e8e8' : undefined,
+          // borderBottom: this.onlyScrollBarX ? '1px solid  #e8e8e8' : undefined,
+        }
       >
         <div
           style={{
-            height: contentHeight,
-            width: contentWidth,
+            height: this.onlyScrollBarX ? contentHeight - 8 : contentHeight,
+            width: this.onlyScrollBarY ? contentWidth - 8 : contentWidth,
           }}
         >
           {items}
@@ -461,8 +536,8 @@ class Grid extends React.PureComponent<GridProps, ScrollInfo> {
   }
 }
 
-type GridMetaData = InstanceType<typeof Grid>['metaDataMap'];
-type GridMeasureData = InstanceType<typeof Grid>['measuredInfos'];
+type GridMetaData = Grid<unknown>['metaDataMap'];
+type GridMeasureData = Grid<unknown>['measuredInfos'];
 
 function getColStartIndex(
   gridBasicInfo: GridBasicInfo,
@@ -480,8 +555,8 @@ function getColStartIndex(
 }
 function getColStopIndex(
   gridBasicInfo: GridBasicInfo,
-  metadata,
-  measuredInfo,
+  metadata: GridMetaData,
+  measuredInfo: GridMeasureData,
   startIndex: number,
   containerOffset: number,
 ) {
@@ -514,9 +589,9 @@ function getColStopIndex(
 
 function getRowStartIndex(
   gridBasicInfo: GridBasicInfo,
-  metadata,
-  measuredInfo,
-  scrollTop,
+  metadata: GridMetaData,
+  measuredInfo: GridMeasureData,
+  scrollTop: number,
 ) {
   return findNearestItem(
     'row',
@@ -528,8 +603,8 @@ function getRowStartIndex(
 }
 function getRowStopIndex(
   gridBasicInfo: GridBasicInfo,
-  metadata,
-  measuredInfo,
+  metadata: GridMetaData,
+  measuredInfo: GridMeasureData,
   startIndex: number,
   scrollTop: number,
 ): number {
@@ -562,7 +637,11 @@ function getRowStopIndex(
 }
 
 const estimatedRowHeight = 48;
-function getEstimatedTotalHeight(rowCount, rowMetadataMap, measuredInfo) {
+function getEstimatedTotalHeight(
+  rowCount: number,
+  rowMetadataMap: GridMetaData['rowMetadataMap'],
+  measuredInfo: GridMeasureData,
+) {
   let totalSizeOfMeasuredRows = 0;
 
   // Edge case check for when the number of items decreases while a scroll is in progress.
@@ -608,9 +687,9 @@ function getEstimatedTotalWidth(columnCount, columnMetadataMap, measuredInfo) {
 function findNearestItem(
   itemType: 'col' | 'row',
   gridBasicInfo: GridBasicInfo,
-  metadata,
-  measuredInfo,
-  containerOffset,
+  metadata: GridMetaData,
+  measuredInfo: GridMeasureData,
+  containerOffset: number,
 ) {
   const { columnMetadataMap, rowMetadataMap } = metadata;
   const { lastMeasuredColumnIndex, lastMeasuredRowIndex } = measuredInfo;
@@ -655,9 +734,9 @@ function findNearestItem(
 
 function findNearestItemExponentialSearch(
   itemType: 'col' | 'row',
-  gridBasicInfo,
-  metadata,
-  measuredInfo,
+  gridBasicInfo: GridBasicInfo,
+  metadata: GridMetaData,
+  measuredInfo: GridMeasureData,
   index: number,
   offset: number,
 ) {
@@ -687,9 +766,9 @@ function findNearestItemExponentialSearch(
 
 function findNearestItemBinarySearch(
   itemType: 'col' | 'row',
-  gridBasicInfo,
-  metadata,
-  measuredInfo,
+  gridBasicInfo: GridBasicInfo,
+  metadata: GridMetaData,
+  measuredInfo: GridMeasureData,
   high: number,
   low: number,
   containerOffset: number,
@@ -724,21 +803,21 @@ function getItemMetadata(
   itemType: 'col' | 'row',
   { columnWidth = 100, rowHeight = 48 }: GridBasicInfo,
   index: number,
-  metaData,
-  measuredInfo,
+  metadata: GridMetaData,
+  measuredInfo: GridMeasureData,
 ): ColumnMetaData | RowMetaData {
   // const { lastMeasuredColumnIndex, lastMeasuredRowIndex } = measuredInfo;
   let itemMetadataMap;
   let itemSize: number;
   let lastMeasuredIndex: number;
   if (itemType === 'col') {
-    itemMetadataMap = metaData.columnMetadataMap;
+    itemMetadataMap = metadata.columnMetadataMap;
     // * 每次获取 Metadata 同时更新值
     itemSize =
       typeof columnWidth === 'function' ? columnWidth(index) : columnWidth;
     lastMeasuredIndex = measuredInfo.lastMeasuredColumnIndex;
   } else {
-    itemMetadataMap = metaData.rowMetadataMap;
+    itemMetadataMap = metadata.rowMetadataMap;
     itemSize = typeof rowHeight === 'function' ? rowHeight(index) : rowHeight;
     lastMeasuredIndex = measuredInfo.lastMeasuredRowIndex;
   }

@@ -17,6 +17,7 @@ export interface ColumnType<RecordType> {
     record: RecordType,
     index: number,
   ) => React.ReactNode;
+  className?: (record: RecordType, index: number) => string;
 }
 
 export interface RowType {
