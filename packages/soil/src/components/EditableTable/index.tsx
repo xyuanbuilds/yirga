@@ -26,7 +26,6 @@ import getStandardRules from './getStandardRules';
 import Table from './CustomTable';
 import { drop, swap, isSimilar, allPromiseFinish } from './utils';
 import DuplicateCheckContext from './DuplicateCheckContext';
-
 import styles from './index.less';
 
 const TABLE_HEADER_HEIGHT = 48;

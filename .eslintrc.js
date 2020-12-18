@@ -1,7 +1,7 @@
 require('@rushstack/eslint-patch/modern-module-resolution');
 
 module.exports = {
-  extends: [require.resolve('@yirga/prelints/lib/eslint')],
+  extends: [require.resolve('./packages/prelints/lib/eslint')],
   parserOptions: {
     // sourceType: 'module',
     // project: ['./tsconfig.eslint.json', './packages/*/tsconfig.json'],

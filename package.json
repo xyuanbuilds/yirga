@@ -23,7 +23,6 @@
   ],
   "dependencies": {
     "@rushstack/eslint-patch": "^1.0.3",
-    "@yirga/prelints": "^0.1.0",
     "debug": "^4.1.1"
   }
 }

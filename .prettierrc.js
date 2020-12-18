@@ -1,4 +1,4 @@
-const config = require("@yirga/prelints");
+const config = require("./packages/prelints/lib");
 
 module.exports = {
   ...config.prettier,
