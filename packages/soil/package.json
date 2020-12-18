@@ -1,5 +1,6 @@
 {
   "name": "@yirga/soil",
+  "private": true,
   "version": "0.0.2",
   "description": "soil to grow",
   "author": "JhonXY <1076849402@qq.com>",
