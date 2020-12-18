@@ -18,7 +18,6 @@
       "ignoreChanges": [
         "**/CHANGELOG.md",
         "**/node_modules/**",
-        "**/package.json",
         "**/*.md",
         "**/*.spec.*",
         "**/*.stories.*",
