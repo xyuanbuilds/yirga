@@ -68,18 +68,15 @@
   "less.validate": false,
   "css.validate": false,
   "scss.validate": false,
-  "stylelint.configOverrides": {
-    "ignoreFiles": ["**/*.js", "**/*.tsx", "**/*.ts"]
-  },
+  "stylelint.ignoreDisables": true,
   "stylelint.packageManager": "yarn",
   "editor.codeActionsOnSave": {
+    "source.fixAll": true,
     "source.fixAll.eslint": true,
     "source.fixAll.stylelint": false,
-    "source.fixAll": true
   },
   "eslint.lintTask.enable": true,
   "[less]": {
-    "editor.defaultFormatter": "stylelint.vscode-stylelint",
     "editor.codeActionsOnSave": {
       "source.fixAll.stylelint": true
     }
