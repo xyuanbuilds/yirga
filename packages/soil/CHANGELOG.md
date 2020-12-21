@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.1](https://github.com/JhonXY/yirga/compare/@yirga/soil@0.1.0...@yirga/soil@0.1.1) (2020-12-21)
+
+
+### Bug Fixes
+
+* cell use col/row className ([223a6c7](https://github.com/JhonXY/yirga/commit/223a6c7c8b11a47831ca3952d8b7fd44d76ecccf))
+
+
+
+
+
 # [0.1.0](https://github.com/JhonXY/yirga/compare/@yirga/soil@0.0.2...@yirga/soil@0.1.0) (2020-12-18)
 
 
