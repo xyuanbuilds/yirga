@@ -35,7 +35,7 @@ export interface GridColumn<T> extends ColumnType<T> {
 }
 export interface GridRow<T> {
   key: string;
-  className?: (record: T, index: number) => string;
+  className?: string | ((record: T, index: number) => string);
 }
 
 export interface GridProps<T> {
@@ -51,8 +51,8 @@ export interface GridProps<T> {
   containerWidth: number;
   onScroll?: (scroll: ScrollInfo) => void;
   style?: React.CSSProperties;
-  className?: string;
-  rowClassName?: (record: T, rowIndex: number) => string;
+  className?: string | ((record: T, index: number) => string);
+  rowClassName?: string | ((record: T, index: number) => string);
   syncScrollLeft?: ({ scrollLeft: number, currentTarget: HTMLElement }) => void;
   // rows?: GridRow[];
 }

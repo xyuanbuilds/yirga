@@ -34,10 +34,15 @@ function Cell<RecordType = Record<string, React.ReactNode>>({
   const { className: rowClassName } = curRow;
   // * 定制 className
   const rowClassNameStr =
-    typeof rowClassName === 'function' && rowClassName(record, rowIndex);
+    typeof rowClassName === 'function'
+      ? rowClassName(record, rowIndex)
+      : rowClassName || undefined;
   const colClassNameStr =
-    typeof colClassName === 'function' && colClassName(record, columnIndex);
+    typeof colClassName === 'function'
+      ? colClassName(record, columnIndex)
+      : colClassName || undefined;
 
+  // * 行样式为最高优先级
   const mergedClassName = classNames(
     {
       [styles.noBorderRight]: hasScrollBarY,
