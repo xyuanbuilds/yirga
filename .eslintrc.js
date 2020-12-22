@@ -1,10 +1,19 @@
 require('@rushstack/eslint-patch/modern-module-resolution');
+const path = require('path');
+const fs = require('fs');
+
+const isDirectory = (source) => fs.lstatSync(source).isDirectory();
+const getDirectories = (source) =>
+  fs
+    .readdirSync(source)
+    .map((name) => path.resolve(source, name))
+    .filter(isDirectory);
 
 module.exports = {
   extends: [require.resolve('./packages/prelints/lib/eslint')],
   parserOptions: {
     // sourceType: 'module',
-    // project: ['./tsconfig.eslint.json', './packages/*/tsconfig.json'],
+    project: ['./tsconfig.eslint.json', './packages/*/tsconfig.json'],
     tsconfigRootDir: __dirname,
     warnOnUnsupportedTypeScriptVersion: false,
   },
@@ -29,6 +38,16 @@ module.exports = {
         jsx: 'never',
         ts: 'never',
         tsx: 'never',
+      },
+    ],
+    'import/no-extraneous-dependencies': [
+      'error',
+      {
+        packageDir: [
+          __dirname,
+          path.resolve(__dirname, 'node_modules/antd'),
+          ...getDirectories(path.resolve(__dirname, './packages')),
+        ],
       },
     ],
     'react/require-default-props': 'off',
