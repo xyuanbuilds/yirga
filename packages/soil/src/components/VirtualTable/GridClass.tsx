@@ -51,10 +51,10 @@ export interface GridProps<T> {
   containerWidth: number;
   onScroll?: (scroll: ScrollInfo) => void;
   style?: React.CSSProperties;
-  className?: string | ((record: T, index: number) => string);
+  className?: string;
   rowClassName?: string | ((record: T, index: number) => string);
   syncScrollLeft?: ({ scrollLeft: number, currentTarget: HTMLElement }) => void;
-  // rows?: GridRow[];
+  bordered?: boolean;
 }
 
 class Grid<RecordType> extends React.PureComponent<
@@ -72,8 +72,8 @@ class Grid<RecordType> extends React.PureComponent<
   };
 
   metaDataMap = {
-    rowMetadataMap: {} as RowMetaData,
-    columnMetadataMap: {} as ColumnMetaData,
+    rowMetadataMap: {} as Record<string, RowMetaData>,
+    columnMetadataMap: {} as Record<string, ColumnMetaData>,
   };
 
   wrapper = React.createRef<HTMLDivElement>();
@@ -325,17 +325,31 @@ class Grid<RecordType> extends React.PureComponent<
 
   // * 重绘融合
   layoutUpdate = (scrollLeft: number, scrollTop: number) => {
-    const actualScrollLeft = Math.max(0, scrollLeft);
-    const actualScrollTop = Math.max(0, scrollTop);
+    const validScrollLeft = Math.max(0, scrollLeft);
+    const validScrollTop = Math.max(0, scrollTop);
+    // ! 需要设置最大左滑范围，防止超出容器的滚动触发
+    let maxScrollLeft = 0;
+    if (
+      this.measuredInfos.lastMeasuredColumnIndex ===
+      this.props.columns.length - 1
+    ) {
+      const lastCol = this.metaDataMap.columnMetadataMap[
+        this.props.columns.length - 1
+      ];
+      maxScrollLeft = lastCol.offset + lastCol.size - this.props.containerWidth;
+    }
+    const actualScrollLeft = maxScrollLeft
+      ? Math.min(validScrollLeft, maxScrollLeft)
+      : validScrollLeft;
     if (this.wrapper.current) {
       this.wrapper.current.scrollLeft = actualScrollLeft;
-      this.wrapper.current.scrollTop = actualScrollTop;
+      this.wrapper.current.scrollTop = validScrollTop;
       this.syncScroll({
         scrollLeft: actualScrollLeft,
         currentTarget: this.wrapper.current,
       });
     }
-    this.callOnScroll(actualScrollLeft, actualScrollTop);
+    this.callOnScroll(actualScrollLeft, validScrollTop);
   };
 
   // * 滚动同步
@@ -417,6 +431,7 @@ class Grid<RecordType> extends React.PureComponent<
       rowClassName,
       containerHeight,
       containerWidth,
+      bordered = true,
     } = this.props;
 
     const rowCount = data.length || this.props.rowCount || 0;
@@ -459,6 +474,7 @@ class Grid<RecordType> extends React.PureComponent<
                   key: String(rowIndex),
                   className: rowClassName,
                 },
+                bordered,
                 record: data[rowIndex],
                 data: data[rowIndex][columns[columnIndex].key],
                 // hasScrollBarX:
@@ -512,21 +528,24 @@ class Grid<RecordType> extends React.PureComponent<
       });
     }
 
+    const actualContentHeight = this.onlyScrollBarX
+      ? contentHeight - 8
+      : contentHeight;
+    const actualContentWidth = this.onlyScrollBarY
+      ? contentWidth - 8
+      : contentWidth;
+
     return (
       <div
         ref={this.wrapper}
         onScroll={this.#onScroll}
         className={wrapperClassName}
-        style={
-          bodyStyle
-          // borderRight: this.onlyScrollBarY ? '1px solid  #e8e8e8' : undefined,
-          // borderBottom: this.onlyScrollBarX ? '1px solid  #e8e8e8' : undefined,
-        }
+        style={bodyStyle}
       >
         <div
           style={{
-            height: this.onlyScrollBarX ? contentHeight - 8 : contentHeight,
-            width: this.onlyScrollBarY ? contentWidth - 8 : contentWidth,
+            height: actualContentHeight,
+            width: actualContentWidth,
           }}
         >
           {items}
@@ -693,8 +712,10 @@ function findNearestItem(
 ) {
   const { columnMetadataMap, rowMetadataMap } = metadata;
   const { lastMeasuredColumnIndex, lastMeasuredRowIndex } = measuredInfo;
-  let itemMetadataMap;
-  let lastMeasuredIndex;
+  let itemMetadataMap:
+    | GridMetaData['rowMetadataMap']
+    | GridMetaData['columnMetadataMap'];
+  let lastMeasuredIndex: number;
   if (itemType === 'col') {
     itemMetadataMap = columnMetadataMap;
     lastMeasuredIndex = lastMeasuredColumnIndex;
@@ -703,7 +724,6 @@ function findNearestItem(
     lastMeasuredIndex = lastMeasuredRowIndex;
   }
 
-  // console.log('get measured', itemMetadataMap);
   const lastMeasuredItemOffset =
     lastMeasuredIndex > 0 ? itemMetadataMap[lastMeasuredIndex].offset : 0;
 

@@ -16,6 +16,7 @@ export interface DefaultCellProps<RecordType> {
   rowIndex: number;
   columnIndex: number;
   className?: string;
+  bordered?: boolean;
 }
 
 function Cell<RecordType = Record<string, React.ReactNode>>({
@@ -29,6 +30,7 @@ function Cell<RecordType = Record<string, React.ReactNode>>({
   rowIndex,
   columnIndex,
   className,
+  bordered = true,
 }: DefaultCellProps<RecordType>) {
   const { className: colClassName, render: colRender } = curColumn;
   const { className: rowClassName } = curRow;
@@ -47,6 +49,7 @@ function Cell<RecordType = Record<string, React.ReactNode>>({
     {
       [styles.noBorderRight]: hasScrollBarY,
       [styles.noBorderBottom]: hasScrollBarX,
+      [styles.noBorder]: !bordered,
     },
     styles.tableCellContainer,
     className,

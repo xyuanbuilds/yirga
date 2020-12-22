@@ -42,6 +42,7 @@ let curColumns;
 let normalDataSource;
 let longDataSource;
 Virtualized.args = {
+  // bordered: false,
   height: 488 + 2, // TODO 容器监听
   width: 1000, // TODO 容器监听
   columns: (curColumns = createColumns(100)),
@@ -53,6 +54,7 @@ export const 列边界 = Template.bind({});
 let curColumns1;
 let curDataSource1;
 列边界.args = {
+  // bordered: false,
   height: 488 + 2, // TODO 容器监听
   width: 120 * 5 + 1, // TODO 容器监听
   columns: (curColumns1 = createColumns(5)),
@@ -61,14 +63,19 @@ let curDataSource1;
   curDataSource1,
 };
 export const 行边界 = Template.bind({});
-let curColumns2;
+const curColumns2 = createColumns(100).map((i, index) => {
+  if (index === 1) i.className = 'testCol';
+  return i;
+});
 let curDataSource2;
+
 行边界.args = {
+  // bordered: false,
   height: 48 * 6 + 1, // TODO 容器监听
   width: 1000, // TODO 容器监听
-  columns: (curColumns2 = createColumns(100)),
-  curColumns,
+  columns: curColumns2,
   dataSource: (curDataSource2 = createDataSource(5, curColumns2)),
+  rowClassName: (_, index) => (index === 1 ? 'rowTest' : undefined),
   curDataSource2,
 };
 

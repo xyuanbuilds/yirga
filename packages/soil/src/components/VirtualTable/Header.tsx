@@ -28,7 +28,10 @@ function TitleContainer({
   children: React.ReactElement;
   hasFilter?: boolean;
   hasSorter?: boolean;
-} & Partial<React.HTMLAttributes<HTMLSpanElement>>) {
+} & React.DetailedHTMLProps<
+  React.HTMLAttributes<HTMLSpanElement>,
+  HTMLSpanElement
+>) {
   return (
     <span
       {...propsForContainer}
@@ -52,7 +55,14 @@ function renderSorter(titleContent, sorterRender) {
     : titleContent;
 }
 
-function Header({ columns, setColumn, filters, sorters, wrapperHeight }) {
+function Header({
+  columns,
+  setColumn,
+  filters,
+  sorters,
+  wrapperHeight,
+  bordered = true,
+}) {
   return (
     // <div>
     columns
@@ -70,6 +80,7 @@ function Header({ columns, setColumn, filters, sorters, wrapperHeight }) {
           wrapperHeight,
           key: i.key,
           id: i.key,
+          bordered,
           content: renderFilter(
             renderSorter(titleContent, sorterRender),
             filterRender,
@@ -100,10 +111,21 @@ function Header({ columns, setColumn, filters, sorters, wrapperHeight }) {
   );
 }
 
-function Th({ id, content, style, setColumn, columnIndex, wrapperHeight }) {
+function Th({
+  id,
+  content,
+  style,
+  setColumn,
+  columnIndex,
+  wrapperHeight,
+  bordered,
+}) {
+  const thClassNames = classNames(styles.tableHeaderTh, {
+    [styles.noBorder]: !bordered,
+  });
   return (
     <>
-      <div className={styles.tableHeaderTh} style={style}>
+      <div className={thClassNames} style={style}>
         {content}
       </div>
       <DragStuff

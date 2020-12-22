@@ -1,18 +1,22 @@
-/* .table-header-content {
-  display: flex;
-} */
+@import (reference) './index.less';
+
 .tableHeaderTh {
   position: absolute;
   top: 0;
   background-color: rgb(250, 250, 250);
   box-sizing: border-box;
-  border-top: 1px solid #e8e8e8;
+  border-top: unit(@borderWidth, px) solid #e8e8e8;
   border-bottom: 1px solid #e8e8e8;
-  border-right: 1px solid #e8e8e8;
+  border-right: unit(@borderWidth, px) solid #e8e8e8;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   z-index: 1;
+
+  &.noBorder {
+    border-top: unit(@borderWidth, px) solid rgba(0, 0, 0, 0);
+    border-right: none;
+  }
 }
 
 .titleContainer {

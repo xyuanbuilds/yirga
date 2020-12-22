@@ -1,29 +1,27 @@
 import * as React from 'react';
 import { Empty } from 'antd';
+import classNames from 'classnames';
 import Grid from './GridClass';
 import Header from './Header';
 import useColumns from './hooks/useColumns';
 import useTimeoutLock from './hooks/useTimeoutLock';
 import useFilters, { getFilteredData } from './hooks/useFilters/index';
 import useSorters, { getSortedData } from './hooks/useSorters/index';
-import type {
-  ColumnType,
-  FiltersProps,
-  ColumnWidth,
-  SortersProps,
-} from './interface';
+import type { ColumnType, FiltersProps, SortersProps } from './interface';
 import styles from './index.less';
 
 /* -------- basic -------- */
 const EMPTY_SCROLL_TARGET = {};
 const defaultColumns = [];
 const defaultDataSource = [];
+/* ------- styles -------- */
 
 interface TableWrapperProps<T = Record<string, React.ReactNode>> {
   columns: ColumnType<T>[];
   rowClassName?: string;
   dataSource: T[];
-  columnWidth?: ColumnWidth;
+  columnWidth?: number | ((index: number) => number);
+  bordered?: boolean;
   rowHeight?: number | ((index: number) => number);
   height: number; // 表格容器高
   width: number; // 表格容器宽
@@ -40,6 +38,7 @@ const BasicWrapper = <RecordType extends Record<string, React.ReactNode>>({
   height,
   width,
   headerHeight = 48,
+  bordered = true,
   filters,
   sorters,
   rowClassName,
@@ -126,7 +125,7 @@ const BasicWrapper = <RecordType extends Record<string, React.ReactNode>>({
     if (typeof rowHeight === 'number') {
       actualContentHeight = diffedDataSource.length * rowHeight;
     }
-    const bodyHeight = height - headerHeight - 1;
+    const bodyHeight = height - headerHeight;
 
     return {
       height:
@@ -135,16 +134,16 @@ const BasicWrapper = <RecordType extends Record<string, React.ReactNode>>({
           : diffedDataSource.length === 0
           ? 200
           : bodyHeight,
-      width: width - 1,
+      width: width - (bordered ? 1 : 0),
     };
-  }, [height, headerHeight, width, rowHeight, diffedDataSource]);
+  }, [height, headerHeight, width, rowHeight, diffedDataSource, bordered]);
 
   const headerEl = React.useMemo(() => {
     return (
       <div
         style={{ height: headerHeight }}
         ref={headerContainerRef}
-        className={styles.tableHeaderTranslateWrapper}
+        className={styles.tableHeaderScrollWrapper}
         onScroll={leftScrollingSync('header')}
       >
         <div
@@ -154,6 +153,7 @@ const BasicWrapper = <RecordType extends Record<string, React.ReactNode>>({
           }}
         >
           <Header
+            bordered={bordered}
             wrapperHeight={bodyStyle.height + headerHeight}
             filters={filterRenders}
             sorters={sorterRenders}
@@ -163,10 +163,14 @@ const BasicWrapper = <RecordType extends Record<string, React.ReactNode>>({
         </div>
       </div>
     );
-  }, [filterRenders, sorterRenders, diffedColumns, bodyStyle]);
+  }, [filterRenders, sorterRenders, diffedColumns, bodyStyle, bordered]);
 
   const empty =
     !Array.isArray(diffedDataSource) || diffedDataSource.length === 0;
+
+  const tableWrapperClassName = classNames(styles.tableScrollWrapper, {
+    [styles.noBorder]: !bordered,
+  });
 
   const renderBody = () => {
     return (
@@ -188,7 +192,8 @@ const BasicWrapper = <RecordType extends Record<string, React.ReactNode>>({
             dataSource={diffedDataSource}
             containerHeight={bodyStyle.height} // 减去表头 减去外框border-top
             containerWidth={bodyStyle.width} // 减去外框border-left
-            className={styles.tableScrollWrapper}
+            className={tableWrapperClassName}
+            bordered={bordered}
             style={bodyStyle}
           />
         )}

@@ -5,11 +5,17 @@ import bindRaf from './utils/bindRaf';
 import styles from './DragTool.less';
 import type { ColumnDiffedData } from './interface';
 
-interface DragStuffProps {
+interface DragStuffProps
+  extends React.DetailedHTMLProps<
+    React.HTMLAttributes<HTMLDivElement>,
+    HTMLDivElement
+  > {
   setColumn: (
     index: number,
     action: React.SetStateAction<ColumnDiffedData[]>,
   ) => void;
+  wrapperHeight: number;
+  columnIndex: number;
 }
 
 function DragStuff({
