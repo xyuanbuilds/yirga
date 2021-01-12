@@ -57,10 +57,9 @@ export interface GridProps<T> {
   bordered?: boolean;
 }
 
-class Grid<RecordType> extends React.PureComponent<
-  GridProps<RecordType>,
-  ScrollInfo
-> {
+class Grid<
+  RecordType extends Record<string, React.ReactNode>
+> extends React.PureComponent<GridProps<RecordType>, ScrollInfo> {
   state: ScrollInfo = {
     scrollLeft: 0,
     scrollTop: 0,
@@ -555,8 +554,8 @@ class Grid<RecordType> extends React.PureComponent<
   }
 }
 
-type GridMetaData = Grid<unknown>['metaDataMap'];
-type GridMeasureData = Grid<unknown>['measuredInfos'];
+type GridMetaData = Grid<Record<string, React.ReactNode>>['metaDataMap'];
+type GridMeasureData = Grid<Record<string, React.ReactNode>>['measuredInfos'];
 
 function getColStartIndex(
   gridBasicInfo: GridBasicInfo,
