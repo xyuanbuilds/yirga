@@ -93,29 +93,29 @@ const initialValues = [
   { field: 'testsield1213fd12', fieldNotes: 'dfss', type: 1, mainKey: false },
   { field: 'testsield1123df21', fieldNotes: 'dfss', type: 1, mainKey: false },
 ];
-export const WithInitial = Template.bind({});
-WithInitial.args = {
-  columns,
-  height: 500,
-  initialValues: Array(5)
-    .fill({})
-    .reduce((pre) => {
-      return pre.concat(
-        pre.map((i, index) => {
-          return Object.fromEntries(
-            Object.entries(i).map((item) => {
-              if (item[0] === 'field') {
-                return [
-                  item[0],
-                  `e${String(Math.random() * 100000).slice(0, 4)}${String(
-                    Math.random() * 100000,
-                  ).slice(0, 4)}`,
-                ];
-              }
-              return item;
-            }),
-          );
-        }),
-      );
-    }, initialValues),
-};
+// export const WithInitial = Template.bind({});
+// WithInitial.args = {
+//   columns,
+//   height: 500,
+//   initialValues: Array(5)
+//     .fill({})
+//     .reduce((pre) => {
+//       return pre.concat(
+//         pre.map((i, index) => {
+//           return Object.fromEntries(
+//             Object.entries(i).map((item) => {
+//               if (item[0] === 'field') {
+//                 return [
+//                   item[0],
+//                   `e${String(Math.random() * 100000).slice(0, 4)}${String(
+//                     Math.random() * 100000,
+//                   ).slice(0, 4)}`,
+//                 ];
+//               }
+//               return item;
+//             }),
+//           );
+//         }),
+//       );
+//     }, initialValues),
+// };

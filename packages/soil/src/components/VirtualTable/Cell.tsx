@@ -1,5 +1,7 @@
 import * as React from 'react';
 import classNames from 'classnames';
+import { Tooltip } from 'antd';
+import getScrollBarSize from './utils/getScrollBarSize';
 import styles from './Cell.less';
 
 export interface DefaultCellProps<RecordType> {
@@ -17,6 +19,7 @@ export interface DefaultCellProps<RecordType> {
   columnIndex: number;
   className?: string;
   bordered?: boolean;
+  isScrolling?: boolean;
 }
 
 function Cell<RecordType = Record<string, React.ReactNode>>({
@@ -31,6 +34,7 @@ function Cell<RecordType = Record<string, React.ReactNode>>({
   columnIndex,
   className,
   bordered = true,
+  isScrolling = true,
 }: DefaultCellProps<RecordType>) {
   const { className: colClassName, render: colRender } = curColumn;
   const { className: rowClassName } = curRow;
@@ -47,6 +51,7 @@ function Cell<RecordType = Record<string, React.ReactNode>>({
   // * 行样式为最高优先级
   const mergedClassName = classNames(
     {
+      [styles.scrolling]: isScrolling,
       [styles.noBorderRight]: hasScrollBarY,
       [styles.noBorderBottom]: hasScrollBarX,
       [styles.noBorder]: !bordered,
@@ -57,18 +62,26 @@ function Cell<RecordType = Record<string, React.ReactNode>>({
     rowClassNameStr,
   );
 
+  const scrollBarSize = getScrollBarSize();
+  const content =
+    typeof colRender === 'function' ? colRender(data, record, rowIndex) : data;
+
   return (
     <div
       style={{
         ...style,
-        width: hasScrollBarY ? style.width - 8 : style.width,
-        height: hasScrollBarX ? style.height - 8 : style.height,
+        width: hasScrollBarY ? style.width - scrollBarSize : style.width,
+        height: hasScrollBarX ? style.height - scrollBarSize : style.height,
       }}
       className={mergedClassName}
     >
-      {typeof colRender === 'function'
-        ? colRender(data, record, rowIndex)
-        : data}
+      {!isScrolling ? (
+        <Tooltip placement="topLeft" mouseEnterDelay={0.3} title={data}>
+          {content}
+        </Tooltip>
+      ) : (
+        content
+      )}
     </div>
   );
 }

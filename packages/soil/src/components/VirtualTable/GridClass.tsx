@@ -1,9 +1,18 @@
-/* eslint-disable no-param-reassign */
+/* eslint-disable no-param-reassign,import/no-extraneous-dependencies */
 import memoizeOne from 'memoize-one';
 import * as React from 'react';
+import { requestTimeout, cancelTimeout } from './utils/timer';
+import getScrollBarSize from './utils/getScrollBarSize';
 import Cell from './Cell';
 
 const DEFAULT_OUT_OF_VIEW_ITEM_NUM = 1;
+
+const uuid = () => {
+  // uuid长度始终大于阀值
+  return String(
+    Math.floor((Math.random() + Math.floor(Math.random() * 9 + 1)) * 10 ** 6),
+  );
+};
 
 // * 内部 type
 // * 构建网格的最基本信息
@@ -15,7 +24,11 @@ type GridBasicInfo = {
   rowHeight?: number | ((index: number) => number);
   columnWidth?: number | ((index: number) => number);
 };
-type ScrollInfo = { scrollLeft: number; scrollTop: number };
+type ScrollInfo = {
+  scrollLeft: number;
+  scrollTop: number;
+  isScrolling: boolean;
+};
 type ColumnMetaData = {
   itemType: 'col';
   offset: number;
@@ -49,7 +62,8 @@ export interface GridProps<T> {
   columnWidth?: number | ((index: number) => number);
   containerHeight: number;
   containerWidth: number;
-  onScroll?: (scroll: ScrollInfo) => void;
+  onScroll?: (scroll: { scrollLeft: number; scrollTop: number }) => void;
+  // onScrollBarChange?: (info: { x: boolean; y: boolean }) => void;
   style?: React.CSSProperties;
   className?: string;
   rowClassName?: string | ((record: T, index: number) => string);
@@ -60,10 +74,17 @@ export interface GridProps<T> {
 class Grid<
   RecordType extends Record<string, React.ReactNode>
 > extends React.PureComponent<GridProps<RecordType>, ScrollInfo> {
+  wrapperBorderLeft = 1;
+
   state: ScrollInfo = {
     scrollLeft: 0,
     scrollTop: 0,
+    isScrolling: false,
   };
+
+  uuid = uuid();
+
+  scrollBarSize: number = getScrollBarSize();
 
   measuredInfos = {
     lastMeasuredColumnIndex: -1,
@@ -86,59 +107,118 @@ class Grid<
       }),
   );
 
+  // eslint-disable-next-line react/sort-comp
+  // callOnScrollBarChange = () => {
+  //   const { onScrollBarChange } = this.props;
+  //   if (onScrollBarChange) {
+  //     onScrollBarChange({
+  //       x: this.noScrollBar
+  //         ? false
+  //         : this.onlyScrollBarX || !this.onlyScrollBarY,
+  //       y: this.noScrollBar
+  //         ? false
+  //         : this.onlyScrollBarY || !this.onlyScrollBarX,
+  //     });
+  //   }
+  // };
+
   componentDidMount() {
     const { scrollLeft, scrollTop } = this.state;
 
     this.layoutUpdate(scrollLeft, scrollTop);
     if (this.wrapper.current) {
-      this.wrapper.current.addEventListener('wheel', this.#onWheel, {
+      this.wrapper.current.addEventListener('wheel', this.onWheel, {
         passive: false,
       });
     }
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps: GridProps<RecordType>) {
+    if (
+      this.props.containerWidth !== prevProps.containerWidth ||
+      this.props.containerHeight !== prevProps.containerHeight ||
+      this.props.bordered !== prevProps.bordered
+    ) {
+      this.onReset();
+      return;
+    }
+    // * columnWidth变化需要重新测量
+    if (
+      this.props.columnWidth !== prevProps.columnWidth ||
+      this.props.columns !== prevProps.columns
+    ) {
+      this.resetStyleCache();
+      this.measuredInfos.lastMeasuredColumnIndex = -1;
+      this.metaDataMap.columnMetadataMap = {};
+    }
+    if (
+      this.props.rowHeight !== prevProps.rowHeight ||
+      this.props.dataSource !== prevProps.dataSource
+    ) {
+      this.resetStyleCache();
+      this.measuredInfos.lastMeasuredRowIndex = -1;
+      this.metaDataMap.rowMetadataMap = {};
+    }
     const { scrollLeft, scrollTop } = this.state;
     this.layoutUpdate(scrollLeft, scrollTop);
   }
 
   componentWillUnmount() {
-    this.wrapper.current?.removeEventListener('wheel', this.#onWheel);
+    this.wrapper.current?.removeEventListener('wheel', this.onWheel);
   }
 
   onReset = () => {
     this.measuredInfos.lastMeasuredColumnIndex = -1;
     this.measuredInfos.lastMeasuredRowIndex = -1;
-    this.setState({
-      scrollLeft: 0,
-      scrollTop: 0,
-    });
+    this.metaDataMap.columnMetadataMap = {};
+    this.metaDataMap.rowMetadataMap = {};
+    this.resetStyleCache();
+    this.setState(
+      {
+        scrollLeft: 0,
+        scrollTop: 0,
+        isScrolling: true,
+      },
+      () => this.resetStyleCache(),
+    );
+  };
+
+  resetColFrom = (index: number) => {
+    this.measuredInfos.lastMeasuredColumnIndex = Math.min(
+      this.measuredInfos.lastMeasuredColumnIndex,
+      index - 1 >= -1 ? index - 1 : -1,
+    );
+    this.resetStyleCache();
   };
 
   /* eslint-disable-next-line react/sort-comp */
   scrollTo = ({ scrollLeft, scrollTop }: Partial<ScrollInfo>) => {
-    this.setState((prev) => {
-      if (scrollLeft !== undefined) {
-        scrollLeft = Math.max(0, scrollLeft);
-      }
-      if (scrollTop !== undefined) {
-        scrollTop = Math.max(0, scrollTop);
-      }
-      if (scrollLeft === undefined) {
-        scrollLeft = prev.scrollLeft;
-      }
-      if (scrollTop === undefined) {
-        scrollTop = prev.scrollTop;
-      }
+    this.setState(
+      (prev) => {
+        if (scrollLeft !== undefined) {
+          scrollLeft = Math.max(0, scrollLeft);
+        }
+        if (scrollTop !== undefined) {
+          scrollTop = Math.max(0, scrollTop);
+        }
+        if (scrollLeft === undefined) {
+          scrollLeft = prev.scrollLeft;
+        }
+        if (scrollTop === undefined) {
+          scrollTop = prev.scrollTop;
+        }
 
-      if (scrollLeft === prev.scrollLeft && scrollTop === prev.scrollTop)
-        return null;
+        if (scrollLeft === prev.scrollLeft && scrollTop === prev.scrollTop)
+          return null;
 
-      return {
-        scrollTop,
-        scrollLeft,
-      };
-    });
+        return {
+          scrollTop,
+          scrollLeft,
+          isScrolling: true,
+        };
+      },
+      () => this.resetStyleCache(),
+    );
   };
 
   // eslint-disable-next-line react/sort-comp
@@ -149,11 +229,16 @@ class Grid<
 
   nextFrameId?: number;
 
+  // * 只有X轴滚动条
   onlyScrollBarX = false;
 
+  // * 只有Y轴滚动条
   onlyScrollBarY = false;
 
-  #onWheel = (event: WheelEvent) => {
+  // * 完全没有滚动条
+  noScrollBar = false;
+
+  onWheel = (event: WheelEvent) => {
     event.preventDefault();
 
     if (typeof this.nextFrameId === 'number')
@@ -162,13 +247,25 @@ class Grid<
       y: (this.frameOffsetBatch.y += event.deltaY),
       x: (this.frameOffsetBatch.x += event.deltaX),
     };
+
     this.nextFrameId = requestAnimationFrame(() => {
-      if (this.wrapper.current) {
+      if (this.wrapper.current && !this.noScrollBar) {
+        // * 元素全部测量后，可以获得最大 scrollLeft，scrollTop
+        const { maxScrollLeft, maxScrollTop } = this.getMaxScrollOffset();
+        const batchedScrollLeft =
+          this.wrapper.current.scrollLeft + this.frameOffsetBatch.x;
+        const batchedScrollTop =
+          this.wrapper.current.scrollTop + this.frameOffsetBatch.y;
+
+        const actualScrollLeft = maxScrollLeft
+          ? Math.min(batchedScrollLeft, maxScrollLeft)
+          : batchedScrollLeft;
+        const actualScrollTop = maxScrollTop
+          ? Math.min(batchedScrollTop, maxScrollTop)
+          : batchedScrollTop;
         this.scrollTo({
-          scrollLeft: this.onlyScrollBarY
-            ? 0
-            : (this.wrapper.current.scrollLeft += this.frameOffsetBatch.x),
-          scrollTop: (this.wrapper.current.scrollTop += this.frameOffsetBatch.y),
+          scrollLeft: this.onlyScrollBarY ? 0 : actualScrollLeft,
+          scrollTop: this.onlyScrollBarX ? 0 : actualScrollTop,
         });
       }
       this.frameOffsetBatch = {
@@ -178,7 +275,7 @@ class Grid<
     });
   };
 
-  #onScroll = (event: React.UIEvent<HTMLDivElement, UIEvent>) => {
+  onScroll = (event: React.UIEvent<HTMLDivElement, UIEvent>) => {
     const {
       clientHeight,
       clientWidth,
@@ -188,22 +285,83 @@ class Grid<
       scrollWidth,
     } = event.currentTarget;
 
-    this.setState((prev) => {
-      if (scrollLeft === prev.scrollLeft && scrollTop === prev.scrollTop)
-        return null;
-      const actualLeft = Math.max(
-        0,
-        Math.min(scrollLeft, scrollWidth - clientWidth),
-      );
-      const actualTop = Math.max(
-        0,
-        Math.min(scrollTop, scrollHeight - clientHeight),
-      );
-      return {
-        scrollTop: actualTop,
-        scrollLeft: actualLeft,
-      };
-    });
+    this.setState(
+      (prev) => {
+        if (scrollLeft === prev.scrollLeft && scrollTop === prev.scrollTop)
+          return null;
+        const actualLeft = Math.max(
+          0,
+          Math.min(scrollLeft, scrollWidth - clientWidth),
+        );
+        const actualTop = Math.max(
+          0,
+          Math.min(scrollTop, scrollHeight - clientHeight),
+        );
+        return {
+          scrollTop: actualTop,
+          scrollLeft: actualLeft,
+          isScrolling: true,
+        };
+      },
+      () => this.resetStyleCache(),
+    );
+  };
+
+  maxScrollLeft = 0;
+
+  getMaxScrollLeft = () => {
+    const scrollbarSize = getScrollBarSize();
+    console.log(scrollbarSize);
+    const lastCol = this.metaDataMap.columnMetadataMap[
+      this.props.columns.length - 1
+    ];
+    return lastCol
+      ? lastCol.offset +
+          lastCol.size -
+          this.props.containerWidth +
+          this.wrapperBorderLeft +
+          (this.onlyScrollBarX ? 0 : scrollbarSize)
+      : 0;
+  };
+
+  maxScrollTop = 0;
+
+  getMaxScrollTop = () => {
+    const scrollbarSize = getScrollBarSize();
+    const lastRow = this.metaDataMap.rowMetadataMap[
+      this.props.dataSource.length - 1
+    ];
+    return lastRow
+      ? lastRow.offset +
+          lastRow.size -
+          this.props.containerHeight +
+          (this.onlyScrollBarY ? 0 : scrollbarSize)
+      : 0;
+  };
+
+  getMaxScrollOffset = () => {
+    if (
+      this.measuredInfos.lastMeasuredColumnIndex ===
+        this.props.columns.length - 1 &&
+      !this.onlyScrollBarY
+    ) {
+      this.maxScrollLeft = this.maxScrollLeft || this.getMaxScrollLeft();
+    } else {
+      this.maxScrollLeft = 0;
+    }
+    if (
+      this.measuredInfos.lastMeasuredRowIndex ===
+        this.props.dataSource.length - 1 &&
+      !this.onlyScrollBarX
+    ) {
+      this.maxScrollTop = this.maxScrollTop || this.getMaxScrollTop();
+    } else {
+      this.maxScrollTop = 0;
+    }
+    return {
+      maxScrollTop: this.maxScrollTop,
+      maxScrollLeft: this.maxScrollLeft,
+    };
   };
 
   getVerticalRange = (scroll: ScrollInfo) => {
@@ -320,35 +478,39 @@ class Grid<
     ];
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   getItemStyleCache = memoizeOne((_, __) => ({}));
+
+  resetTimerId: { id: number } | null = null;
+
+  resetStyleCache = () => {
+    if (this.resetTimerId !== null) {
+      cancelTimeout(this.resetTimerId);
+    }
+    this.resetTimerId = requestTimeout(this.scrollReset, 150);
+  };
+
+  scrollReset = () => {
+    this.setState({ isScrolling: false }, () => {
+      this.getItemStyleCache(-1);
+    });
+  };
 
   // * 重绘融合
   layoutUpdate = (scrollLeft: number, scrollTop: number) => {
     const validScrollLeft = Math.max(0, scrollLeft);
     const validScrollTop = Math.max(0, scrollTop);
-    // ! 需要设置最大左滑范围，防止超出容器的滚动触发
-    let maxScrollLeft = 0;
-    if (
-      this.measuredInfos.lastMeasuredColumnIndex ===
-      this.props.columns.length - 1
-    ) {
-      const lastCol = this.metaDataMap.columnMetadataMap[
-        this.props.columns.length - 1
-      ];
-      maxScrollLeft = lastCol.offset + lastCol.size - this.props.containerWidth;
-    }
-    const actualScrollLeft = maxScrollLeft
-      ? Math.min(validScrollLeft, maxScrollLeft)
-      : validScrollLeft;
+
     if (this.wrapper.current) {
-      this.wrapper.current.scrollLeft = actualScrollLeft;
+      this.wrapper.current.scrollLeft = validScrollLeft;
       this.wrapper.current.scrollTop = validScrollTop;
       this.syncScroll({
-        scrollLeft: actualScrollLeft,
+        scrollLeft: validScrollLeft,
         currentTarget: this.wrapper.current,
       });
     }
-    this.callOnScroll(actualScrollLeft, validScrollTop);
+
+    this.callOnScroll(validScrollLeft, validScrollTop);
   };
 
   // * 滚动同步
@@ -432,13 +594,15 @@ class Grid<
       containerWidth,
       bordered = true,
     } = this.props;
+    const { isScrolling } = this.state;
 
     const rowCount = data.length || this.props.rowCount || 0;
     const columnCount = columns.length || this.props.columnCount || 0;
+
     const [rowStartIndex, rowStopIndex] = this.getVerticalRange(this.state);
     const [colStartIndex, colStopIndex] = this.getHorizontalRange(this.state);
 
-    let items = [] as React.ReactElement[];
+    const items = [] as React.ReactElement[];
     if (columnCount > 0 && rowCount && rowStopIndex >= 0 && colStopIndex >= 0) {
       for (
         let rowIndex = rowStartIndex;
@@ -452,6 +616,7 @@ class Grid<
         ) {
           const curColumn = columns[columnIndex];
           const curRow = rows && rows[rowIndex];
+          const curRecord = data[rowIndex];
 
           items.push(
             // TODO Cell 外部注入
@@ -465,6 +630,7 @@ class Grid<
                 columnIndex,
                 key: getDefaultCellKey(columnIndex, rowIndex),
                 style: this.getItemStyle(rowIndex, columnIndex),
+                isScrolling,
                 /** 外部传递 */
                 curColumn,
                 curRow: {
@@ -474,13 +640,11 @@ class Grid<
                   className: rowClassName,
                 },
                 bordered,
-                record: data[rowIndex],
-                data: data[rowIndex][columns[columnIndex].key],
-                // hasScrollBarX:
-                //   curItemIndex >=
-                //   (colStopIndex - colStartIndex + 1) *
-                //     (rowStopIndex - rowStartIndex),
-                // hasScrollBarY: (curItemIndex % columnCount) - columnCount === -1,
+                record: curRecord,
+                data: getPathValue<React.ReactNode, RecordType>(
+                  curRecord,
+                  curColumn.dataIndex || curColumn.key,
+                ),
               },
             ),
           );
@@ -497,54 +661,33 @@ class Grid<
       this.metaDataMap.columnMetadataMap,
       this.measuredInfos,
     );
+    this.wrapperBorderLeft = this.props.bordered ? 1 : 0;
+
+    // * 出现 X 滚动条的限值
+    const wrapperScrollBarXLimit = containerWidth - this.wrapperBorderLeft;
+    const wrapperScrollBarYLimit = containerHeight;
     this.onlyScrollBarY =
-      containerHeight < contentHeight && contentWidth <= containerWidth;
-
+      wrapperScrollBarYLimit < contentHeight &&
+      contentWidth <= wrapperScrollBarXLimit;
     this.onlyScrollBarX =
-      containerWidth < contentWidth && contentHeight <= containerHeight;
-
-    if (this.onlyScrollBarY) {
-      items = items.map((item, index) => {
-        if ((index % columnCount) - columnCount === -1) {
-          return React.cloneElement(item, {
-            hasScrollBarY: true,
-          });
-        }
-        return item;
-      });
-    }
-    if (this.onlyScrollBarX) {
-      items = items.map((item, index) => {
-        if (
-          index >=
-          (colStopIndex - colStartIndex + 1) * (rowStopIndex - rowStartIndex)
-        ) {
-          return React.cloneElement(item, {
-            hasScrollBarX: true,
-          });
-        }
-        return item;
-      });
-    }
-
-    const actualContentHeight = this.onlyScrollBarX
-      ? contentHeight - 8
-      : contentHeight;
-    const actualContentWidth = this.onlyScrollBarY
-      ? contentWidth - 8
-      : contentWidth;
+      wrapperScrollBarXLimit < contentWidth &&
+      contentHeight <= wrapperScrollBarYLimit;
+    this.noScrollBar =
+      contentWidth <= wrapperScrollBarXLimit &&
+      contentHeight <= wrapperScrollBarYLimit;
 
     return (
       <div
+        id="container"
         ref={this.wrapper}
-        onScroll={this.#onScroll}
+        onScroll={this.onScroll}
         className={wrapperClassName}
         style={bodyStyle}
       >
         <div
           style={{
-            height: actualContentHeight,
-            width: actualContentWidth,
+            height: contentHeight,
+            width: contentWidth,
           }}
         >
           {items}
@@ -827,17 +970,17 @@ function getItemMetadata(
 ): ColumnMetaData | RowMetaData {
   // const { lastMeasuredColumnIndex, lastMeasuredRowIndex } = measuredInfo;
   let itemMetadataMap;
-  let itemSize: number;
+  let itemSize: ((index: number) => number) | (() => number);
   let lastMeasuredIndex: number;
   if (itemType === 'col') {
     itemMetadataMap = metadata.columnMetadataMap;
     // * 每次获取 Metadata 同时更新值
     itemSize =
-      typeof columnWidth === 'function' ? columnWidth(index) : columnWidth;
+      typeof columnWidth === 'function' ? columnWidth : () => columnWidth;
     lastMeasuredIndex = measuredInfo.lastMeasuredColumnIndex;
   } else {
     itemMetadataMap = metadata.rowMetadataMap;
-    itemSize = typeof rowHeight === 'function' ? rowHeight(index) : rowHeight;
+    itemSize = typeof rowHeight === 'function' ? rowHeight : () => rowHeight;
     lastMeasuredIndex = measuredInfo.lastMeasuredRowIndex;
   }
 
@@ -850,11 +993,12 @@ function getItemMetadata(
     }
 
     for (let i = lastMeasuredIndex + 1; i <= index; i++) {
+      const size = itemSize(i);
       itemMetadataMap[i] = {
         offset,
-        size: itemSize,
+        size,
       };
-      offset += itemSize;
+      offset += size;
     }
     if (itemType === 'col') {
       measuredInfo.lastMeasuredColumnIndex = index;
@@ -862,7 +1006,6 @@ function getItemMetadata(
       measuredInfo.lastMeasuredRowIndex = index;
     }
   }
-
   return itemMetadataMap[index];
 }
 
@@ -881,6 +1024,38 @@ function getItemMetadata(
 
 function getDefaultCellKey(columnIndex: React.Key, rowIndex: React.Key) {
   return `${rowIndex}_${columnIndex}`;
+}
+
+function toArray<T>(arr: T | T[]): T[] {
+  if (arr === undefined || arr === null) {
+    return [];
+  }
+
+  return Array.isArray(arr) ? arr : [arr];
+}
+function getPathValue<
+  ValueType extends React.ReactNode,
+  ObjectType extends Record<string, unknown>
+>(record: ObjectType, path: ColumnType<ObjectType>['dataIndex']): ValueType {
+  // Skip if path is empty
+  if (!path && typeof path !== 'number') {
+    return (record as unknown) as ValueType;
+  }
+
+  const pathList = toArray(path);
+
+  let current: ValueType | ObjectType = record;
+
+  for (let i = 0; i < pathList.length; i += 1) {
+    if (!current) {
+      return null as ValueType;
+    }
+
+    const prop = pathList[i];
+    current = current[prop];
+  }
+
+  return current as ValueType;
 }
 
 export default Grid;

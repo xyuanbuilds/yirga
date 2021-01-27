@@ -61,27 +61,33 @@ function DragStuff({
     }
   };
 
-  const handleDrag: DraggableEventHandler = bindRaf((_, ui) => {
-    const dragInfo = dragStuffRef.current;
-    const { left } = ui.node.getBoundingClientRect();
-    if (dragInfo.node !== null) dragInfo.node.style.left = `${left}px`;
-  });
+  const handleDrag: DraggableEventHandler = React.useCallback(
+    bindRaf((_, ui) => {
+      const dragInfo = dragStuffRef.current;
+      const { left } = ui.node.getBoundingClientRect();
+      if (dragInfo.node !== null) dragInfo.node.style.left = `${left}px`;
+    }),
+    [],
+  );
 
-  const handleDragStop: DraggableEventHandler = (_, ui) => {
+  const handleDragStop: DraggableEventHandler = React.useCallback((_, ui) => {
     const { lastX } = ui;
 
-    let difference = lastX;
     drag.current.state.x = 0;
-    setColumn(columnIndex, (preColumns) =>
-      preColumns.reduce<ColumnDiffedData[]>((pre, cur, i) => {
+    setColumn(columnIndex, (preColumns) => {
+      const curColumn = preColumns[columnIndex];
+      const difference =
+        lastX + curColumn.width > curColumn.minWidth
+          ? lastX
+          : curColumn.minWidth - curColumn.width;
+
+      return preColumns.reduce<ColumnDiffedData[]>((pre, cur, i) => {
         if (i > columnIndex) {
           pre.push({
             ...cur,
             offset: cur.offset + difference,
           });
         } else if (i === columnIndex) {
-          difference =
-            cur.width + lastX < cur.minWidth ? cur.minWidth - cur.width : lastX;
           pre.push({
             ...cur,
             width: cur.width + difference,
@@ -90,8 +96,8 @@ function DragStuff({
           pre.push(cur);
         }
         return pre;
-      }, []),
-    );
+      }, []);
+    });
     const dragInfo = dragStuffRef.current;
     if (dragInfo.node) {
       document.body.removeChild(dragInfo.node);
@@ -99,7 +105,7 @@ function DragStuff({
     dragInfo.appended = false;
     dragInfo.node = null;
     setDrag(false);
-  };
+  }, []);
   return (
     <Draggable
       ref={drag}

@@ -1,5 +1,5 @@
 /* ---------- Basic ---------- */
-export type DataIndex = string | number | (string | number)[];
+export type DataIndex = string | number | React.Key[];
 
 export type ColumnWidth = number | ((index: number) => number);
 

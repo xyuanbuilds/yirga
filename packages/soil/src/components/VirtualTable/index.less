@@ -7,7 +7,21 @@
   height: 100%;
   width: 100%;
   box-sizing: border-box;
+  // border-left: unit(@borderWidth, px) solid #e8e8e8;
+}
+
+.resizeSupport {
+  width: 100%;
+  height: 100%;
+}
+
+.tableHeaderScrollWrapper {
   border-left: unit(@borderWidth, px) solid #e8e8e8;
+  height: 48px;
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  scrollbar-width: thin;
 
   &.noBorder {
     border-left:
@@ -16,17 +30,18 @@
   }
 }
 
-.tableHeaderScrollWrapper {
-  height: 48px;
-  position: relative;
-  width: 100%;
-  overflow: hidden;
-}
-
 .tableScrollWrapper {
+  border-left: unit(@borderWidth, px) solid #e8e8e8;
   width: 100%;
-  overflow: auto scroll;
+  overflow: auto;
   position: relative;
+  scrollbar-width: thin;
+
+  &.noBorder {
+    border-left:
+      unit(@borderWidth - @borderWidth, px) solid
+      #e8e8e8;
+  }
 }
 
 .tableWrapperOnlyScrollbarY {
@@ -37,48 +52,40 @@
   border-bottom: 1px solid #e8e8e8;
 }
 
+/* empty */
+.emptyContainer {
+  overflow: auto hidden;
+  border-left: 1px solid rgb(232, 232, 232);
+  border-right: 1px solid rgb(232, 232, 232);
+  border-bottom: 1px solid rgb(232, 232, 232);
+
+  &.noBorder {
+    border-left: none;
+    border-right: none;
+  }
+}
+
+.stickyEmpty {
+  position: sticky;
+  left: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
 .tableEmpty {
   height: 100%;
-  border-right: 1px solid #e8e8e8;
-  border-bottom: 1px solid #e8e8e8;
   margin: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-direction: column;
+
+  :global {
+    .ant-empty-description {
+      color: #999;
+    }
+  }
 }
-
-// .tableScrollWrapper::-webkit-scrollbar {
-//   width: 8px;
-//   height: 8px;
-//   background-color: initial;
-//   visibility: hidden;
-// }
-
-// .tableScrollWrapper::-webkit-scrollbar-track {
-//   background-color: initial;
-//   width: auto;
-//   visibility: hidden;
-// }
-
-// .tableScrollWrapper::-webkit-scrollbar-thumb {
-//   width: 8px;
-//   height: 8px;
-//   border-radius: 8px;
-//   background-color: #ccc;
-//   visibility: hidden;
-// }
-
-// .tableScrollWrapper:hover::-webkit-scrollbar {
-//   visibility: visible;
-// }
-
-// .tableScrollWrapper:hover::-webkit-scrollbar-track {
-//   visibility: visible;
-// }
-
-// .tableScrollWrapper:hover::-webkit-scrollbar-thumb {
-//   visibility: visible;
-// }
 
 :export {
   borderWidth: @borderWidth; // bordered 最普通的 border width
