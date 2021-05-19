@@ -62,7 +62,7 @@
     "@types/redux": "^3.6.0",
     "@yirga/prelints": "^0.0.4",
     "babel-loader": "^8.1.0",
-    "fork-ts-checker-webpack-plugin": "^5.2.0",
+    "fork-ts-checker-webpack-plugin": "^6.2.10",
     "react-is": "^16.13.1",
     "storybook": "^6.1.15",
     "typescript-plugin-css-modules": "^2.8.0",
