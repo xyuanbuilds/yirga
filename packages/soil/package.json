@@ -58,7 +58,7 @@
     "@types/classnames": "^2.2.11",
     "@types/lodash": "^4.14.161",
     "@types/react": "^17.0.0",
-    "@types/react-dom": "^16.9.8",
+    "@types/react-dom": "^17.0.9",
     "@types/react-redux": "^7.1.9",
     "@types/redux": "^3.6.0",
     "@yirga/prelints": "^0.3.1",
