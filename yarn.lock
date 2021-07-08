@@ -17013,10 +17013,10 @@ webpack-sources@^1.4.0, webpack-sources@^1.4.1, webpack-sources@^1.4.3:
     source-list-map "^2.0.0"
     source-map "~0.6.1"
 
-webpack-typings-for-css@^0.6.1:
-  version "0.6.3"
-  resolved "https://registry.npmjs.org/webpack-typings-for-css/-/webpack-typings-for-css-0.6.3.tgz#e4b35e10538202cfe7e220b1ecf872985fd2e68a"
-  integrity sha512-S80AHSNxgNtXzfCtLToX1RAalRaKS0fvmvB3UARvUbnIHvPxNzi+iuzBIUcSZiN+765MbdzgOHIxg2CNrtdMtg==
+webpack-typings-for-css@^0.6.4:
+  version "0.6.4"
+  resolved "https://registry.yarnpkg.com/webpack-typings-for-css/-/webpack-typings-for-css-0.6.4.tgz#54f3754223d2b219e018b464f4de732d1ce514c0"
+  integrity sha512-PUDXr02G4I0eCrv4uuDklE1ArXKoPwEjbQ+MwEczuNhRd6az0aVoY69WimRtLDxSXk4sG5X/8QkG60AqGoExwg==
   dependencies:
     camelcase "^6.2.0"
     handlebars "^4.7.6"
