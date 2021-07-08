@@ -25,8 +25,10 @@
     "test": "echo \"Error: run tests from root\" && exit 1",
     "storybook": "start-storybook -p 6006",
     "sb": "start-storybook -p 6006",
-    "deps": "yarn upgrade-interactive --latest",
-    "build-storybook": "build-storybook"
+    "deps": "yarn upgrade --latest",
+    "build-storybook": "build-storybook",
+    "clean": "tsc -b tsconfig.build.json --clean",
+    "clean:es": "tsc -b tsconfig.build.es.json --clean"
   },
   "bugs": {
     "url": "https://github.com/xyuanbuilds/yirga/issues"
@@ -60,11 +62,12 @@
     "@types/react-dom": "^16.9.8",
     "@types/react-redux": "^7.1.9",
     "@types/redux": "^3.6.0",
-    "@yirga/prelints": "^0.0.4",
+    "@yirga/prelints": "^0.3.1",
     "babel-loader": "^8.1.0",
     "fork-ts-checker-webpack-plugin": "^5.2.0",
     "react-is": "^16.13.1",
     "storybook": "^6.1.15",
+    "typescript": "^4.3.5",
     "typescript-plugin-css-modules": "^2.8.0",
     "webpack-typings-for-css": "^0.6.1"
   }

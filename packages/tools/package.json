@@ -28,7 +28,8 @@
     "build": "babel src --out-dir lib --extensions .ts,.tsx",
     "build:es": "ENV_MODULE='es' babel src --out-dir es --extensions .ts,.tsx --out-file-extension .mjs",
     "build:default": "babel src --out-dir es --extensions .ts,.tsx --rootMode upward-optional",
-    "clean": "tsc -b tsconfig.build.json --clean"
+    "clean": "tsc -b tsconfig.build.json --clean",
+    "clean:es": "tsc -b tsconfig.build.es.json --clean"
   },
   "bugs": {
     "url": "https://github.com/xyuanbuilds/yirga/issues"
@@ -38,7 +39,8 @@
     "@babel/core": "^7.11.6",
     "@babel/plugin-transform-runtime": "^7.11.5",
     "@babel/preset-typescript": "^7.10.4",
-    "@yirga/prelints": "^0.0.4"
+    "@yirga/prelints": "^0.3.1",
+    "typescript": "^4.3.5"
   },
   "dependencies": {
     "@babel/runtime-corejs3": "^7.12.1"
