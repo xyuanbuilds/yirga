@@ -27,6 +27,7 @@ module.exports = {
     window: true,
   },
   rules: {
+    'arrow-body-style': 'off',
     'react/jsx-props-no-spreading': 'off',
     'react/prop-types': 'off',
     'react/jsx-filename-extension': 'off',

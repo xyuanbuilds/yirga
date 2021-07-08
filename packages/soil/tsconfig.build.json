@@ -10,9 +10,11 @@
       }
     ],
     "resolveJsonModule": true,
-    "module": "es6",
+    "module": "ESNext",
     "outDir": "./lib",
     "rootDir": ".",
-    "checkJs": false
+    "checkJs": false,
+    "target": "esnext",
+    "moduleResolution": "Node"
   }
 }

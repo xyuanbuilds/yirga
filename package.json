@@ -20,7 +20,8 @@
     "build-debug": "DEBUG=yirga:* lerna run --stream --sort build",
     "clean": "lerna run clean",
     "test": "lerna run test",
-    "commit": "git-cz"
+    "commit": "git-cz",
+    "soil": "lerna run --parallel --no-prefix start --scope=@yirga/soil"
   },
   "workspaces": [
     "packages/*"

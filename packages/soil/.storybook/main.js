@@ -9,7 +9,7 @@ module.exports = {
     '@storybook/addon-essentials',
     '@storybook/preset-ant-design',
   ],
-  webpackFinal: async (config, { configType }) => {
+  webpackFinal: async (config, { configType, lessOptions }) => {
     // `configType` has a value of 'DEVELOPMENT' or 'PRODUCTION'
     // You can change the configuration based on that.
     // 'PRODUCTION' is used when building the static version of storybook.
@@ -24,7 +24,7 @@ module.exports = {
         {
           use: [
             { loader: 'style-loader' },
-            { loader: 'webpack-typings-for-css' },
+            // { loader: 'webpack-typings-for-css' },
             {
               loader: 'css-loader',
               options: {
@@ -36,7 +36,12 @@ module.exports = {
             },
             {
               loader: 'less-loader',
-              options: { javascriptEnabled: true },
+              options: {
+                lessOptions: {
+                  ...lessOptions,
+                  javascriptEnabled: true,
+                },
+              },
             },
           ],
           include: [path.join(__dirname, '../src/')],
@@ -50,7 +55,12 @@ module.exports = {
             },
             {
               loader: 'less-loader',
-              options: { javascriptEnabled: true },
+              options: {
+                lessOptions: {
+                  ...lessOptions,
+                  javascriptEnabled: true,
+                },
+              },
             },
           ],
         },
