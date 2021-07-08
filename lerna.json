@@ -8,7 +8,7 @@
       "license": "MIT",
       "repository": {
         "type": "git",
-        "url": "git+https://github.com/JhonXY/yirga.git"
+        "url": "git+https://github.com/xyuanbuilds/yirga.git"
       },
       "scripts": {
         "clean": "tsc -b tsconfig.build.json --clean"

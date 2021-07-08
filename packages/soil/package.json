@@ -3,8 +3,8 @@
   "private": true,
   "version": "0.1.1",
   "description": "soil to grow",
-  "author": "JhonXY <1076849402@qq.com>",
-  "homepage": "https://github.com/JhonXY/yirga#readme",
+  "author": "xyuanbuilds <1076849402@qq.com>",
+  "homepage": "https://github.com/xyuanbuilds/yirga#readme",
   "license": "MIT",
   "main": "lib/index.js",
   "directories": {
@@ -19,7 +19,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/JhonXY/yirga.git"
+    "url": "git+https://github.com/xyuanbuilds/yirga"
   },
   "scripts": {
     "test": "echo \"Error: run tests from root\" && exit 1",
@@ -29,7 +29,7 @@
     "build-storybook": "build-storybook"
   },
   "bugs": {
-    "url": "https://github.com/JhonXY/yirga/issues"
+    "url": "https://github.com/xyuanbuilds/yirga/issues"
   },
   "dependencies": {
     "@ant-design/compatible": "^1.0.8",

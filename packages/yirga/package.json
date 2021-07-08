@@ -3,8 +3,8 @@
   "private": true,
   "version": "0.1.0",
   "description": "> TODO: description",
-  "author": "JhonXY <1076849402@qq.com>",
-  "homepage": "https://github.com/JhonXY/yirga#readme",
+  "author": "xyuanbuilds <1076849402@qq.com>",
+  "homepage": "https://github.com/xyuanbuilds/yirga#readme",
   "license": "MIT",
   "main": "lib/index.js",
   "directories": {
@@ -19,13 +19,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/JhonXY/yirga.git"
+    "url": "git+https://github.com/xyuanbuilds/yirga.git"
   },
   "scripts": {
     "test": "echo \"Error: run tests from root\" && exit 1"
   },
   "bugs": {
-    "url": "https://github.com/JhonXY/yirga/issues"
+    "url": "https://github.com/xyuanbuilds/yirga/issues"
   },
   "peerDependencies": {
     "typescript": "^4.0.2"
