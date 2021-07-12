@@ -4,6 +4,7 @@
     "composite": false,
     "allowJs": true,
     "rootDir": ".",
-    "noImplicitAny": false
+    "noImplicitAny": false,
+    "jsx": "react-jsx"
   }
 }
