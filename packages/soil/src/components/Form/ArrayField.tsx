@@ -1,13 +1,12 @@
 import { useForm } from './context/Form';
-import FieldContext, { useField } from './context/Field';
+import FieldContext from './context/Field';
 
+// 0: ['a', 'b']: value
 // * 没ArrayField场景，只有一个 ArrayField Context 用于提供 remove，push 等操作函数
-function Field({ name, children }) {
+function ArrayField({ name: arrayName = 'array', children }) {
   const form = useForm();
-  const parent = useField();
-  const field = form.createField({
-    name,
-    basePath: parent.address,
+  const field = form.createArrayField({
+    name: arrayName,
   });
 
   return (
@@ -15,4 +14,4 @@ function Field({ name, children }) {
   );
 }
 
-export default Field;
+export default ArrayField;

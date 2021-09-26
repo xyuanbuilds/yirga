@@ -1,3 +1,5 @@
+import React from 'react';
+
 export type DataIndex = React.Key | React.Key[];
 
 export type ColumnWidth = number | ((columIndex: number) => number);
@@ -48,4 +50,5 @@ export interface ListProps<RecordType> {
   // className?: string;
   // rowClassName?: string | ((record: RecordType, index: number) => string);
   // bordered?: boolean;
+  renderRow?: () => React.ReactNode;
 }

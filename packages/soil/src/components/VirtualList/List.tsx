@@ -8,8 +8,8 @@ const max = (l: number) => (r: number) => Math.max(l, r);
 const min = (l: number) => (r: number) => Math.min(l, r);
 
 // TODO Row 更多内容补充
-function Row({ items, record }) {
-  return items;
+function Row({ items, record, render }) {
+  return render ? render(items) : items;
 }
 
 const DEFAULT_OUT_OF_VIEW_ITEM_NUM = 1;
@@ -30,7 +30,7 @@ const MEASURED_ROW_HEIGHT = 40;
 // TODO onWheel 优化
 function List<RecordType extends object>(props: ListProps<RecordType>) {
   // TODO 省略columns 中的冗余信息，让columns只在 width 或 dataIndex 变化时，才导致当前组件刷新
-  const { container, columns, dataSource, rowHeight } = props;
+  const { container, columns, dataSource, rowHeight, renderRow } = props;
   const cacheRef = React.useRef<Record<string, RowData>>({
     '-1': {
       size: 0,
@@ -65,6 +65,7 @@ function List<RecordType extends object>(props: ListProps<RecordType>) {
   const timer = React.useRef<null | {
     id: number;
   }>(null);
+  console.log('scrolling', isScrolling);
 
   function resetStyleCache() {
     if (timer.current !== null) {
@@ -157,6 +158,8 @@ function List<RecordType extends object>(props: ListProps<RecordType>) {
           cacheData,
           measuredData,
         );
+        const { render } = curColumn;
+        const cellData = getCellData(curRecord, curColumn.dataIndex);
         rowItems.push(
           <div
             style={{
@@ -168,14 +171,21 @@ function List<RecordType extends object>(props: ListProps<RecordType>) {
             }}
             key={`${x}_${y}_cell`}
           >
-            {getCellData(curRecord, curColumn.dataIndex)}
+            {render ? render(cellData, curRecord, y) : cellData}
           </div>,
         );
 
         left += curColumn.width;
       }
 
-      rows.push(<Row key={`${y}_row`} record={curRecord} items={rowItems} />);
+      rows.push(
+        <Row
+          render={renderRow}
+          key={`${y}_row`}
+          record={curRecord}
+          items={rowItems}
+        />,
+      );
     }
   }
 
@@ -377,7 +387,10 @@ function getCellData<T extends object>(
   return curRecord[dataIndex];
 }
 
-function getNumInfo(index, numOrFunc) {
+function getNumInfo(
+  index: number,
+  numOrFunc: number | ((index: number) => number),
+) {
   if (typeof numOrFunc === 'function') return numOrFunc(index);
   return numOrFunc;
 }
