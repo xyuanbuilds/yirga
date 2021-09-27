@@ -1,4 +1,5 @@
 import { useForm } from './context/Form';
+import ReactiveField from './ReactiveField';
 import FieldContext from './context/Field';
 
 // 0: ['a', 'b']: value
@@ -10,7 +11,9 @@ function ArrayField({ name: arrayName = 'array', children }) {
   });
 
   return (
-    <FieldContext.Provider value={field}>{children}</FieldContext.Provider>
+    <FieldContext.Provider value={field}>
+      <ReactiveField field={field}> {children}</ReactiveField>
+    </FieldContext.Provider>
   );
 }
 

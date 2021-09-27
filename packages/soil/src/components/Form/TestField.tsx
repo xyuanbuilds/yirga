@@ -7,15 +7,15 @@ function TestFieldComponent(props: {
 }) {
   const { value: controlledValue } = props;
   const [value, setValue] = React.useState<string>(controlledValue || '');
+
   React.useEffect(() => {
-    if (typeof controlledValue === 'string') setValue(controlledValue);
+    if (controlledValue) setValue(controlledValue);
   }, [controlledValue]);
 
   return (
     <Input
       onChange={(e) => {
-        setValue(e.target.value);
-        props.onChange?.(e.target.value);
+        props.onChange?.(e);
       }}
       value={value}
     />

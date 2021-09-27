@@ -78,6 +78,26 @@
       "console": "integratedTerminal",
       "stopOnEntry": false,
       "sourceMaps": true,
+    },
+    {
+      "type": "pwa-chrome",
+      "name": "chrome soil",
+      "request": "launch",
+      "sourceMaps": true,
+      "url": "http://localhost:6006", // 需要访问的页面
+      "webRoot": "${workspaceFolder}/packages/soil",
+      "breakOnLoad": true,
+      "supportsLoadedScriptRequest": true,
+      "skipFiles": [
+        "${workspaceFolder}/node_modules/umi/**/*.js",
+        "${workspaceFolder}/node_modules/scheduler/**/*.js",
+        "${workspaceFolder}/packages/react/src/.umi/**/*.js",
+        "node_modules/**/*.js",
+        "react.development.js",
+        "react-dom.development.js",
+        "<node_internals>/**"
+      ]
+      // "preLaunchTask": "@formily/antd: start"
     }
   ]
 }

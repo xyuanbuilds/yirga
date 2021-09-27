@@ -11,7 +11,7 @@ import {
 } from '@formily/reactive';
 import { isArr, isNum, isValid, isNumberIndex } from './predicate';
 import FormContext from './context/Form';
-import type { Segment, Field, ArrayField } from './types/Field';
+import type { Segment, Field, ArrayField, NormalEvent } from './types/Field';
 import type { Form } from './types/Form';
 
 export type FieldPath = Array<string | number | FieldPath>;
@@ -48,7 +48,7 @@ function FormInstance({ children }) {
     const identifier = address.toString();
 
     if (!identifier) {
-      throw new Error('no identifier');
+      throw new Error('field no identifier');
     }
     if (!form.fields[identifier]) {
       batch(() => {
@@ -60,11 +60,12 @@ function FormInstance({ children }) {
           set value(value: any) {
             form.setValuesIn(address, value);
           },
-          onInput(e) {
+          onInput(e: NormalEvent) {
             if ('target' in e) {
-              field.value = e.target.value || e.target!.checked;
+              field.value =
+                'value' in e.target ? e.target.value : e.target.checked;
             } else {
-              throw new Error('target without value');
+              throw new Error('invalid target');
             }
 
             //  const values = getValuesFromEvent(args);
@@ -85,7 +86,7 @@ function FormInstance({ children }) {
           identifier,
         };
         define(field, {
-          value: observable.computed, // 为啥是 computed ?
+          value: observable.computed,
           onInput: batch,
         });
 
@@ -146,7 +147,12 @@ function FormInstance({ children }) {
 
   function getValuesIn(address: Segment[]) {
     // getIn(form.values, address); // TODO path 系统添加
-    return form.values[address[1]][address[2]];
+    // return form.values[address[1]][address[2]];
+    let v = form.values;
+    address.forEach((key) => {
+      v = v[key];
+    });
+    return v;
   }
 
   function setValuesIn(address: Segment[], value: any) {

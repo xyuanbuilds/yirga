@@ -1,80 +1,64 @@
 import React from 'react';
 import { observer } from '@formily/reactive-react';
-import { isVoidField } from '@formily/core';
+import type { GeneralField } from './types/Field';
 
+type C<
+  P = {
+    value?: any;
+    onChange: (e: Event) => void;
+  }
+> = React.FunctionComponent<P> | React.ComponentClass<P> | string;
 interface ReactiveFieldProps {
-  field: Formily.Core.Types.GeneralField;
+  field: GeneralField;
   children?:
     | ((
-        field: Formily.Core.Types.GeneralField,
+        field: GeneralField,
         form: Formily.Core.Models.Form,
       ) => React.ReactChild)
     | React.ReactNode;
+  component?: C[];
 }
 
 const ReactiveInternal: React.FC<ReactiveFieldProps> = (props) => {
-  const { field, children } = props;
-  if (!props.field) {
-    return <>{props.children}</>;
+  const { field, children, component } = props;
+
+  if (!component) return null;
+  if (!field || !component) {
+    return <>{children}</>;
   }
 
-  if (field.display !== 'visible') return null;
-
-  const renderDecorator = (fieldChildren: React.ReactNode) => {
-    if (!field.decorator[0]) {
-      return <>{fieldChildren}</>;
-    }
-    return React.createElement(
-      field.decorator[0],
-      {
-        ...field.decorator[1],
-        style: {
-          ...field.decorator[1]?.style,
-        },
-      },
-      fieldChildren,
-    );
-  };
+  // if (field.display !== 'visible') return null;
 
   const renderComponent = () => {
-    if (!field.component[0]) return <>{children}</>;
-    const value = !isVoidField(field) ? field.value : undefined;
-    const onChange = !isVoidField(field)
-      ? (...args: any[]) => {
-          field.onInput(...args);
-          field.component[1]?.onChange?.(...args);
-        }
-      : field.component[1]?.onChange;
+    // const value = !isVoidField(field) ? field.value : undefined;
 
-    const disabled = !isVoidField(field)
-      ? field.pattern === 'disabled' || field.pattern === 'readPretty'
-      : undefined;
-    const readOnly = !isVoidField(field)
-      ? field.pattern === 'readOnly'
-      : undefined;
+    const onChange = (event) => {
+      field.onInput(event);
+    };
+
+    // const disabled = !isVoidField(field)
+    //   ? field.pattern === 'disabled' || field.pattern === 'readPretty'
+    //   : undefined;
+    // const readOnly = !isVoidField(field)
+    //   ? field.pattern === 'readOnly'
+    //   : undefined;
+
     return React.createElement(
-      field.component[0],
+      component[0],
       {
-        disabled,
-        readOnly,
-        ...field.component[1],
-        style: {
-          ...field.component[1]?.style,
-        },
-        value,
+        value: field.value,
         onChange,
       },
       children,
     );
   };
 
-  return renderDecorator(renderComponent());
+  return renderComponent();
 };
 
 ReactiveInternal.displayName = 'ReactiveInternal';
 
 const ReactiveField = observer(ReactiveInternal, {
-  forwardRef: true,
   displayName: 'ReactiveField',
 });
 

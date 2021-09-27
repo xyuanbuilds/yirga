@@ -1,6 +1,6 @@
 import type { Form } from './Form';
 
-type NormalEvent = {
+export type NormalEvent = {
   target:
     | {
         value: any;
