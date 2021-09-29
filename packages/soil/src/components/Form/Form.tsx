@@ -6,8 +6,6 @@ import {
   // reaction,
   untracked,
   batch,
-  // toJS,
-  // autorun,
 } from '@formily/reactive';
 import { isArr, isNum, isValid, isNumberIndex } from './predicate';
 import FormContext from './context/Form';
@@ -25,7 +23,7 @@ export type FieldPath = Array<string | number | FieldPath>;
 function FormInstance({ children }) {
   const { current: form } = React.useRef<Form>({
     fields: {}, // { xx.0.xx: Field }
-    values: {}, // {}
+    values: {}, // { array: [{ a1: xx }, { a1: xx }]}
     setValuesIn,
     getValuesIn,
     createField,
@@ -40,9 +38,11 @@ function FormInstance({ children }) {
   function createField({
     basePath = [], // 来自父Field
     name, // 当前 field name
+    defaultValue,
   }: {
     basePath?: (number | string)[];
     name: string | number;
+    defaultValue?: any;
   }): Field {
     const address = basePath.concat(name);
     const identifier = address.toString();
@@ -55,7 +55,7 @@ function FormInstance({ children }) {
         const field = {
           form,
           get value() {
-            return form.getValuesIn(address) || [];
+            return form.getValuesIn(address);
           },
           set value(value: any) {
             form.setValuesIn(address, value);
@@ -90,6 +90,10 @@ function FormInstance({ children }) {
           onInput: batch,
         });
 
+        batch.scope?.(() => {
+          if (isValid(defaultValue)) field.value = defaultValue;
+        });
+
         form.fields[identifier] = field;
       });
       // this.notify(LifeCycleTypes.ON_FORM_GRAPH_CHANGE);
@@ -97,12 +101,19 @@ function FormInstance({ children }) {
     return form.fields[identifier] as Field;
   }
 
+  // remove 任一行删除：（尽量快速）该 index 数据删除，该index 后所有数据 index -1；
+  // move 任一行移动到指定位置，若下移，经过行做上移，若上移，经过行做下移；（慢速）
+  // moveUp 任一行做上移操作；（尽量快速）
+  // moveDown 任一行坐下移操作；（尽量快速）
+  // push 行尾增加一行；（快速）
   function createArrayField({
     basePath = [],
-    name = 'array',
+    name,
+    defaultValue,
   }: {
     basePath?: (number | string)[];
-    name: string | number;
+    name: string;
+    defaultValue?: any[];
   }): ArrayField {
     const address = basePath.concat(name);
     const identifier = address.toString();
@@ -115,6 +126,15 @@ function FormInstance({ children }) {
         const field = {
           form,
           remove() {},
+          push(...items: any[]) {
+            if (!isArr(field.value)) return;
+            batch(() => {
+              field.value.push(...items);
+              // field.value = field.value.con;
+              // 用于触发相应的生命周期，及其他状态，暂不需要
+              // TODO return field.onInput(field.value);
+            });
+          },
           get value() {
             return form.getValuesIn(address) || [];
           },
@@ -136,12 +156,15 @@ function FormInstance({ children }) {
           onInput: batch,
         });
 
+        batch.scope?.(() => {
+          if (isArr(defaultValue)) field.value = defaultValue;
+        });
+
         form.fields[identifier] = field;
       });
       // this.notify(LifeCycleTypes.ON_FORM_GRAPH_CHANGE);
     }
 
-    // TODO 与createField相同，多增加类似 remove，push 等操作
     return form.fields[identifier] as ArrayField;
   }
 
@@ -160,14 +183,6 @@ function FormInstance({ children }) {
       setIn(address, form.values, value);
     });
   }
-
-  // remove 任一行删除：（尽量快速）该 index 数据删除，该index 后所有数据 index -1；
-  // move 任一行移动到指定位置，若下移，经过行做上移，若上移，经过行做下移；（慢速）
-  // moveUp 任一行做上移操作；（尽量快速）
-  // moveDown 任一行坐下移操作；（尽量快速）
-  // push 行尾增加一行；（快速）
-
-  // const onChange = () => {};
 
   return <FormContext.Provider value={form}>{children}</FormContext.Provider>;
 }

@@ -3,13 +3,14 @@ import * as React from 'react';
 
 function TestFieldComponent(props: {
   value?: string;
-  onChange?: (v: string) => void;
+  onChange?: (v: { target: any }) => void;
 }) {
   const { value: controlledValue } = props;
+
   const [value, setValue] = React.useState<string>(controlledValue || '');
 
   React.useEffect(() => {
-    if (controlledValue) setValue(controlledValue);
+    if (typeof controlledValue === 'string') setValue(controlledValue);
   }, [controlledValue]);
 
   return (
@@ -22,4 +23,4 @@ function TestFieldComponent(props: {
   );
 }
 
-export default TestFieldComponent;
+export default React.memo(TestFieldComponent);

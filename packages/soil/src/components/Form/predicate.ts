@@ -27,7 +27,7 @@ export const isHTMLElement = (target: any): target is EventTarget => {
   return Object.prototype.toString.call(target).indexOf('HTML') > -1;
 };
 
-// * business
+// * extra
 export const isValid = (val: any) => val !== undefined && val !== null;
 export const isNumberIndex = (val: any) =>
   isStr(val) ? /^\d+$/.test(val) : isNum(val);

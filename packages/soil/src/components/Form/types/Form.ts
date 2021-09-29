@@ -5,6 +5,12 @@ type Address = PathPattern[];
 export interface CreateFieldProps {
   name: PathPattern;
   basePath?: Address;
+  defaultValue?: any;
+}
+
+export interface CreateArrayFieldProps {
+  name: string;
+  defaultValue?: any[];
 }
 
 export interface Form<ValueType extends object = any> {
@@ -13,5 +19,5 @@ export interface Form<ValueType extends object = any> {
   getValuesIn: (address: Address) => any;
   setValuesIn: (address: Address, value: any) => void;
   createField: (props: CreateFieldProps) => Field; // TODO, 目前只支持 ArrayField，先做尝试
-  createArrayField: (props: CreateFieldProps) => ArrayField; // TODO, 目前只支持 ArrayField，先做尝试
+  createArrayField: (props: CreateArrayFieldProps) => ArrayField; // TODO, 目前只支持 ArrayField，先做尝试
 }

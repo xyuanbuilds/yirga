@@ -5,6 +5,7 @@ import 'antd/es/input-number/style/index';
 // import { FormProvider, FormConsumer, Field } from '@formily/react';
 import List from '../components/VirtualList/List';
 import FormTest from '../components/Form/test';
+import TableFromTest from '../components/Form/TestTableField';
 
 export default {
   title: 'Example/MyTable',
@@ -90,8 +91,8 @@ export default {
 
 const Template = () => {
   return (
-    <div style={{ height: 200, width: 300 }}>
-      <FormTest />
+    <div style={{ height: 400, width: 400 }}>
+      <TableFromTest />
     </div>
   );
 };

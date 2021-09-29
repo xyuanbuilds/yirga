@@ -1,6 +1,7 @@
 import React from 'react';
 import { observer } from '@formily/reactive-react';
 import type { GeneralField } from './types/Field';
+import type { Form } from './types/Form';
 
 type C<
   P = {
@@ -10,25 +11,22 @@ type C<
 > = React.FunctionComponent<P> | React.ComponentClass<P> | string;
 interface ReactiveFieldProps {
   field: GeneralField;
+  onlyObservable?: boolean;
   children?:
-    | ((
-        field: GeneralField,
-        form: Formily.Core.Models.Form,
-      ) => React.ReactChild)
+    | ((field: GeneralField, form: Form) => React.ReactChild)
     | React.ReactNode;
-  component?: C[];
+  component?: [C, Record<string, any>?];
 }
 
 const ReactiveInternal: React.FC<ReactiveFieldProps> = (props) => {
-  const { field, children, component } = props;
+  const { field, children, component, onlyObservable } = props;
 
-  if (!component) return null;
-  if (!field || !component) {
-    return <>{children}</>;
+  if (!component && !onlyObservable) return null;
+  if (onlyObservable || !field) {
+    return <div>{children}</div>;
   }
 
   // if (field.display !== 'visible') return null;
-
   const renderComponent = () => {
     // const value = !isVoidField(field) ? field.value : undefined;
 
@@ -44,7 +42,7 @@ const ReactiveInternal: React.FC<ReactiveFieldProps> = (props) => {
     //   : undefined;
 
     return React.createElement(
-      component[0],
+      component![0],
       {
         value: field.value,
         onChange,
