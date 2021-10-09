@@ -1,15 +1,45 @@
+import { useEffect, useRef } from 'react';
 import { useForm } from './context/Form';
 import ReactiveField from './ReactiveField';
 import FieldContext, { useField } from './context/Field';
-import type { FieldProps } from './types/Field';
+import type { FieldProps, Field as IField } from './types/Field';
 
-function Field({ name, children, component, basePath }: FieldProps) {
+const useAttach = <T extends IField>(target: T): T => {
+  // const oldTargetRef = useRef<IField>(null!);
+  // useEffect(() => {
+  //   if (oldTargetRef.current && target !== oldTargetRef.current) {
+  //     console.log('what diffs ?');
+  //     oldTargetRef.current.disposers?.forEach((dispose) => {
+  //       dispose();
+  //     });
+  //   }
+  //   oldTargetRef.current = target;
+  //   return () => {
+  //     console.log('what ?');
+  //     target.disposers?.forEach((dispose) => {
+  //       dispose();
+  //     });
+  //   };
+  // }, [target]);
+  return target;
+};
+
+function Field({
+  name,
+  children,
+  component,
+  basePath,
+  defaultValue,
+}: FieldProps) {
   const form = useForm();
   const parent = useField();
-  const field = form.createField({
-    name,
-    basePath: basePath || parent?.address,
-  });
+  const field = useAttach(
+    form.createField({
+      name,
+      basePath: basePath || parent?.address,
+      defaultValue,
+    }),
+  );
 
   return (
     <FieldContext.Provider value={field}>

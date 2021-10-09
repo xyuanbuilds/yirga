@@ -3,7 +3,7 @@ import * as React from 'react';
 import {
   define,
   observable,
-  // reaction,
+  reaction,
   untracked,
   batch,
 } from '@formily/reactive';
@@ -29,16 +29,19 @@ function FormInstance({ children }) {
     createField,
     createArrayField,
   });
+
   define(form, {
     fields: observable.shallow,
     values: observable,
     setValuesIn: batch,
   });
 
+  window.form_test = form;
+
   function createField({
     basePath = [], // 来自父Field
     name, // 当前 field name
-    defaultValue,
+    defaultValue: propsDefaultValue,
   }: {
     basePath?: (number | string)[];
     name: string | number;
@@ -47,12 +50,15 @@ function FormInstance({ children }) {
     const address = basePath.concat(name);
     const identifier = address.toString();
 
+    /* 表单联动相关内容 */
+    const disposers: (() => void)[] = [];
+
     if (!identifier) {
       throw new Error('field no identifier');
     }
     if (!form.fields[identifier]) {
       batch(() => {
-        const field = {
+        const field: Field = {
           form,
           get value() {
             return form.getValuesIn(address);
@@ -82,19 +88,78 @@ function FormInstance({ children }) {
             //  await this.validate('onInput');
             //  this.caches.inputting = false;
           },
+          defaultValue: undefined,
           address,
           identifier,
+          disposers,
         };
         define(field, {
           value: observable.computed,
           onInput: batch,
         });
 
+        const parentDefaultValue = field.value;
+        const defaultValue = propsDefaultValue || parentDefaultValue;
+
         batch.scope?.(() => {
-          if (isValid(defaultValue)) field.value = defaultValue;
+          if (isValid(defaultValue)) {
+            field.value = defaultValue;
+          }
+
+          /* 副作用添加 */
+          //* 普通表单联动 & 同行表单联动
+          if (identifier.includes(',a')) {
+            const c = `${identifier.slice(0, identifier.length - 1)}b`;
+            field.disposers!.push(
+              reaction(
+                () => {
+                  console.log('re');
+                  return form.fields[c]?.value;
+                },
+                (value) => {
+                  field.value = value;
+                },
+              ),
+            );
+          }
+          //* 整列表单联动（重名校验）
+          if (identifier.includes(',c')) {
+            let prev = [];
+            field.disposers!.push(
+              reaction(
+                () => {
+                  const arr = form.values[address[0]].reduce((res, cur) => {
+                    res.push(cur[address[2]]);
+                    return res;
+                  }, []);
+
+                  if (
+                    prev.length !== arr.length ||
+                    arr.find((v, index) => v !== prev[index])
+                  ) {
+                    prev = arr;
+                  }
+                  return prev;
+                },
+                (values) => {
+                  const fieldIndex = address[1];
+                  if (
+                    isValid(field.value) &&
+                    Array.isArray(values) &&
+                    values.find(
+                      (v, index) => v === field.value && index !== fieldIndex,
+                    )
+                  ) {
+                    console.log(`${identifier} same: ${field.value}`);
+                  }
+                },
+              ),
+            );
+          }
+          /* 副作用添加 */
         });
 
-        form.fields[identifier] = field;
+        form.fields[identifier] = field as Field;
       });
       // this.notify(LifeCycleTypes.ON_FORM_GRAPH_CHANGE);
     }
@@ -105,7 +170,6 @@ function FormInstance({ children }) {
   // move 任一行移动到指定位置，若下移，经过行做上移，若上移，经过行做下移；（慢速）
   // moveUp 任一行做上移操作；（尽量快速）
   // moveDown 任一行坐下移操作；（尽量快速）
-  // push 行尾增加一行；（快速）
   function createArrayField({
     basePath = [],
     name,
@@ -123,14 +187,13 @@ function FormInstance({ children }) {
     }
     if (!form.fields[identifier]) {
       batch(() => {
-        const field = {
+        const field: ArrayField = {
           form,
           remove() {},
           push(...items: any[]) {
             if (!isArr(field.value)) return;
             batch(() => {
               field.value.push(...items);
-              // field.value = field.value.con;
               // 用于触发相应的生命周期，及其他状态，暂不需要
               // TODO return field.onInput(field.value);
             });
@@ -143,11 +206,13 @@ function FormInstance({ children }) {
           },
           onInput(e) {
             if ('target' in e) {
-              field.value = e.target.value || e.target!.checked;
+              field.value =
+                'value' in e.target ? e.target.value : e.target.checked;
             } else {
               throw new Error('target without value');
             }
           },
+          defaultValue: [],
           address,
           identifier,
         };
@@ -183,6 +248,16 @@ function FormInstance({ children }) {
       setIn(address, form.values, value);
     });
   }
+
+  // TODO 添加 去除 reactions 逻辑
+  // const disposers = [];
+  // React.useEffect(() => {
+  //   return () => {
+  //     disposers.forEach((dispose) => {
+  //       dispose();
+  //     });
+  //   };
+  // }, []);
 
   return <FormContext.Provider value={form}>{children}</FormContext.Provider>;
 }

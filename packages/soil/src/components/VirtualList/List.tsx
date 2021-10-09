@@ -65,7 +65,7 @@ function List<RecordType extends object>(props: ListProps<RecordType>) {
   const timer = React.useRef<null | {
     id: number;
   }>(null);
-  console.log('scrolling', isScrolling);
+  // console.log('scrolling', isScrolling);
 
   function resetStyleCache() {
     if (timer.current !== null) {

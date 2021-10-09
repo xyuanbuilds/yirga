@@ -91,7 +91,7 @@ export default {
 
 const Template = () => {
   return (
-    <div style={{ height: 400, width: 400 }}>
+    <div style={{ height: 600, width: 400 }}>
       <TableFromTest />
     </div>
   );
@@ -104,8 +104,8 @@ Virtualized1.args = {
   width: 1000, // TODO 容器监听
   rowHeight: 45,
   container: {
-    height: 200,
-    width: 300,
+    height: 500,
+    width: 500,
   },
   dataSource: Array(100)
     .fill(1)

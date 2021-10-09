@@ -16,7 +16,9 @@ export interface Field {
   form: Form;
   identifier: string;
   address: Segment[];
+  defaultValue: any;
   value: any;
+  disposers?: (() => void)[];
   onInput: (event: NormalEvent) => void;
 }
 
@@ -39,6 +41,11 @@ export interface FieldProps {
   children?: React.ReactElement;
   component: [Component, ComponentProps?];
   basePath?: Segment[];
+  defaultValue?: any;
+}
+
+export interface ArrayFieldProps extends FieldProps {
+  defaultValue?: any[];
 }
 
 export type GeneralField = Field | ArrayField;

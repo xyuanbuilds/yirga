@@ -38,15 +38,33 @@ const testColumns: ColumnProps[] = [
     component: [TestField],
     valueType: 'string',
   },
+  {
+    dataIndex: 'c',
+    width: 200,
+    component: [TestField],
+    valueType: 'string',
+  },
+  {
+    dataIndex: 'd',
+    width: 200,
+    component: [TestField],
+    valueType: 'string',
+  },
+  {
+    dataIndex: 'e',
+    width: 200,
+    component: [TestField],
+    valueType: 'string',
+  },
 ];
 
 const size = {
-  height: 488 + 2, // TODO 容器监听
-  width: 1000, // TODO 容器监听
+  height: 400, // TODO 容器监听
+  width: 600, // TODO 容器监听
   rowHeight: 45,
   container: {
-    height: 200,
-    width: 300,
+    height: 400,
+    width: 400,
   },
 };
 
@@ -100,6 +118,7 @@ function useTableFormColumns(columns, dataSource) {
             <Item index={index}>
               {({ basePath }) => (
                 <Field
+                  defaultValue={dataIndex === 'b' ? 'yyyy' : undefined}
                   component={component}
                   basePath={basePath}
                   name={name || dataIndex}
@@ -136,7 +155,7 @@ const TableContainer = () => {
 
   return (
     <div>
-      <div style={{ height: 200, width: 300 }}>
+      <div style={{ height: 400, width: 400 }}>
         <Table />
       </div>
       <Button onClick={() => arrayField.push(getDefaultLineData())}>Add</Button>
@@ -147,7 +166,9 @@ const TableContainer = () => {
 function FormContainer({ children }) {
   return (
     <Form>
-      <ArrayField defaultValue={[{ a: 'testData' }]}>{children}</ArrayField>
+      <ArrayField defaultValue={[{ a: 'testData', b: 'ssss', c: '', d: '' }]}>
+        {children}
+      </ArrayField>
     </Form>
   );
 }
