@@ -14,8 +14,9 @@ export type NormalEvent = {
 export type Segment = string | number;
 export interface Field {
   form: Form;
-  identifier: string;
-  address: Segment[];
+  identifier: string; // * 内部名称，唯一数组
+  address: Segment[]; // * 选址数组
+  name: Segment; // * 外部名称，column中的 dataIndex
   defaultValue: any;
   value: any;
   disposers?: (() => void)[];
@@ -38,10 +39,15 @@ type ComponentProps = Record<string, any>;
 
 export interface FieldProps {
   name: Segment;
-  children?: React.ReactElement;
-  component: [Component, ComponentProps?];
   basePath?: Segment[];
   defaultValue?: any;
+  children?: React.ReactElement;
+  component: [Component, ComponentProps?];
+  // * 产生联动关系
+  linkages?: Segment | Segment[];
+  linkageReaction?: (field: Field, values: any | any[]) => void;
+  // * 校验重名
+  deduplicate?: boolean;
 }
 
 export interface ArrayFieldProps extends FieldProps {

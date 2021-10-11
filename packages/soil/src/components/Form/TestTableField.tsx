@@ -23,6 +23,9 @@ interface ColumnProps {
   valueType: ValueType;
   width?: number;
   component: [React.FunctionComponent<any>];
+  linkages?: string[];
+  linkageReaction?: (field: any, value: any) => void;
+  deduplicate?: boolean;
 }
 
 const testColumns: ColumnProps[] = [
@@ -31,6 +34,11 @@ const testColumns: ColumnProps[] = [
     width: 100,
     component: [TestField],
     valueType: 'string',
+    linkages: ['b'],
+    linkageReaction: (field, values) => {
+      const [one] = values;
+      field.value = one;
+    },
   },
   {
     dataIndex: 'b',
@@ -43,6 +51,7 @@ const testColumns: ColumnProps[] = [
     width: 200,
     component: [TestField],
     valueType: 'string',
+    deduplicate: true,
   },
   {
     dataIndex: 'd',
@@ -107,7 +116,19 @@ const getDefaultValue = (valueType: ValueType, defaultValue?: any) => {
 
 function useTableFormColumns(columns, dataSource) {
   return columns.reduce(
-    (buf, { name, dataIndex, component, ...extra }, key) => {
+    (
+      buf,
+      {
+        name,
+        dataIndex,
+        component,
+        linkages,
+        linkageReaction,
+        deduplicate,
+        ...extra
+      },
+      key,
+    ) => {
       return buf.concat({
         ...extra,
         key,
@@ -122,6 +143,9 @@ function useTableFormColumns(columns, dataSource) {
                   component={component}
                   basePath={basePath}
                   name={name || dataIndex}
+                  linkages={linkages}
+                  linkageReaction={linkageReaction}
+                  deduplicate={deduplicate}
                 />
               )}
             </Item>

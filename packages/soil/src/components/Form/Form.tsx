@@ -3,14 +3,17 @@ import * as React from 'react';
 import {
   define,
   observable,
-  reaction,
+  // reaction,
   untracked,
   batch,
 } from '@formily/reactive';
 import { isArr, isNum, isValid, isNumberIndex } from './predicate';
 import FormContext from './context/Form';
-import type { Segment, Field, ArrayField, NormalEvent } from './types/Field';
-import type { Form } from './types/Form';
+import * as FieldModel from './models/Field';
+import { pipe } from './utils';
+
+import type { Segment, Field, ArrayField } from './types/Field';
+import type { Form, FieldFactoryProps } from './types/Form';
 
 export type FieldPath = Array<string | number | FieldPath>;
 // 0: ['a', 'b']: value
@@ -36,134 +39,50 @@ function FormInstance({ children }) {
     setValuesIn: batch,
   });
 
-  window.form_test = form;
+  // window.form_test = form;
 
   function createField({
     basePath = [], // 来自父Field
     name, // 当前 field name
-    defaultValue: propsDefaultValue,
-  }: {
-    basePath?: (number | string)[];
-    name: string | number;
-    defaultValue?: any;
-  }): Field {
+    defaultValue,
+    linkages,
+    linkageReaction,
+    deduplicate,
+  }: FieldFactoryProps): Field {
     const address = basePath.concat(name);
     const identifier = address.toString();
-
-    /* 表单联动相关内容 */
-    const disposers: (() => void)[] = [];
 
     if (!identifier) {
       throw new Error('field no identifier');
     }
+
     if (!form.fields[identifier]) {
       batch(() => {
-        const field: Field = {
+        const field = FieldModel.fieldInit({
           form,
-          get value() {
-            return form.getValuesIn(address);
-          },
-          set value(value: any) {
-            form.setValuesIn(address, value);
-          },
-          onInput(e: NormalEvent) {
-            if ('target' in e) {
-              field.value =
-                'value' in e.target ? e.target.value : e.target.checked;
-            } else {
-              throw new Error('invalid target');
-            }
-
-            //  const values = getValuesFromEvent(args);
-            //  const value = values[0];
-            //  this.inputValue = value;
-            //  this.inputValues = values;
-
-            // field.modified = true;
-            // form.modified = true;
-
-            // form.notify(LifeCycleTypes.ON_FIELD_INPUT_VALUE_CHANGE, this);
-            // form.notify(LifeCycleTypes.ON_FORM_INPUT_CHANGE, this.form);
-
-            //  await this.validate('onInput');
-            //  this.caches.inputting = false;
-          },
-          defaultValue: undefined,
+          name,
           address,
           identifier,
-          disposers,
-        };
-        define(field, {
-          value: observable.computed,
-          onInput: batch,
         });
 
-        const parentDefaultValue = field.value;
-        const defaultValue = propsDefaultValue || parentDefaultValue;
-
-        batch.scope?.(() => {
-          if (isValid(defaultValue)) {
-            field.value = defaultValue;
-          }
-
-          /* 副作用添加 */
-          //* 普通表单联动 & 同行表单联动
-          if (identifier.includes(',a')) {
-            const c = `${identifier.slice(0, identifier.length - 1)}b`;
-            field.disposers!.push(
-              reaction(
-                () => {
-                  console.log('re');
-                  return form.fields[c]?.value;
-                },
-                (value) => {
-                  field.value = value;
-                },
-              ),
-            );
-          }
-          //* 整列表单联动（重名校验）
-          if (identifier.includes(',c')) {
-            let prev = [];
-            field.disposers!.push(
-              reaction(
-                () => {
-                  const arr = form.values[address[0]].reduce((res, cur) => {
-                    res.push(cur[address[2]]);
-                    return res;
-                  }, []);
-
-                  if (
-                    prev.length !== arr.length ||
-                    arr.find((v, index) => v !== prev[index])
-                  ) {
-                    prev = arr;
-                  }
-                  return prev;
-                },
-                (values) => {
-                  const fieldIndex = address[1];
-                  if (
-                    isValid(field.value) &&
-                    Array.isArray(values) &&
-                    values.find(
-                      (v, index) => v === field.value && index !== fieldIndex,
-                    )
-                  ) {
-                    console.log(`${identifier} same: ${field.value}`);
-                  }
-                },
-              ),
-            );
-          }
-          /* 副作用添加 */
-        });
-
-        form.fields[identifier] = field as Field;
+        form.fields[identifier] = pipe(
+          FieldModel.createFieldModel({
+            form,
+            field,
+          }),
+          FieldModel.createFieldReactions({
+            linkages,
+            linkageReaction,
+            deduplicate,
+          }),
+          FieldModel.setFieldInitial({
+            defaultValue,
+          }),
+        ).field;
       });
-      // this.notify(LifeCycleTypes.ON_FORM_GRAPH_CHANGE);
     }
-    return form.fields[identifier] as Field;
+
+    return form.fields[identifier];
   }
 
   // remove 任一行删除：（尽量快速）该 index 数据删除，该index 后所有数据 index -1；
@@ -215,6 +134,7 @@ function FormInstance({ children }) {
           defaultValue: [],
           address,
           identifier,
+          name,
         };
         define(field, {
           value: observable.computed, // 为啥是 computed ?
@@ -250,6 +170,7 @@ function FormInstance({ children }) {
   }
 
   // TODO 添加 去除 reactions 逻辑
+  // * form 注销时，手动清除所有的 disposers
   // const disposers = [];
   // React.useEffect(() => {
   //   return () => {
