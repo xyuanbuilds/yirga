@@ -53,18 +53,6 @@ const testColumns: ColumnProps[] = [
     valueType: 'string',
     deduplicate: true,
   },
-  {
-    dataIndex: 'd',
-    width: 200,
-    component: [TestField],
-    valueType: 'string',
-  },
-  {
-    dataIndex: 'e',
-    width: 200,
-    component: [TestField],
-    valueType: 'string',
-  },
 ];
 
 const size = {
@@ -114,48 +102,62 @@ const getDefaultValue = (valueType: ValueType, defaultValue?: any) => {
   return null;
 };
 
-function useTableFormColumns(columns, dataSource) {
-  return columns.reduce(
-    (
-      buf,
-      {
-        name,
-        dataIndex,
-        component,
-        linkages,
-        linkageReaction,
-        deduplicate,
-        ...extra
-      },
-      key,
-    ) => {
-      return buf.concat({
-        ...extra,
-        key,
-        dataIndex,
-        render: (_: any, record: any) => {
-          const index = dataSource.indexOf(record);
-          const children = (
-            <Item index={index}>
-              {({ basePath }) => (
-                <Field
-                  defaultValue={dataIndex === 'b' ? 'yyyy' : undefined}
-                  component={component}
-                  basePath={basePath}
-                  name={name || dataIndex}
-                  linkages={linkages}
-                  linkageReaction={linkageReaction}
-                  deduplicate={deduplicate}
-                />
-              )}
-            </Item>
-          );
-          return children;
+function useTableFormColumns(columns, dataSource, { remove }) {
+  return columns
+    .reduce(
+      (
+        buf,
+        {
+          name,
+          dataIndex,
+          component,
+          linkages,
+          linkageReaction,
+          deduplicate,
+          ...extra
         },
-      });
-    },
-    [],
-  );
+        key,
+      ) => {
+        return buf.concat({
+          ...extra,
+          key,
+          dataIndex,
+          render: (_: any, record: any) => {
+            const index = dataSource.indexOf(record);
+            const children = (
+              <Item index={index}>
+                {({ basePath }) => (
+                  <Field
+                    defaultValue={dataIndex === 'b' ? 'yyyy' : undefined}
+                    component={component}
+                    basePath={basePath}
+                    name={name || dataIndex}
+                    linkages={linkages}
+                    linkageReaction={linkageReaction}
+                    deduplicate={deduplicate}
+                  />
+                )}
+              </Item>
+            );
+            return children;
+          },
+        });
+      },
+      [],
+    )
+    .concat({
+      key: 'array_action_column',
+      dataIndex: 'array_action_column',
+      render: (_: any, record: any) => {
+        const index = dataSource.indexOf(record);
+        return (
+          <>
+            {' '}
+            <Button onClick={() => remove(index)}>删除</Button>
+          </>
+        );
+      },
+    });
 }
 
 const Table = observer(() => {
@@ -164,7 +166,14 @@ const Table = observer(() => {
     ? arrayField.value.slice()
     : [];
 
-  const formColumns = useTableFormColumns(testColumns, dataSource);
+  console.log(dataSource.length);
+
+  const { remove } = arrayField;
+  const operator = {
+    remove,
+  };
+
+  const formColumns = useTableFormColumns(testColumns, dataSource, operator);
   return <List {...size} columns={formColumns} dataSource={dataSource} />;
 });
 

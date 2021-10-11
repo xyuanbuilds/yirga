@@ -88,20 +88,20 @@ const createFieldReactions = ({
     /* 副作用添加 */
     //* 普通表单联动 & 同行表单联动
     if (isValid(linkages) && isFn(linkageReaction)) {
-      const frontSlice = identifier.slice(0, identifier.length - 1);
-
-      const linkIdentifiers = isArr(linkages)
-        ? (linkages as any[]).map(
-            (linkageName) => `${frontSlice}${linkageName}`,
-          )
-        : `${frontSlice}${linkages}`;
+      const arrayKey = field.address[0];
+      const indexKey = field.address[1];
 
       field.disposers!.push(
         reaction(
           () => {
-            return isArr(linkIdentifiers)
-              ? (linkIdentifiers as any[]).map((id) => form.fields[id]?.value)
-              : form.fields[linkIdentifiers]?.value;
+            if (isArr(linkages)) {
+              const curLine = form.fields[arrayKey]?.value[indexKey];
+              if (!curLine) return [];
+
+              return linkages.map((key) => curLine[key]);
+            }
+
+            return form.fields[`${arrayKey},${indexKey},${linkages}`]?.value;
           },
           (values: any | any[]) => {
             linkageReaction(field, values);
@@ -134,12 +134,16 @@ const createFieldReactions = ({
             (values) => {
               // TODO 优化可变index地址
               const fieldIndex = address[1];
+              // let value = null;
+              // try {
+              const { value } = field;
+              // } catch (e) {
+              //   console.log(e.message);
+              // }
               if (
-                isValid(field.value) &&
+                isValid(value) &&
                 Array.isArray(values) &&
-                values.find(
-                  (v, index) => v === field.value && index !== fieldIndex,
-                )
+                values.find((v, index) => v === value && index !== fieldIndex)
               ) {
                 console.log(`${identifier} same: ${field.value}`);
               }

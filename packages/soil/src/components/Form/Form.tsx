@@ -10,9 +10,9 @@ import {
 import { isArr, isNum, isValid, isNumberIndex } from './predicate';
 import FormContext from './context/Form';
 import * as FieldModel from './models/Field';
-import { pipe } from './utils';
+import { pipe, each } from './utils';
 
-import type { Segment, Field, ArrayField } from './types/Field';
+import type { Segment, Field, ArrayField, GeneralField } from './types/Field';
 import type { Form, FieldFactoryProps } from './types/Form';
 
 export type FieldPath = Array<string | number | FieldPath>;
@@ -108,13 +108,23 @@ function FormInstance({ children }) {
       batch(() => {
         const field: ArrayField = {
           form,
-          remove() {},
           push(...items: any[]) {
             if (!isArr(field.value)) return;
             batch(() => {
               field.value.push(...items);
               // 用于触发相应的生命周期，及其他状态，暂不需要
               // TODO return field.onInput(field.value);
+            });
+          },
+          remove(index: number) {
+            if (!isArr(field.value)) return;
+            batch(() => {
+              field.value.splice(index, 1);
+              spliceArrayState(field, {
+                startIndex: index,
+                deleteCount: 1,
+              });
+              // return this.onInput(this.value);
             });
           },
           get value() {
@@ -210,6 +220,112 @@ function setIn(segments: Segment[], source: any, value: any) {
     }
     source = source[index];
   }
+}
+
+export function spliceArrayState(
+  field: ArrayField,
+  props?: {
+    startIndex?: number;
+    deleteCount?: number;
+    insertCount?: number;
+  },
+) {
+  const { startIndex, deleteCount, insertCount } = {
+    startIndex: 0,
+    deleteCount: 0,
+    insertCount: 0,
+    ...props,
+  };
+  const address = field.address.toString();
+  const { fields } = field.form;
+  const fieldPatches: {
+    type: 'remove' | 'update';
+    identifier: string;
+    payload?: GeneralField;
+  }[] = [];
+  const offset = insertCount - deleteCount;
+  const isArrayChildren = (identifier: string) => {
+    return (
+      identifier.indexOf(address) === 0 && identifier.length > address.length
+    );
+  };
+  const isAfterNode = (identifier: string) => {
+    const afterStr = identifier.slice(address.length);
+    const number = afterStr.match(/^\.(\d+)/)?.[1];
+    if (number === undefined) return false;
+    const index = Number(number);
+    return index > startIndex + deleteCount - 1;
+  };
+  const isInsertNode = (identifier: string) => {
+    const afterStr = identifier.slice(address.length);
+    const number = afterStr.match(/^\.(\d+)/)?.[1];
+    if (number === undefined) return false;
+    const index = Number(number);
+    return index >= startIndex && index < startIndex + insertCount;
+  };
+  const isDeleteNode = (identifier: string) => {
+    const preStr = identifier.slice(0, address.length);
+    const afterStr = identifier.slice(address.length);
+    const number = afterStr.match(/^,(\d+)/)?.[1];
+    if (number === undefined) return false;
+    const index = Number(number);
+    const target = `${preStr}${afterStr.replace(
+      /^,\d+/,
+      `,${index + deleteCount}`,
+    )}`;
+    return !fields[target];
+  };
+  const moveIndex = (identifier: string) => {
+    if (offset === 0) return identifier;
+    const preStr = identifier.slice(0, address.length);
+    const afterStr = identifier.slice(address.length);
+    const number = afterStr.match(/^\.(\d+)/)?.[1];
+    if (number === undefined) return identifier;
+    const index = Number(number) + offset;
+    return `${preStr}${afterStr.replace(/^\.\d+/, `.${index}`)}`;
+  };
+
+  batch(() => {
+    each(fields, (curField, identifier) => {
+      if (isArrayChildren(identifier)) {
+        if (isAfterNode(identifier)) {
+          const newIdentifier = moveIndex(identifier);
+          fieldPatches.push({
+            type: 'update',
+            identifier: newIdentifier,
+            payload: curField,
+          });
+        }
+        if (isInsertNode(identifier) || isDeleteNode(identifier)) {
+          fieldPatches.push({ type: 'remove', identifier });
+        }
+      }
+    });
+    applyFieldPatches(fields, fieldPatches);
+  });
+  // field.form.notify(LifeCycleTypes.ON_FORM_GRAPH_CHANGE);
+}
+
+export function applyFieldPatches(
+  target: Record<string, GeneralField>,
+  patches: {
+    type: 'remove' | 'update';
+    identifier: string;
+    payload?: GeneralField;
+  }[],
+) {
+  patches.forEach(({ type, identifier, payload }) => {
+    if (type === 'remove') {
+      target[identifier].disposers?.forEach((dispose) => {
+        dispose();
+      });
+      delete target[identifier];
+    } else if (type === 'update') {
+      if (payload) {
+        target[identifier] = payload;
+      }
+    }
+  });
 }
 
 export default React.memo(FormInstance);
