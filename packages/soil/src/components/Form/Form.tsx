@@ -127,6 +127,31 @@ function FormInstance({ children }) {
               // return this.onInput(this.value);
             });
           },
+          move(fromIndex: number, toIndex: number) {
+            if (!isArr(field.value)) return;
+            if (fromIndex === toIndex) return;
+            batch(() => {
+              const fromItem = field.value[fromIndex];
+              field.value.splice(fromIndex, 1);
+              field.value.splice(toIndex, 0, fromItem);
+              exchangeArrayState(field, {
+                fromIndex,
+                toIndex,
+              });
+              // return this.onInput(this.value);
+            });
+          },
+          moveUp(index: number) {
+            if (!isArr(field.value)) return;
+            field.move(
+              index,
+              index - 1 < 0 ? field.value.length - 1 : index - 1,
+            );
+          },
+          moveDown(index: number) {
+            if (!isArr(field.value)) return;
+            field.move(index, index + 1 >= field.value.length ? 0 : index + 1);
+          },
           get value() {
             return form.getValuesIn(address) || [];
           },
@@ -222,6 +247,78 @@ function setIn(segments: Segment[], source: any, value: any) {
   }
 }
 
+export function exchangeArrayState(
+  field: ArrayField,
+  props: {
+    fromIndex?: number;
+    toIndex?: number;
+  },
+) {
+  const { fromIndex, toIndex } = {
+    fromIndex: 0,
+    toIndex: 0,
+    ...props,
+  };
+  const address = field.address.toString();
+  const { fields } = field.form;
+  const fieldPatches: {
+    type: 'remove' | 'update';
+    identifier: string;
+    payload?: GeneralField;
+  }[] = [];
+  const isArrayChildren = (identifier: string) => {
+    return (
+      identifier.indexOf(address) === 0 && identifier.length > address.length
+    );
+  };
+
+  const isFromOrToNode = (identifier: string) => {
+    const afterStr = identifier.slice(address.length);
+    const number = afterStr.match(/^,(\d+)/)?.[1];
+    if (number === undefined) return false;
+    const index = Number(number);
+
+    return index === toIndex || index === fromIndex;
+  };
+
+  const moveIndex = (identifier: string) => {
+    const preStr = identifier.slice(0, address.length);
+    const afterStr = identifier.slice(address.length);
+    const number = afterStr.match(/^,(\d+)/)?.[1];
+    const current = Number(number);
+    let index = current;
+    if (index === fromIndex) {
+      index = toIndex;
+    } else {
+      index = fromIndex;
+    }
+
+    return `${preStr}${afterStr.replace(/^,\d+/, `,${index}`)}`;
+  };
+
+  batch(() => {
+    each(fields, (curField, identifier) => {
+      if (isArrayChildren(identifier)) {
+        if (isFromOrToNode(identifier)) {
+          const newIdentifier = moveIndex(identifier);
+          fieldPatches.push({
+            type: 'update',
+            identifier: newIdentifier,
+            payload: curField,
+          });
+          if (!fields[newIdentifier]) {
+            fieldPatches.push({
+              type: 'remove',
+              identifier,
+            });
+          }
+        }
+      }
+    });
+    applyFieldPatches(fields, fieldPatches);
+  });
+}
+
 export function spliceArrayState(
   field: ArrayField,
   props?: {
@@ -251,14 +348,14 @@ export function spliceArrayState(
   };
   const isAfterNode = (identifier: string) => {
     const afterStr = identifier.slice(address.length);
-    const number = afterStr.match(/^\.(\d+)/)?.[1];
+    const number = afterStr.match(/^,(\d+)/)?.[1];
     if (number === undefined) return false;
     const index = Number(number);
     return index > startIndex + deleteCount - 1;
   };
   const isInsertNode = (identifier: string) => {
     const afterStr = identifier.slice(address.length);
-    const number = afterStr.match(/^\.(\d+)/)?.[1];
+    const number = afterStr.match(/^,(\d+)/)?.[1];
     if (number === undefined) return false;
     const index = Number(number);
     return index >= startIndex && index < startIndex + insertCount;
@@ -279,10 +376,10 @@ export function spliceArrayState(
     if (offset === 0) return identifier;
     const preStr = identifier.slice(0, address.length);
     const afterStr = identifier.slice(address.length);
-    const number = afterStr.match(/^\.(\d+)/)?.[1];
+    const number = afterStr.match(/^,(\d+)/)?.[1];
     if (number === undefined) return identifier;
     const index = Number(number) + offset;
-    return `${preStr}${afterStr.replace(/^\.\d+/, `.${index}`)}`;
+    return `${preStr}${afterStr.replace(/^,\d+/, `,${index}`)}`;
   };
 
   batch(() => {
@@ -323,6 +420,13 @@ export function applyFieldPatches(
     } else if (type === 'update') {
       if (payload) {
         target[identifier] = payload;
+      }
+      //* 路径信息变更
+      if (identifier && payload) {
+        payload.identifier = identifier;
+        payload.address = identifier
+          .split(',')
+          .map((i) => (isNumberIndex(i) ? Number(i) : i));
       }
     }
   });

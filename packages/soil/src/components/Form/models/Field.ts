@@ -23,10 +23,10 @@ const fieldInit = ({
   const field: Field = {
     form,
     get value() {
-      return form.getValuesIn(address);
+      return form.getValuesIn(field.address);
     },
     set value(value: any) {
-      form.setValuesIn(address, value);
+      form.setValuesIn(field.address, value);
     },
     onInput(e: NormalEvent) {
       if ('target' in e) {
@@ -82,18 +82,17 @@ const createFieldReactions = ({
   deduplicate,
 }: Pick<FieldFactoryProps, 'linkages' | 'linkageReaction' | 'deduplicate'>) => {
   return ({ field, form }: Dependencies): Dependencies => {
-    const { identifier, address, name } = field;
     /* 表单联动相关内容 */
 
     /* 副作用添加 */
     //* 普通表单联动 & 同行表单联动
     if (isValid(linkages) && isFn(linkageReaction)) {
-      const arrayKey = field.address[0];
-      const indexKey = field.address[1];
-
       field.disposers!.push(
         reaction(
           () => {
+            const { address } = field;
+            const arrayKey = address[0]; // TODO field.parent 获取准确地址
+            const indexKey = address[1];
             if (isArr(linkages)) {
               const curLine = form.fields[arrayKey]?.value[indexKey];
               if (!curLine) return [];
@@ -111,12 +110,13 @@ const createFieldReactions = ({
     }
     //* 整列表单联动（重名校验）
     if (deduplicate) {
-      const keyIndex = address.findIndex((s) => s === name);
       let prev = [];
       batch.scope?.(() => {
         field.disposers!.push(
           reaction(
             () => {
+              const { address, name } = field;
+              const keyIndex = address.findIndex((s) => s === name);
               // TODO 优化数组内寻址
               const arr = form.values[address[0]].reduce((res, cur) => {
                 res.push(cur[address[keyIndex]]);
@@ -133,19 +133,15 @@ const createFieldReactions = ({
             },
             (values) => {
               // TODO 优化可变index地址
+              const { address, value } = field;
               const fieldIndex = address[1];
-              // let value = null;
-              // try {
-              const { value } = field;
-              // } catch (e) {
-              //   console.log(e.message);
-              // }
+
               if (
                 isValid(value) &&
                 Array.isArray(values) &&
                 values.find((v, index) => v === value && index !== fieldIndex)
               ) {
-                console.log(`${identifier} same: ${field.value}`);
+                console.log(`${field.identifier} same: ${field.value}`);
               }
             },
           ),

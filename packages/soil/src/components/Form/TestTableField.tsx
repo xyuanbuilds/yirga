@@ -57,11 +57,11 @@ const testColumns: ColumnProps[] = [
 
 const size = {
   height: 400, // TODO 容器监听
-  width: 600, // TODO 容器监听
+  width: 700, // TODO 容器监听
   rowHeight: 45,
   container: {
     height: 400,
-    width: 400,
+    width: 700,
   },
 };
 
@@ -102,7 +102,11 @@ const getDefaultValue = (valueType: ValueType, defaultValue?: any) => {
   return null;
 };
 
-function useTableFormColumns(columns, dataSource, { remove }) {
+function useTableFormColumns(
+  columns,
+  dataSource,
+  { remove, moveUp, moveDown },
+) {
   return columns
     .reduce(
       (
@@ -148,11 +152,14 @@ function useTableFormColumns(columns, dataSource, { remove }) {
     .concat({
       key: 'array_action_column',
       dataIndex: 'array_action_column',
+      width: 200,
       render: (_: any, record: any) => {
         const index = dataSource.indexOf(record);
         return (
           <>
             {' '}
+            <Button onClick={() => moveUp(index)}>向上</Button>
+            <Button onClick={() => moveDown(index)}>向下</Button>
             <Button onClick={() => remove(index)}>删除</Button>
           </>
         );
@@ -166,11 +173,11 @@ const Table = observer(() => {
     ? arrayField.value.slice()
     : [];
 
-  console.log(dataSource.length);
-
-  const { remove } = arrayField;
+  const { remove, moveUp, moveDown } = arrayField;
   const operator = {
     remove,
+    moveUp,
+    moveDown,
   };
 
   const formColumns = useTableFormColumns(testColumns, dataSource, operator);
@@ -188,7 +195,7 @@ const TableContainer = () => {
 
   return (
     <div>
-      <div style={{ height: 400, width: 400 }}>
+      <div style={{ height: 400, width: 700 }}>
         <Table />
       </div>
       <Button onClick={() => arrayField.push(getDefaultLineData())}>Add</Button>
@@ -199,7 +206,7 @@ const TableContainer = () => {
 function FormContainer({ children }) {
   return (
     <Form>
-      <ArrayField defaultValue={[{ a: 'testData', b: 'ssss', c: '', d: '' }]}>
+      <ArrayField defaultValue={[{ a: 'testData', b: 'ssss', c: '' }]}>
         {children}
       </ArrayField>
     </Form>

@@ -27,6 +27,9 @@ export interface ArrayField extends Field {
   // TODO 更多的内容
   remove: (index: number) => void;
   push: (...args: any[]) => void;
+  move: (fromIndex: number, toIndex: number) => void;
+  moveUp: (index: number) => void;
+  moveDown: (index: number) => void;
 }
 
 type Component<
