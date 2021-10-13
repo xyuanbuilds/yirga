@@ -1,9 +1,10 @@
 /* eslint-disable no-param-reassign */
-import { createContext, useContext } from 'react';
+import { createContext, useContext, useState } from 'react';
 import { Button } from 'antd';
 import { observer } from '@formily/reactive-react';
 import List from '../VirtualList/List';
 import TestField from './TestField';
+import TestSelect from './TestFieldSelect';
 import ArrayField from './ArrayField';
 import Form from './Form';
 import Field from './Field';
@@ -22,38 +23,11 @@ interface ColumnProps {
   dataIndex: string;
   valueType: ValueType;
   width?: number;
-  component: [React.FunctionComponent<any>];
+  component: [React.FunctionComponent<any>, Record<string, any>?];
   linkages?: string[];
   linkageReaction?: (field: any, value: any) => void;
   deduplicate?: boolean;
 }
-
-const testColumns: ColumnProps[] = [
-  {
-    dataIndex: 'a',
-    width: 100,
-    component: [TestField],
-    valueType: 'string',
-    linkages: ['b'],
-    linkageReaction: (field, values) => {
-      const [one] = values;
-      field.value = one;
-    },
-  },
-  {
-    dataIndex: 'b',
-    width: 200,
-    component: [TestField],
-    valueType: 'string',
-  },
-  {
-    dataIndex: 'c',
-    width: 200,
-    component: [TestField],
-    valueType: 'string',
-    deduplicate: true,
-  },
-];
 
 const size = {
   height: 400, // TODO 容器监听
@@ -132,7 +106,8 @@ function useTableFormColumns(
               <Item index={index}>
                 {({ basePath }) => (
                   <Field
-                    defaultValue={dataIndex === 'b' ? 'yyyy' : undefined}
+                    // !应该 Form initial 最高
+                    // defaultValue={dataIndex === 'b' ? 'yyyy' : undefined}
                     component={component}
                     basePath={basePath}
                     name={name || dataIndex}
@@ -167,7 +142,11 @@ function useTableFormColumns(
     });
 }
 
-const Table = observer(() => {
+interface TableProps {
+  columns: ColumnProps[];
+}
+
+const Table = observer(({ columns }: TableProps) => {
   const arrayField = useField<ArrayFieldInstance>();
   const dataSource = Array.isArray(arrayField.value)
     ? arrayField.value.slice()
@@ -180,12 +159,52 @@ const Table = observer(() => {
     moveDown,
   };
 
-  const formColumns = useTableFormColumns(testColumns, dataSource, operator);
+  const formColumns = useTableFormColumns(columns, dataSource, operator);
   return <List {...size} columns={formColumns} dataSource={dataSource} />;
 });
 
+const aOptions = [
+  { label: 'aaa', value: 'aaa' },
+  { label: 'bbb', value: 'bbb' },
+  { label: 'ccc', value: 'ccc' },
+];
+const bOptions = [
+  { label: 'aaa1', value: 'aaa1' },
+  { label: 'bbb1', value: 'bbb1' },
+  { label: 'ccc1', value: 'ccc1' },
+];
+
 const TableContainer = () => {
   const arrayField = useField<ArrayFieldInstance>();
+
+  const [options, setOptions] = useState(aOptions);
+
+  const testColumns: ColumnProps[] = [
+    {
+      dataIndex: 'a',
+      width: 100,
+      component: [TestField],
+      valueType: 'string',
+      linkages: ['b', 'c'],
+      linkageReaction: (field, values) => {
+        const [b, c] = values;
+        field.value = b + c;
+      },
+    },
+    {
+      dataIndex: 'b',
+      width: 200,
+      component: [TestField],
+      valueType: 'string',
+    },
+    {
+      dataIndex: 'c',
+      width: 200,
+      component: [TestSelect, { options }],
+      valueType: 'string',
+      deduplicate: true,
+    },
+  ];
 
   const getDefaultLineData = () =>
     testColumns.reduce((obj, column) => {
@@ -196,19 +215,31 @@ const TableContainer = () => {
   return (
     <div>
       <div style={{ height: 400, width: 700 }}>
-        <Table />
+        <Table columns={testColumns} />
       </div>
       <Button onClick={() => arrayField.push(getDefaultLineData())}>Add</Button>
+      <Button
+        onClick={() =>
+          setOptions((v) => (v === aOptions ? bOptions : aOptions))
+        }
+      >
+        options change
+      </Button>
     </div>
   );
 };
 
+const a = [{}, { a: 'testData1', b: 'ssss1', c: '' }];
+const b = [{ a: 'testData2', b: 'ssss2', c: '' }];
+
 function FormContainer({ children }) {
+  const [defaultValue, toggle] = useState(a);
   return (
     <Form>
-      <ArrayField defaultValue={[{ a: 'testData', b: 'ssss', c: '' }]}>
-        {children}
-      </ArrayField>
+      <ArrayField defaultValue={defaultValue}>{children}</ArrayField>
+      <Button onClick={() => toggle((v) => (v === a ? b : a))}>
+        改变初始值(但不会生效)
+      </Button>
     </Form>
   );
 }

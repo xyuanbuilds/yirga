@@ -100,6 +100,7 @@ const createFieldReactions = ({
               return linkages.map((key) => curLine[key]);
             }
 
+            // TODO 优化为 query 方式获取
             return form.fields[`${arrayKey},${indexKey},${linkages}`]?.value;
           },
           (values: any | any[]) => {
