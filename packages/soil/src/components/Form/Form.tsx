@@ -119,11 +119,11 @@ function FormInstance({ children }) {
           remove(index: number) {
             if (!isArr(field.value)) return;
             batch(() => {
-              field.value.splice(index, 1);
               spliceArrayState(field, {
                 startIndex: index,
                 deleteCount: 1,
               });
+              field.value.splice(index, 1);
               // return this.onInput(this.value);
             });
           },
@@ -131,13 +131,13 @@ function FormInstance({ children }) {
             if (!isArr(field.value)) return;
             if (fromIndex === toIndex) return;
             batch(() => {
-              const fromItem = field.value[fromIndex];
-              field.value.splice(fromIndex, 1);
-              field.value.splice(toIndex, 0, fromItem);
               exchangeArrayState(field, {
                 fromIndex,
                 toIndex,
               });
+              const fromItem = field.value[fromIndex];
+              field.value.splice(fromIndex, 1);
+              field.value.splice(toIndex, 0, fromItem);
               // return this.onInput(this.value);
             });
           },
@@ -206,14 +206,15 @@ function FormInstance({ children }) {
 
   // TODO 添加 去除 reactions 逻辑
   // * form 注销时，手动清除所有的 disposers
-  // const disposers = [];
+  // const disposers: (() => void)[] =  React.useMemo(() => [], []);
   // React.useEffect(() => {
   //   return () => {
+  //     form.notify('onUnmount')
   //     disposers.forEach((dispose) => {
   //       dispose();
   //     });
   //   };
-  // }, []);
+  // }, [disposers]);
 
   return <FormContext.Provider value={form}>{children}</FormContext.Provider>;
 }
@@ -366,11 +367,12 @@ export function spliceArrayState(
     const number = afterStr.match(/^,(\d+)/)?.[1];
     if (number === undefined) return false;
     const index = Number(number);
-    const target = `${preStr}${afterStr.replace(
-      /^,\d+/,
-      `,${index + deleteCount}`,
-    )}`;
-    return !fields[target];
+    return (
+      index >= startIndex &&
+      !fields[
+        `${preStr}${afterStr.replace(/^,\d+/, `.${index + deleteCount}`)}`
+      ]
+    );
   };
   const moveIndex = (identifier: string) => {
     if (offset === 0) return identifier;
