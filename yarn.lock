@@ -1519,12 +1519,12 @@
     "@formily/reactive" "2.0.0-rc.1"
     hoist-non-react-statics "^3.3.2"
 
-"@formily/reactive-react@^2.0.0-rc.4":
-  version "2.0.0-rc.4"
-  resolved "https://registry.npmjs.org/@formily/reactive-react/-/reactive-react-2.0.0-rc.4.tgz#a089cfa3ec6e5a19fe65e785ab11b90b2db9a42e"
-  integrity sha512-7BMW3nzsGTQsqWuP5uorwkKsMmH2WZiXABj7bE9X1y8OIQEMe899zovwu7/RRouvjiXCqTYJbLJ/5xgHzmTnvg==
+"@formily/reactive-react@^2.0.0-rc.14":
+  version "2.0.0-rc.14"
+  resolved "https://registry.npmjs.org/@formily/reactive-react/-/reactive-react-2.0.0-rc.14.tgz#01a463bbedc09e1f00063b67f5bb4843a8f92433"
+  integrity sha512-wj8JF/COhyGS9buPm/Tdbw1DFEAFujKg+bi83d+Nf0BY39qbtnSfEFQ5s6fX5rZGAzZox/8a/4tnkF0yfYMBaw==
   dependencies:
-    "@formily/reactive" "2.0.0-rc.4"
+    "@formily/reactive" "2.0.0-rc.14"
     hoist-non-react-statics "^3.3.2"
 
 "@formily/reactive@2.0.0-rc.1":
@@ -1532,10 +1532,10 @@
   resolved "https://registry.npmjs.org/@formily/reactive/-/reactive-2.0.0-rc.1.tgz#b2db74194fa29ec39746f77cd1062e02d19fd59f"
   integrity sha512-2s/kasCDDJX9X0afiyvXWuCKap7kRaM1Go9o9EygFt7LiuknN+sZXQh8mnPLgCaP3ad/Oc4MsGP3LOjOgvYLkg==
 
-"@formily/reactive@2.0.0-rc.4", "@formily/reactive@^2.0.0-rc.4":
-  version "2.0.0-rc.4"
-  resolved "https://registry.npmjs.org/@formily/reactive/-/reactive-2.0.0-rc.4.tgz#856c3ebb35265c86eca5a6b6efb263d1af96a2e3"
-  integrity sha512-yZMpICv9SKokRamR2MQATcxSfJiR/CHh10vZHIEr+7ZtYCJIhVePAahdb1IjpYKIUX4QYWhYJwOxKVk8QZgPyw==
+"@formily/reactive@2.0.0-rc.14", "@formily/reactive@^2.0.0-rc.14":
+  version "2.0.0-rc.14"
+  resolved "https://registry.npmjs.org/@formily/reactive/-/reactive-2.0.0-rc.14.tgz#d81757660dddb71b00b8bda3d50fc1dbef412d0b"
+  integrity sha512-E65fyw+PSaMsCA1prF2EKKsh/UXius7/io/dWZgtlZTWzgU2x2PRHiD3NSNmUgKtkDHYp/UxNwOK7CgaECZs3Q==
 
 "@formily/shared@2.0.0-rc.1":
   version "2.0.0-rc.1"
