@@ -41,8 +41,6 @@ const ReactiveInternal: React.FC<ReactiveFieldProps> = (props) => {
     //   ? field.pattern === 'readOnly'
     //   : undefined;
 
-    console.log(component![1]);
-
     return React.createElement(
       component![0],
       {

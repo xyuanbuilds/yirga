@@ -9,6 +9,9 @@ import ArrayField from './ArrayField';
 import Form from './Form';
 import Field from './Field';
 import { useField } from './context/Field';
+import createForm from './models/Form';
+import { onFormInit, onFieldValueChange } from './models/LifeCycle';
+
 import type { ArrayField as ArrayFieldInstance } from './types/Field';
 
 type ValueType =
@@ -188,7 +191,7 @@ const TableContainer = () => {
       linkages: ['b', 'c'],
       linkageReaction: (field, values) => {
         const [b, c] = values;
-        field.value = b + c;
+        field.value = b + c ? b + c : field.value;
       },
     },
     {
@@ -232,15 +235,36 @@ const TableContainer = () => {
 const a = [{}, { a: 'testData1', b: 'ssss1', c: '' }];
 const b = [{ a: 'testData2', b: 'ssss2', c: '' }];
 
+const form = createForm({
+  effects() {
+    onFormInit((curForm) => {
+      console.log(curForm.values);
+    });
+
+    onFieldValueChange('array,0,b', (field) => {
+      if (field.value === '777') field.value = '999';
+    });
+  },
+});
+
 function FormContainer({ children }) {
-  const [defaultValue, toggle] = useState(a);
+  const [defaultValue, toggle] = useState<any[]>(b);
+  const [visible, setVisible] = useState(true);
   return (
-    <Form>
-      <ArrayField defaultValue={defaultValue}>{children}</ArrayField>
-      <Button onClick={() => toggle((v) => (v === a ? b : a))}>
-        改变初始值(但不会生效)
+    <>
+      {visible && (
+        <Form form={form}>
+          <ArrayField defaultValue={defaultValue}>{children}</ArrayField>
+          <Button onClick={() => toggle((v) => (v === a ? b : a))}>
+            改变初始值(但不会生效)
+          </Button>
+        </Form>
+      )}
+
+      <Button onClick={() => setVisible((v) => !v)}>
+        表单{visible ? '隐藏' : '展示'}
       </Button>
-    </Form>
+    </>
   );
 }
 

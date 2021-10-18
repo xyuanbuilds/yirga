@@ -1,6 +1,7 @@
 /* eslint-disable no-param-reassign */
 import { define, observable, reaction, batch } from '@formily/reactive';
 import { isValid, isArr, isFn } from '../predicate';
+import LifeCycles from '../effects/constants';
 
 import type { Field, NormalEvent } from '../types/Field';
 import type { Form, FieldFactoryProps } from '../types/Form';
@@ -82,6 +83,17 @@ const createFieldReactions = ({
   deduplicate,
 }: Pick<FieldFactoryProps, 'linkages' | 'linkageReaction' | 'deduplicate'>) => {
   return ({ field, form }: Dependencies): Dependencies => {
+    field.disposers!.push(
+      reaction(
+        () => field.value,
+        () => {
+          field.form.notify(LifeCycles.ON_FIELD_VALUE_CHANGE, field);
+          // if (isValid(value) && this.modified && !this.caches.inputting) {
+          //   this.validate();
+          // }
+        },
+      ),
+    );
     /* 表单联动相关内容 */
 
     /* 副作用添加 */
@@ -119,14 +131,17 @@ const createFieldReactions = ({
               const { address, name } = field;
               const keyIndex = address.findIndex((s) => s === name);
               // TODO 优化数组内寻址
-              const arr = form.values[address[0]].reduce((res, cur) => {
-                res.push(cur[address[keyIndex]]);
-                return res;
-              }, []);
+              const arr = form.values[address[0]].reduce(
+                (res: any[], cur: any) => {
+                  res.push(cur[address[keyIndex]]);
+                  return res;
+                },
+                [],
+              );
 
               if (
                 prev.length !== arr.length ||
-                arr.find((v, index) => v !== prev[index])
+                arr.find((v: any, index: number) => v !== prev[index])
               ) {
                 prev = arr;
               }
