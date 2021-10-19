@@ -1,9 +1,16 @@
 /* eslint-disable no-param-reassign */
-import { define, observable, reaction, batch } from '@formily/reactive';
+import {
+  define,
+  observable,
+  reaction,
+  batch,
+  action,
+  toJS,
+} from '@formily/reactive';
 import { isValid, isArr, isFn } from '../predicate';
 import LifeCycles from '../effects/constants';
 
-import type { Field, NormalEvent } from '../types/Field';
+import type { Field, ArrayField, NormalEvent } from '../types/Field';
 import type { Form, FieldFactoryProps } from '../types/Form';
 
 interface Dependencies {
@@ -50,12 +57,52 @@ const fieldInit = ({
       //  await this.validate('onInput');
       //  this.caches.inputting = false;
     },
-    defaultValue: undefined,
+    get initialValue() {
+      return form.getInitialValuesIn(field.address);
+    },
+    reset,
     address,
     identifier,
     name,
+    dispose,
+    destroy,
     disposers: [],
   };
+
+  function reset(options?: { forceClear?: boolean }) {
+    // this.modified = false
+    // this.visited = false
+    // this.feedbacks = []
+    // this.inputValue = undefined
+    // this.inputValues = []
+    // batch.scope?.(() => {
+    if (options?.forceClear) {
+      if (isArrayField(field)) {
+        field.value = [] as any;
+      } else {
+        field.value = undefined;
+      }
+    } else if (isValid(field.value)) {
+      // if (isArrayField(field)) {
+      // field.value = toJS(field.initialValue);
+      // } else {
+      field.value = toJS(field.initialValue);
+      // }
+    }
+    // });
+  }
+
+  function dispose() {
+    field.disposers.forEach((c) => {
+      c();
+    });
+    // field.form.removeEffects(field);
+  }
+
+  function destroy() {
+    field.dispose();
+    delete field.form.fields[field.identifier];
+  }
 
   return field;
 };
@@ -66,6 +113,8 @@ const createFieldModel = ({ form, field }: Dependencies): Dependencies => {
     define(field, {
       value: observable.computed,
       onInput: batch,
+      reset: action,
+      initialValue: observable.computed,
     });
 
     form.fields[identifier] = field as Field;
@@ -112,10 +161,15 @@ const createFieldReactions = ({
               return linkages.map((key) => curLine[key]);
             }
 
+            const curField = form.fields[`${arrayKey},${indexKey},${linkages}`];
             // TODO 优化为 query 方式获取
-            return form.fields[`${arrayKey},${indexKey},${linkages}`]?.value;
+            return curField === undefined ? null : curField.value;
           },
           (values: any | any[]) => {
+            // * 空数组或 null 表示当前 field 已失效
+            if (values === null || values.length <= 0) {
+              return;
+            }
             linkageReaction(field, values);
           },
         ),
@@ -174,12 +228,12 @@ const createFieldReactions = ({
 };
 
 const setFieldInitial = ({
-  defaultValue: propsDefaultValue,
-}: Pick<FieldFactoryProps, 'defaultValue'>) => {
+  initialValue: propsInitialValue,
+}: Pick<FieldFactoryProps, 'initialValue'>) => {
   return ({ field, form }: Dependencies): Dependencies => {
     /* 表单联动相关内容 */
-    const parentDefaultValue = field.value;
-    const defaultValue = propsDefaultValue || parentDefaultValue;
+    const defaultValue =
+      toJS(field.initialValue) || propsInitialValue || undefined;
 
     batch.scope?.(() => {
       if (isValid(defaultValue)) {
@@ -193,5 +247,9 @@ const setFieldInitial = ({
     };
   };
 };
+
+export function isArrayField(node: any): node is ArrayField {
+  return isArr(node.value);
+}
 
 export { fieldInit, createFieldModel, createFieldReactions, setFieldInitial };

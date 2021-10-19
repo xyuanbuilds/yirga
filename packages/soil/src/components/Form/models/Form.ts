@@ -1,11 +1,11 @@
 /* eslint-disable no-param-reassign */
-import { define, observable, batch, untracked } from '@formily/reactive';
+import { define, observable, batch, action, toJS } from '@formily/reactive';
 import { isValid, isArr, isNumberIndex, isNum, isFn } from '../predicate';
 import * as FieldModel from './Field';
 import * as ArrayFieldModel from './ArrayField';
 import LifeCycles from '../effects/constants';
 import { createHeart, runEffects } from './LifeCycle';
-import { pipe } from '../utils';
+import { each, pipe, clone } from '../utils';
 
 import type { Field, ArrayField, Segment } from '../types/Field';
 import type { Form, FormProps, FieldFactoryProps } from '../types/Form';
@@ -16,11 +16,14 @@ const formInit = (props: FormProps | undefined): Form => {
     lifeCycles: [],
     fields: {}, // { xx.0.xx: Field }
     values: {}, // { array: [{ a1: xx }, { a1: xx }]}
+    initialValues: {},
     setValuesIn,
     getValuesIn,
+    getInitialValuesIn,
     createField,
     createArrayField,
     notify,
+    reset,
     unmount,
   };
 
@@ -35,6 +38,12 @@ const formInit = (props: FormProps | undefined): Form => {
     }
   }
 
+  function reset(...args) {
+    each(form.fields, (field) => {
+      field.reset(...args);
+    });
+  }
+
   function unmount() {
     form.notify(LifeCycles.ON_FORM_UNMOUNT);
   }
@@ -42,7 +51,7 @@ const formInit = (props: FormProps | undefined): Form => {
   function createField({
     basePath = [], // 来自父Field
     name, // 当前 field name
-    defaultValue,
+    initialValue,
     linkages,
     linkageReaction,
     deduplicate,
@@ -64,17 +73,18 @@ const formInit = (props: FormProps | undefined): Form => {
         });
 
         form.fields[identifier] = pipe(
-          FieldModel.createFieldModel({
-            form,
+          {
             field,
+            form,
+          },
+          FieldModel.setFieldInitial({
+            initialValue,
           }),
+          FieldModel.createFieldModel,
           FieldModel.createFieldReactions({
             linkages,
             linkageReaction,
             deduplicate,
-          }),
-          FieldModel.setFieldInitial({
-            defaultValue,
           }),
         ).field;
 
@@ -88,11 +98,11 @@ const formInit = (props: FormProps | undefined): Form => {
   function createArrayField({
     basePath = [],
     name,
-    defaultValue,
+    initialValue,
   }: {
     basePath?: (number | string)[];
     name: string;
-    defaultValue?: any[];
+    initialValue?: any[];
   }): ArrayField {
     const address = basePath.concat(name);
     const identifier = address.toString();
@@ -111,10 +121,11 @@ const formInit = (props: FormProps | undefined): Form => {
               identifier,
             }),
           },
-          ArrayFieldModel.createModel,
           ArrayFieldModel.setInitial({
-            defaultValue,
+            initialValue,
           }),
+          ArrayFieldModel.createModel,
+          ArrayFieldModel.setReactions,
         ).field;
       });
       // this.notify(LifeCycleTypes.ON_FORM_GRAPH_CHANGE);
@@ -128,16 +139,30 @@ const formInit = (props: FormProps | undefined): Form => {
     // return form.values[address[1]][address[2]];
     let v = form.values;
     address.forEach((key) => {
-      v = v[key];
+      v = v && key in v ? v[key] : undefined;
+    });
+    return v;
+  }
+
+  function getInitialValuesIn(address: Segment[]) {
+    let v = form.initialValues;
+    address.forEach((key) => {
+      v = v && key in v ? v[key] : undefined;
     });
     return v;
   }
 
   function setValuesIn(address: Segment[], value: any) {
-    untracked(() => {
-      setIn(address, form.values, value);
-    });
+    setIn(address, form.values, value);
   }
+  return form;
+};
+
+const setInitial = (props: { initialValues?: any }) => (form: Form): Form => {
+  form.initialValues = clone(props.initialValues) || ({} as any);
+
+  form.values = toJS(form.initialValues);
+
   return form;
 };
 
@@ -145,7 +170,9 @@ const createFormModel = (form: Form): Form => {
   return define(form, {
     fields: observable.shallow,
     values: observable,
-    setValuesIn: batch,
+    initialValues: observable,
+    setValuesIn: action,
+    reset: action,
   });
 };
 
@@ -173,9 +200,23 @@ function setIn(segments: Segment[], source: any, value: any) {
 }
 
 const createForm = (props?: FormProps) => {
-  const form = pipe(formInit(props), createFormModel);
-  form.notify(LifeCycles.ON_FORM_INIT);
-  return form;
+  const initialValues = props?.initialValues;
+
+  let form: Form;
+
+  batch(() => {
+    form = pipe(
+      formInit(props),
+      createFormModel,
+      setInitial({
+        initialValues,
+      }),
+    );
+
+    form.notify(LifeCycles.ON_FORM_INIT);
+  });
+
+  return form!;
 };
 
 export default createForm;

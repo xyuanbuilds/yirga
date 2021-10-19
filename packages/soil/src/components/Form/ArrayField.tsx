@@ -4,11 +4,19 @@ import FieldContext from './context/Field';
 
 // 0: ['a', 'b']: value
 // * 没ArrayField场景，只有一个 ArrayField Context 用于提供 remove，push 等操作函数
-function ArrayField({ name: arrayName = 'array', children, defaultValue }) {
+function ArrayField({
+  name: arrayName = 'array',
+  children,
+  initialValue,
+}: {
+  name?: string;
+  children: React.ReactElement;
+  initialValue?: any[];
+}) {
   const form = useForm();
   const field = form.createArrayField({
     name: arrayName,
-    defaultValue,
+    initialValue,
   });
 
   return (

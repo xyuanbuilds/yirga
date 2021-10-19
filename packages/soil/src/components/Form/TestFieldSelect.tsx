@@ -14,7 +14,7 @@ function TestFieldComponent(props: {
   const [value, setValue] = React.useState<string>(controlledValue || '');
 
   React.useEffect(() => {
-    if (typeof controlledValue === 'string') setValue(controlledValue);
+    setValue(controlledValue!);
   }, [controlledValue]);
 
   return (

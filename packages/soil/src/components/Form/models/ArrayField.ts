@@ -1,8 +1,15 @@
 /* eslint-disable no-param-reassign */
-import { define, observable, batch } from '@formily/reactive';
+import {
+  define,
+  observable,
+  batch,
+  toJS,
+  action,
+  reaction,
+} from '@formily/reactive';
 import { fieldInit as normalFieldInit } from './Field';
 import { isArr, isNumberIndex } from '../predicate';
-import { each } from '../utils';
+import { each, clone } from '../utils';
 
 import type { GeneralField, ArrayField } from '../types/Field';
 import type { Form, FieldFactoryProps } from '../types/Form';
@@ -31,7 +38,7 @@ const fieldInit = ({
     {
       push(...items: any[]) {
         if (!isArr(field.value)) return;
-        batch(() => {
+        action(() => {
           field.value.push(...items);
           // 用于触发相应的生命周期，及其他状态，暂不需要
           // TODO return field.onInput(field.value);
@@ -39,7 +46,7 @@ const fieldInit = ({
       },
       remove(index: number) {
         if (!isArr(field.value)) return;
-        batch(() => {
+        action(() => {
           spliceArrayState(field, {
             startIndex: index,
             deleteCount: 1,
@@ -51,7 +58,7 @@ const fieldInit = ({
       move(fromIndex: number, toIndex: number) {
         if (!isArr(field.value)) return;
         if (fromIndex === toIndex) return;
-        batch(() => {
+        action(() => {
           exchangeArrayState(field, {
             fromIndex,
             toIndex,
@@ -70,7 +77,6 @@ const fieldInit = ({
         if (!isArr(field.value)) return;
         field.move(index, index + 1 >= field.value.length ? 0 : index + 1);
       },
-      defaultValue: [],
     },
   );
 
@@ -82,6 +88,8 @@ const createModel = ({ field }: Dependencies): Dependencies => {
     define(field, {
       value: observable.computed,
       onInput: batch,
+      reset: batch,
+      initialValue: observable.computed,
     });
 
     field.form.fields[field.identifier] = field;
@@ -93,15 +101,13 @@ const createModel = ({ field }: Dependencies): Dependencies => {
 };
 
 const setInitial = ({
-  defaultValue: propsDefaultValue,
+  initialValue: propsInitialValue,
 }: {
-  defaultValue?: any[];
+  initialValue?: any[];
 }) => ({ field }: Dependencies): Dependencies => {
   /* 表单联动相关内容 */
-  const parentDefaultValue = field.value;
-  const defaultValue = propsDefaultValue || parentDefaultValue;
-
-  console.log('d', defaultValue, field.value);
+  const defaultValue =
+    clone(toJS(field.initialValue)) || propsInitialValue || [];
 
   batch.scope?.(() => {
     if (isArr(defaultValue)) field.value = defaultValue;
@@ -110,6 +116,23 @@ const setInitial = ({
   return {
     field,
   };
+};
+
+const setReactions = ({ field }: Dependencies): Dependencies => {
+  field.disposers.push(
+    reaction(
+      () => field.value?.length,
+      (newLength, oldLength) => {
+        if (oldLength && !newLength) {
+          cleanupArrayChildren(field, 0);
+        } else if (newLength < oldLength) {
+          cleanupArrayChildren(field, newLength);
+        }
+      },
+    ),
+  );
+
+  return { field };
 };
 
 function exchangeArrayState(
@@ -279,10 +302,11 @@ function applyFieldPatches(
 ) {
   patches.forEach(({ type, identifier, payload }) => {
     if (type === 'remove') {
-      target[identifier].disposers?.forEach((dispose) => {
-        dispose();
-      });
-      delete target[identifier];
+      // target[identifier].disposers?.forEach((dispose) => {
+      //   dispose();
+      // });
+      // delete target[identifier];
+      target[identifier]?.destroy();
     } else if (type === 'update') {
       if (payload) {
         target[identifier] = payload;
@@ -298,4 +322,31 @@ function applyFieldPatches(
   });
 }
 
-export { fieldInit, createModel, setInitial };
+function cleanupArrayChildren(field: ArrayField, start: number) {
+  const address = field.address.toString();
+  const { fields } = field.form;
+
+  const isArrayChildren = (identifier: string) => {
+    return (
+      identifier.indexOf(address) === 0 && identifier.length > address.length
+    );
+  };
+
+  const isNeedCleanup = (identifier: string) => {
+    const afterStr = identifier.slice(address.length);
+    const number = afterStr.match(/^,(\d+)/)?.[1];
+    if (number === undefined) return false;
+    const index = Number(number);
+    return index >= start;
+  };
+
+  batch(() => {
+    each(fields, (curField, identifier) => {
+      if (isArrayChildren(identifier) && isNeedCleanup(identifier)) {
+        curField.destroy();
+      }
+    });
+  });
+}
+
+export { fieldInit, createModel, setInitial, setReactions };

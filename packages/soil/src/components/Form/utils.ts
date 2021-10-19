@@ -1,5 +1,5 @@
 /* eslint-disable prefer-rest-params */
-import { isArr, isStr, isObj } from './predicate';
+import { isArr, isStr, isObj, isPlainObj } from './predicate';
 
 type EachArrayIterator<T> = (currentValue: T, key: number) => void | boolean;
 type EachStringIterator = (currentValue: string, key: number) => void | boolean;
@@ -49,6 +49,34 @@ export function each(val: any, iterator: any, revert?: boolean): void {
     }
   }
 }
+
+/* eslint-disable */
+export const clone = (values: any) => {
+  if (Array.isArray(values)) {
+    const res: any[] = [];
+    values.forEach((item) => {
+      res.push(clone(item));
+    });
+    return res;
+  }
+  if (isPlainObj(values)) {
+    if ('$$typeof' in values && '_owner' in values) {
+      return values;
+    }
+    if ('_isAMomentObject' in values) {
+      return values;
+    }
+    const res = {};
+    for (const key in values) {
+      if (Object.hasOwnProperty.call(values, key)) {
+        res[key] = clone(values[key]);
+      }
+    }
+    return res;
+  }
+  return values;
+};
+/* eslint-enable */
 
 export function pipe<A>(a: A): A;
 export function pipe<A, B>(a: A, ab: (a: A) => B): B;

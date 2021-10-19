@@ -17,10 +17,13 @@ export interface Field {
   identifier: string; // * 内部名称，唯一数组
   address: Segment[]; // * 选址数组
   name: Segment; // * 外部名称，column中的 dataIndex
-  defaultValue: any;
+  initialValue: any;
   value: any;
-  disposers?: (() => void)[];
+  dispose: () => void;
+  destroy: () => void;
+  disposers: (() => void)[];
   onInput: (event: NormalEvent) => void;
+  reset: (options?: { forceClear?: boolean }) => void;
 }
 
 export interface ArrayField extends Field {
@@ -43,7 +46,7 @@ type ComponentProps = Record<string, any>;
 export interface FieldProps {
   name: Segment;
   basePath?: Segment[];
-  defaultValue?: any;
+  initialValue?: any;
   children?: React.ReactElement;
   component: [Component, ComponentProps?];
   // * 产生联动关系
@@ -54,7 +57,7 @@ export interface FieldProps {
 }
 
 export interface ArrayFieldProps extends FieldProps {
-  defaultValue?: any[];
+  initialValue?: any[];
 }
 
 export type GeneralField = Field | ArrayField;

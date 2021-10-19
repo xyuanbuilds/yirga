@@ -27,7 +27,7 @@ function Field({
   children,
   component,
   basePath,
-  defaultValue,
+  initialValue,
   linkages,
   linkageReaction,
   deduplicate,
@@ -37,7 +37,7 @@ function Field({
   const field = form.createField({
     name,
     basePath: basePath || parent?.address,
-    defaultValue,
+    initialValue,
     linkages,
     linkageReaction,
     deduplicate,

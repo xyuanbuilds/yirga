@@ -13,6 +13,7 @@ import createForm from './models/Form';
 import { onFormInit, onFieldValueChange } from './models/LifeCycle';
 
 import type { ArrayField as ArrayFieldInstance } from './types/Field';
+import { isValid } from './predicate';
 
 type ValueType =
   | 'array'
@@ -191,7 +192,7 @@ const TableContainer = () => {
       linkages: ['b', 'c'],
       linkageReaction: (field, values) => {
         const [b, c] = values;
-        field.value = b + c ? b + c : field.value;
+        field.value = (isValid(b) ? b : '') + (isValid(c) ? c : '');
       },
     },
     {
@@ -236,6 +237,9 @@ const a = [{}, { a: 'testData1', b: 'ssss1', c: '' }];
 const b = [{ a: 'testData2', b: 'ssss2', c: '' }];
 
 const form = createForm({
+  initialValues: {
+    array: b,
+  },
   effects() {
     onFormInit((curForm) => {
       console.log(curForm.values);
@@ -254,7 +258,7 @@ function FormContainer({ children }) {
     <>
       {visible && (
         <Form form={form}>
-          <ArrayField defaultValue={defaultValue}>{children}</ArrayField>
+          <ArrayField>{children}</ArrayField>
           <Button onClick={() => toggle((v) => (v === a ? b : a))}>
             改变初始值(但不会生效)
           </Button>
@@ -264,6 +268,7 @@ function FormContainer({ children }) {
       <Button onClick={() => setVisible((v) => !v)}>
         表单{visible ? '隐藏' : '展示'}
       </Button>
+      <Button onClick={() => form.reset()}>表单重制</Button>
     </>
   );
 }
