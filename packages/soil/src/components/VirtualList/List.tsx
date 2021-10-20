@@ -28,7 +28,10 @@ type MeasuredData = {
 };
 const MEASURED_ROW_HEIGHT = 40;
 // TODO onWheel 优化
-function List<RecordType extends object>(props: ListProps<RecordType>) {
+function List<RecordType extends object>(
+  props: ListProps<RecordType>,
+  wrapper,
+) {
   // TODO 省略columns 中的冗余信息，让columns只在 width 或 dataIndex 变化时，才导致当前组件刷新
   const { container, columns, dataSource, rowHeight, renderRow } = props;
   const cacheRef = React.useRef<Record<string, RowData>>({
@@ -90,6 +93,7 @@ function List<RecordType extends object>(props: ListProps<RecordType>) {
       scrollHeight,
       scrollWidth,
     } = e.currentTarget;
+    props?.onScroll?.({ scrollLeft, scrollTop });
     setScroll((prev) => {
       if (scrollLeft === prev.scrollLeft && scrollTop === prev.scrollTop)
         return prev;
@@ -160,6 +164,7 @@ function List<RecordType extends object>(props: ListProps<RecordType>) {
         );
         const { render } = curColumn;
         const cellData = getCellData(curRecord, curColumn.dataIndex);
+
         rowItems.push(
           <div
             style={{
@@ -192,7 +197,7 @@ function List<RecordType extends object>(props: ListProps<RecordType>) {
   return (
     <div
       id="table_container"
-      // ref={wrapper}
+      ref={wrapper}
       onScroll={onScroll}
       // className={wrapperClassName}
       style={{
@@ -395,4 +400,4 @@ function getNumInfo(
   return numOrFunc;
 }
 
-export default List;
+export default React.forwardRef(List);

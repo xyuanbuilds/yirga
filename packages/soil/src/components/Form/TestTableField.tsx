@@ -252,16 +252,16 @@ const form = createForm({
 });
 
 function FormContainer({ children }) {
-  const [defaultValue, toggle] = useState<any[]>(b);
+  // const [defaultValue, toggle] = useState<any[]>(b);
   const [visible, setVisible] = useState(true);
   return (
     <>
       {visible && (
         <Form form={form}>
           <ArrayField>{children}</ArrayField>
-          <Button onClick={() => toggle((v) => (v === a ? b : a))}>
+          {/* <Button onClick={() => toggle((v) => (v === a ? b : a))}>
             改变初始值(但不会生效)
-          </Button>
+          </Button> */}
         </Form>
       )}
 

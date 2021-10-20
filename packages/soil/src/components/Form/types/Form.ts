@@ -42,5 +42,5 @@ export interface Form<ValueType extends object = any> {
   createField: (props: FieldFactoryProps) => Field; // TODO, 目前只支持 ArrayField，先做尝试
   createArrayField: (props: CreateArrayFieldProps) => ArrayField; // TODO, 目前只支持 ArrayField，先做尝试
   unmount: () => void;
-  reset: (props: { forceClear?: boolean }) => void;
+  reset: (props?: { forceClear?: boolean }) => void;
 }

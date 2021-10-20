@@ -4,7 +4,7 @@ import 'antd/es/input-number/style/index';
 // import { createForm } from '@formily/core';
 // import { FormProvider, FormConsumer, Field } from '@formily/react';
 import List from '../components/VirtualList/List';
-import FormTest from '../components/Form/test';
+// import FormTest from '../components/Form/test';
 import TableFromTest from '../components/Form/TestTableField';
 
 export default {
