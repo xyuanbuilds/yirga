@@ -9,21 +9,46 @@ export interface IArrayBaseItemProps {
 const ItemContext = React.createContext<IArrayBaseItemProps>(null!);
 ItemContext.displayName = 'ArrayItemContext';
 
-const Item = ({ children, index }) => {
+const I = ({ children, index }) => {
   const arrayField = useField();
 
-  const indexValue = React.useMemo(
-    () => ({
-      index,
-    }),
-    [index],
-  );
   return (
-    <ItemContext.Provider value={indexValue}>
+    <ItemContext.Provider value={index}>
       {children({ basePath: arrayField.address.concat(index) })}
     </ItemContext.Provider>
   );
 };
+
+const Item = React.memo(I);
+
+const FC = ({
+  index,
+  name,
+  dataIndex,
+  component,
+  linkages,
+  linkageReaction,
+  deduplicate,
+}) => {
+  return (
+    <Item index={index}>
+      {({ basePath }) => {
+        return (
+          <Field
+            component={component}
+            basePath={basePath}
+            name={name || dataIndex}
+            linkages={linkages}
+            linkageReaction={linkageReaction}
+            deduplicate={deduplicate}
+          />
+        );
+      }}
+    </Item>
+  );
+};
+
+const FieldContainer = React.memo(FC);
 
 // * 表单域获取当前 index 信息
 export const useIndex = (index?: number) => {
@@ -46,21 +71,17 @@ function getFieldRender(column) {
     return {
       ...extra,
       render: (_: any, __: any, y) => {
-        const children = (
-          <Item index={y}>
-            {({ basePath }) => (
-              <Field
-                component={component}
-                basePath={basePath}
-                name={name || dataIndex}
-                linkages={linkages}
-                linkageReaction={linkageReaction}
-                deduplicate={deduplicate}
-              />
-            )}
-          </Item>
+        return (
+          <FieldContainer
+            index={y}
+            name={name}
+            dataIndex={dataIndex}
+            component={component}
+            linkages={linkages}
+            linkageReaction={linkageReaction}
+            deduplicate={deduplicate}
+          />
         );
-        return children;
       },
     };
   }

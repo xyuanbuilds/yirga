@@ -1,9 +1,10 @@
 import * as React from 'react';
 import { Checkbox } from 'antd';
+import { ROW_ID_KEY } from '../../Form/models/ArrayField';
 
 export interface ISelectableItemProps {
-  toggleSelection: (index: number) => () => void;
-  isSelected: (index: number) => boolean;
+  toggleSelection: (index: React.Key) => () => void;
+  isSelected: (index: React.Key) => boolean;
 }
 const SelectableItemContext = React.createContext<ISelectableItemProps>(null!);
 SelectableItemContext.displayName = 'SelectableItemContext';
@@ -13,18 +14,20 @@ function useSelectable() {
   // const [selectedAll, setSelectedAll] = React.useState(false);
   const [selectedIndexes, setSelected] = React.useState<React.Key[]>([]);
 
-  const toggleSelection = (index: number) => () => {
+  const toggleSelection = (option: React.Key) => () => {
     setSelected((v) => {
-      const curSelectionIndex = v.findIndex((i) => i === index);
+      const curSelectionIndex = v.findIndex((i) => i === option);
       if (curSelectionIndex >= 0) {
-        return v.slice(0, index).concat(v.slice(index + 1));
+        return v
+          .slice(0, curSelectionIndex)
+          .concat(v.slice(curSelectionIndex + 1));
       }
-      return v.concat(index);
+      return v.concat(option);
     });
   };
 
-  const isSelected = (index: number) => {
-    return selectedIndexes.findIndex((i) => i === index) >= 0;
+  const isSelected = (option: any) => {
+    return selectedIndexes.findIndex((i) => i === option) >= 0;
   };
 
   return {
@@ -35,13 +38,16 @@ function useSelectable() {
   };
 }
 
-const CK = ({ index }) => {
+const CK = ({ record }) => {
   const { toggleSelection, isSelected } = React.useContext(
     SelectableItemContext,
   );
 
   return (
-    <Checkbox checked={isSelected(index)} onClick={toggleSelection(index)} />
+    <Checkbox
+      checked={isSelected(record[ROW_ID_KEY])}
+      onClick={toggleSelection(record[ROW_ID_KEY])}
+    />
   );
 };
 const CheckBoxContainer = React.memo(CK);
@@ -53,8 +59,8 @@ function useSelectableColumns(columns: any[], selectable?: boolean): any[] {
         key: 'array_table_select',
         dataIndex: 'array_table_select',
         width: 32,
-        render(_, __, index) {
-          return <CheckBoxContainer index={index} />;
+        render(_, record) {
+          return <CheckBoxContainer record={record} />;
         },
       },
     ];

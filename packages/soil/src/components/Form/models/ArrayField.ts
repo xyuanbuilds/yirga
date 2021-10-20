@@ -7,6 +7,7 @@ import {
   action,
   reaction,
 } from '@formily/reactive';
+import { nanoid } from 'nanoid/non-secure';
 import { fieldInit as normalFieldInit } from './Field';
 import { isArr, isNumberIndex } from '../predicate';
 import { each, clone } from '../utils';
@@ -39,7 +40,12 @@ const fieldInit = ({
       push(...items: any[]) {
         if (!isArr(field.value)) return;
         action(() => {
-          field.value.push(...items);
+          field.value.push(
+            ...items.map((i) => ({
+              ...i,
+              [ROW_ID_KEY]: nanoid(),
+            })),
+          );
           // 用于触发相应的生命周期，及其他状态，暂不需要
           // TODO return field.onInput(field.value);
         });
@@ -100,6 +106,8 @@ const createModel = ({ field }: Dependencies): Dependencies => {
   };
 };
 
+const ROW_ID_KEY = Symbol('array_row_id');
+
 const setInitial = ({
   initialValue: propsInitialValue,
 }: {
@@ -110,7 +118,13 @@ const setInitial = ({
     clone(toJS(field.initialValue)) || propsInitialValue || [];
 
   batch.scope?.(() => {
-    if (isArr(defaultValue)) field.value = defaultValue;
+    if (isArr(defaultValue))
+      field.value = defaultValue.map((i) => {
+        return {
+          ...i,
+          [ROW_ID_KEY]: nanoid(),
+        };
+      });
   });
 
   return {
@@ -135,6 +149,19 @@ const setReactions = ({ field }: Dependencies): Dependencies => {
   return { field };
 };
 
+// * 值操作行为模式
+type Patch =
+  | {
+      type: 'remove';
+      identifier: string;
+    }
+  | {
+      type: 'update';
+      identifier: string;
+      oldIdentifier: string;
+      payload?: GeneralField;
+    };
+
 function exchangeArrayState(
   field: ArrayField,
   props: {
@@ -149,11 +176,7 @@ function exchangeArrayState(
   };
   const address = field.address.toString();
   const { fields } = field.form;
-  const fieldPatches: {
-    type: 'remove' | 'update';
-    identifier: string;
-    payload?: GeneralField;
-  }[] = [];
+  const fieldPatches: Patch[] = [];
   const isArrayChildren = (identifier: string) => {
     return (
       identifier.indexOf(address) === 0 && identifier.length > address.length
@@ -192,6 +215,7 @@ function exchangeArrayState(
           fieldPatches.push({
             type: 'update',
             identifier: newIdentifier,
+            oldIdentifier: identifier,
             payload: curField,
           });
           if (!fields[newIdentifier]) {
@@ -223,11 +247,7 @@ function spliceArrayState(
   };
   const address = field.address.toString();
   const { fields } = field.form;
-  const fieldPatches: {
-    type: 'remove' | 'update';
-    identifier: string;
-    payload?: GeneralField;
-  }[] = [];
+  const fieldPatches: Patch[] = [];
   const offset = insertCount - deleteCount;
   const isArrayChildren = (identifier: string) => {
     return (
@@ -279,6 +299,7 @@ function spliceArrayState(
           fieldPatches.push({
             type: 'update',
             identifier: newIdentifier,
+            oldIdentifier: identifier,
             payload: curField,
           });
         }
@@ -294,22 +315,17 @@ function spliceArrayState(
 
 function applyFieldPatches(
   target: Record<string, GeneralField>,
-  patches: {
-    type: 'remove' | 'update';
-    identifier: string;
-    payload?: GeneralField;
-  }[],
+  patches: Patch[],
 ) {
-  patches.forEach(({ type, identifier, payload }) => {
-    if (type === 'remove') {
-      // target[identifier].disposers?.forEach((dispose) => {
-      //   dispose();
-      // });
-      // delete target[identifier];
+  patches.forEach((patch) => {
+    if (patch.type === 'remove') {
+      const { identifier } = patch;
       target[identifier]?.destroy();
-    } else if (type === 'update') {
+    } else if (patch.type === 'update') {
+      const { identifier, oldIdentifier, payload } = patch;
       if (payload) {
         target[identifier] = payload;
+        if (target[oldIdentifier] === payload) delete target[oldIdentifier];
       }
       //* 路径信息变更
       if (identifier && payload) {
@@ -349,4 +365,5 @@ function cleanupArrayChildren(field: ArrayField, start: number) {
   });
 }
 
+export { ROW_ID_KEY };
 export { fieldInit, createModel, setInitial, setReactions };

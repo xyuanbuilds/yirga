@@ -10,6 +10,7 @@ import ArrayField from '../Form/ArrayField';
 import Form from '../Form/Form';
 import { useField } from '../Form/context/Field';
 import createForm from '../Form/models/Form';
+import { ROW_ID_KEY } from '../Form/models/ArrayField';
 import { isValid } from '../Form/predicate';
 
 import TestField from '../Form/TestField';
@@ -224,13 +225,13 @@ function TableContainer({ columns, selectable = true }) {
               return (
                 <>
                   <Table
-                    rowKey="index"
+                    rowKey={ROW_ID_KEY}
                     rowSelection={{
                       onChange: setSelected,
-                      columnWidth: selectable ? 32 : 0,
                       selectedRowKeys: selectedIndexes,
+                      columnWidth: selectable ? 32 : 0,
                     }}
-                    dataSource={dataSource.map((i, index) => ({ ...i, index }))}
+                    dataSource={dataSource}
                     columns={columns.concat({
                       title: '操作',
                       dataIndex: 'sssss',
