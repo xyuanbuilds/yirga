@@ -4,6 +4,8 @@ import { pipe } from 'fp-ts/function';
 import { cancelTimeout, requestTimeout } from './timer';
 import type { ListProps } from './type';
 
+import styles from './style/selectable.less';
+
 const max = (l: number) => (r: number) => Math.max(l, r);
 const min = (l: number) => (r: number) => Math.min(l, r);
 
@@ -167,6 +169,7 @@ function List<RecordType extends object>(
 
         rowItems.push(
           <div
+            className={styles.cell}
             style={{
               position: 'absolute',
               left,
@@ -210,7 +213,6 @@ function List<RecordType extends object>(
           height: contentHeight,
           width: contentWidth,
           position: 'relative',
-          borderTop: '1px solid',
         }}
       >
         {rows}
