@@ -19,6 +19,8 @@ type Dependencies = {
   field: ArrayField;
 };
 
+const ROW_ID_KEY = Symbol('array_row_id');
+
 const fieldInit = ({
   form,
   name,
@@ -105,8 +107,6 @@ const createModel = ({ field }: Dependencies): Dependencies => {
     field,
   };
 };
-
-const ROW_ID_KEY = Symbol('array_row_id');
 
 const setInitial = ({
   initialValue: propsInitialValue,
@@ -325,7 +325,7 @@ function applyFieldPatches(
       const { identifier, oldIdentifier, payload } = patch;
       if (payload) {
         target[identifier] = payload;
-        if (target[oldIdentifier] === payload) delete target[oldIdentifier];
+        if (target[oldIdentifier] === payload) target[oldIdentifier]?.destroy();
       }
       //* 路径信息变更
       if (identifier && payload) {

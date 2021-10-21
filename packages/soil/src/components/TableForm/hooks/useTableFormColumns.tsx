@@ -9,46 +9,19 @@ export interface IArrayBaseItemProps {
 const ItemContext = React.createContext<IArrayBaseItemProps>(null!);
 ItemContext.displayName = 'ArrayItemContext';
 
-const I = ({ children, index }) => {
+const Item = ({ children, index }) => {
   const arrayField = useField();
+
+  const basePath = React.useMemo(() => {
+    return arrayField.address.concat(index);
+  }, [index, arrayField.address]);
 
   return (
     <ItemContext.Provider value={index}>
-      {children({ basePath: arrayField.address.concat(index) })}
+      {children({ basePath })}
     </ItemContext.Provider>
   );
 };
-
-const Item = React.memo(I);
-
-const FC = ({
-  index,
-  name,
-  dataIndex,
-  component,
-  linkages,
-  linkageReaction,
-  deduplicate,
-}) => {
-  return (
-    <Item index={index}>
-      {({ basePath }) => {
-        return (
-          <Field
-            component={component}
-            basePath={basePath}
-            name={name || dataIndex}
-            linkages={linkages}
-            linkageReaction={linkageReaction}
-            deduplicate={deduplicate}
-          />
-        );
-      }}
-    </Item>
-  );
-};
-
-const FieldContainer = React.memo(FC);
 
 // * 表单域获取当前 index 信息
 export const useIndex = (index?: number) => {
@@ -70,17 +43,22 @@ function getFieldRender(column) {
 
     return {
       ...extra,
-      render: (_: any, __: any, y) => {
+      render: (_: any, __: any, index: number) => {
         return (
-          <FieldContainer
-            index={y}
-            name={name}
-            dataIndex={dataIndex}
-            component={component}
-            linkages={linkages}
-            linkageReaction={linkageReaction}
-            deduplicate={deduplicate}
-          />
+          <Item index={index}>
+            {({ basePath }) => {
+              return (
+                <Field
+                  component={component}
+                  basePath={basePath}
+                  name={name || dataIndex}
+                  linkages={linkages}
+                  linkageReaction={linkageReaction}
+                  deduplicate={deduplicate}
+                />
+              );
+            }}
+          </Item>
         );
       },
     };
@@ -94,17 +72,14 @@ function useTableFormColumns(
   { remove, moveUp, moveDown },
 ) {
   return columns
-    .reduce((buf, column) =>
-      // key,
-      {
-        return buf.concat(getFieldRender(column));
-      }, [])
+    .reduce((buf, column) => {
+      return buf.concat(getFieldRender(column));
+    }, [])
     .concat({
       key: 'array_action_column',
       dataIndex: 'array_action_column',
       width: 200,
-      render: (_: any, record: any, index: number) => {
-        // const index = dataSource.indexOf(record);
+      render: (_: any, __: any, index: number) => {
         return (
           <>
             <Button onClick={() => moveUp(index)}>向上</Button>
