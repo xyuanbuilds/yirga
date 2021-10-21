@@ -50,5 +50,18 @@ export interface ListProps<RecordType> {
   // className?: string;
   // rowClassName?: string | ((record: RecordType, index: number) => string);
   // bordered?: boolean;
-  renderRow?: () => React.ReactNode;
+  renderRow?: (
+    style: { left: number; top: number },
+    index: number,
+    items: React.ReactNode | React.ReactNodeArray,
+    record: RecordType,
+  ) => React.ReactElement;
+  renderContainer?: (
+    props: {
+      style: React.CSSProperties;
+      ref?: React.ForwardedRef<any>;
+      onScroll(e: React.UIEvent<HTMLDivElement, UIEvent>): void;
+    },
+    content: React.ReactNode | React.ReactNodeArray,
+  ) => React.ReactElement;
 }

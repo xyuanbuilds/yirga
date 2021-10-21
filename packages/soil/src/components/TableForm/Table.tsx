@@ -4,6 +4,8 @@ import { Table, Button } from 'antd';
 import ResizeObserver from 'rc-resize-observer';
 import { observer } from '@formily/reactive-react';
 
+import type { CustomizeScrollBody } from 'rc-table/lib/interface.d';
+
 import List from '../VirtualList/List';
 
 import ArrayField from '../Form/ArrayField';
@@ -15,13 +17,19 @@ import { isValid } from '../Form/predicate';
 
 import TestField from '../Form/TestField';
 import TestSelect from '../Form/TestFieldSelect';
-import type { ArrayField as ArrayFieldInstance } from '../Form/types/Field';
 
 import useTableFormColumns from './hooks/useTableFormColumns';
 import useSelectableColumns, {
   useSelectable,
   SelectableItemContext,
 } from './hooks/useSelectableColumn';
+import {
+  // DragHandle,
+  SortableContainer,
+  SortableRow,
+  onSortEnd,
+} from './hooks/useSortableColumn';
+import type { ArrayField as ArrayFieldInstance } from '../Form/types/Field';
 
 const form = createForm();
 
@@ -110,7 +118,7 @@ interface TableProps {
   selectable?: boolean;
   onScroll: (info: { scrollLeft: number }) => void;
 }
-const BodyContainer = React.forwardRef(
+const BodyContainer = React.forwardRef<unknown, TableProps>(
   (
     { columns, dataSource, operator, selectable, size, onScroll }: TableProps,
     ref,
@@ -123,12 +131,31 @@ const BodyContainer = React.forwardRef(
       },
     };
 
+    const arrayField = useField<ArrayFieldInstance>();
     const selectableColumn = useSelectableColumns(columns, selectable);
     const c = useTableFormColumns(selectableColumn, operator);
 
     return (
       <List
         {...listSize}
+        renderRow={(props, index, content) => {
+          return (
+            <SortableRow index={index} {...props}>
+              {content}
+            </SortableRow>
+          );
+        }}
+        renderContainer={(props, content) => {
+          return (
+            <SortableContainer
+              lockAxis="y"
+              onSortEnd={onSortEnd(arrayField.move)}
+              {...props}
+            >
+              {content}
+            </SortableContainer>
+          );
+        }}
         ref={ref}
         onScroll={onScroll}
         columns={c}
@@ -172,7 +199,10 @@ const LinkComponent = observer(
 );
 
 // TODO 表头高度？
-function TableContainer({ columns, selectable = true }) {
+function TableContainer<RecordType extends object>({
+  columns,
+  selectable = true,
+}) {
   const [size, setTableInfo] = React.useState({
     width: 0,
     height: 0,
@@ -185,9 +215,11 @@ function TableContainer({ columns, selectable = true }) {
     isSelected,
   } = useSelectable();
 
-  const renderList = (operator: ColumnNeedOperator) => (
-    rawData: readonly object[],
-    { ref, onScroll }: any,
+  const renderList = (
+    operator: ColumnNeedOperator,
+  ): CustomizeScrollBody<RecordType> => (
+    rawData: readonly RecordType[],
+    { ref, onScroll },
   ) => {
     return (
       <SelectableItemContext.Provider
@@ -224,7 +256,7 @@ function TableContainer({ columns, selectable = true }) {
             {(dataSource, operator) => {
               return (
                 <>
-                  <Table
+                  <Table<RecordType>
                     rowKey={ROW_ID_KEY}
                     rowSelection={{
                       onChange: setSelected,

@@ -10,8 +10,8 @@ const max = (l: number) => (r: number) => Math.max(l, r);
 const min = (l: number) => (r: number) => Math.min(l, r);
 
 // TODO Row 更多内容补充
-function Row({ items, record, render }) {
-  return render ? render(items) : items;
+function Row({ style, index, items, record, render }) {
+  return render ? render({ style }, index, items, record) : items;
 }
 
 const DEFAULT_OUT_OF_VIEW_ITEM_NUM = 1;
@@ -30,12 +30,19 @@ type MeasuredData = {
 };
 const MEASURED_ROW_HEIGHT = 40;
 // TODO onWheel 优化
-function List<RecordType extends object>(
+function List<RecordType extends object, T = any>(
   props: ListProps<RecordType>,
-  wrapper,
-) {
+  wrapper: React.ForwardedRef<T>,
+): React.ReactElement {
   // TODO 省略columns 中的冗余信息，让columns只在 width 或 dataIndex 变化时，才导致当前组件刷新
-  const { container, columns, dataSource, rowHeight, renderRow } = props;
+  const {
+    container,
+    columns,
+    dataSource,
+    rowHeight,
+    renderRow,
+    renderContainer,
+  } = props;
   const cacheRef = React.useRef<Record<string, RowData>>({
     '-1': {
       size: 0,
@@ -76,7 +83,7 @@ function List<RecordType extends object>(
     if (timer.current !== null) {
       cancelTimeout(timer.current);
     }
-    timer.current = requestTimeout(scrollReset, 200);
+    timer.current = requestTimeout(scrollReset, 100);
   }
   function scrollReset() {
     setScrolling(false);
@@ -150,12 +157,19 @@ function List<RecordType extends object>(
 
   const [rowStartIndex, rowStopIndex] = getVerticalRange();
 
-  const rows = [] as React.ReactElement[];
+  const rows: React.ReactElement[] = [];
   if (columnCount > 0 && rowCount) {
     for (let y = rowStartIndex; y <= rowStopIndex && y < rowCount; y += 1) {
       const rowItems: React.ReactNode[] = [];
       const curRecord = dataSource[y];
 
+      const rowStyle = {
+        height: rowHeight,
+        width: contentWidth,
+        top: 0,
+        left: 0,
+        position: 'absolute',
+      };
       for (let x = 0, left = 0; x < columnCount; x += 1) {
         const curColumn = columns[x];
         const { size, offset } = getItemMetadata(
@@ -166,14 +180,14 @@ function List<RecordType extends object>(
         );
         const { render } = curColumn;
         const cellData = getCellData(curRecord, curColumn.dataIndex);
-
+        rowStyle.top = offset;
         rowItems.push(
           <div
             className={styles.cell}
             style={{
               position: 'absolute',
               left,
-              top: offset,
+              top: renderRow ? 0 : offset,
               width: curColumn.width,
               height: size,
             }}
@@ -188,6 +202,8 @@ function List<RecordType extends object>(
 
       rows.push(
         <Row
+          index={y}
+          style={rowStyle}
           render={renderRow}
           key={`${y}_row`}
           record={curRecord}
@@ -197,26 +213,42 @@ function List<RecordType extends object>(
     }
   }
 
-  return (
+  const content = (
     <div
-      id="table_container"
-      ref={wrapper}
-      onScroll={onScroll}
-      // className={wrapperClassName}
       style={{
-        ...container,
-        overflow: 'auto',
+        height: contentHeight,
+        width: contentWidth,
+        position: 'relative',
       }}
     >
-      <div
-        style={{
-          height: contentHeight,
-          width: contentWidth,
-          position: 'relative',
-        }}
-      >
-        {rows}
-      </div>
+      {rows}
+    </div>
+  );
+
+  const containerStyle: React.CSSProperties = {
+    pointerEvents: isScrolling ? 'none' : 'initial',
+    ...container,
+    overflow: 'auto',
+  };
+
+  return typeof renderContainer === 'function' ? (
+    renderContainer(
+      {
+        ref: wrapper,
+        onScroll,
+        style: containerStyle,
+      },
+      content,
+    )
+  ) : (
+    <div
+      id="table_container"
+      ref={(wrapper as React.ForwardedRef<HTMLDivElement>) || null}
+      onScroll={onScroll}
+      // className={wrapperClassName}
+      style={containerStyle}
+    >
+      {content}
     </div>
   );
 }
