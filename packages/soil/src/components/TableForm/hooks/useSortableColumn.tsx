@@ -46,4 +46,18 @@ const Row = ({
 
 const SortableRow = SortableElement(Row);
 
+function useSortableColumn(columns, sortable) {
+  if (sortable)
+    return [
+      {
+        dataIndex: 'array_table_sort',
+        width: 30,
+        render: () => <DragHandle />,
+      },
+    ].concat(columns);
+
+  return columns;
+}
+
+export default useSortableColumn;
 export { DragHandle, SortableContainer, SortableRow, onSortEnd };

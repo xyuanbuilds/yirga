@@ -23,7 +23,7 @@ import useSelectableColumns, {
   useSelectable,
   SelectableItemContext,
 } from './hooks/useSelectableColumn';
-import {
+import useSortableColumn, {
   // DragHandle,
   SortableContainer,
   SortableRow,
@@ -97,8 +97,8 @@ function Test() {
 
   return <TableContainer columns={testColumns} />;
 }
-// * 测试实际使用环境
 
+// * 表单功能添加
 function FormContainer({ children }) {
   return (
     <Form form={form}>
@@ -107,28 +107,25 @@ function FormContainer({ children }) {
   );
 }
 
-interface TableProps {
+interface BodyProps {
   columns: ColumnProps[];
   dataSource: any;
-  operator: any;
   size: {
     width: number;
     height: number;
   };
-  // scrollInfoRef: React.MutableRefObject<{ scrollLeft: number }>;
   scrollInfoRef: React.Ref<{ scrollLeft: number }>;
-  selectable?: boolean;
   onScroll?: (info: { scrollLeft: number }) => void;
 }
+
+// * 虚拟滚动表体的链接层
 const BodyContainer = ({
   columns,
   dataSource,
-  operator,
-  selectable,
   size,
   onScroll,
   scrollInfoRef,
-}: TableProps) => {
+}: BodyProps) => {
   const listSize = {
     rowHeight: 45,
     container: {
@@ -136,6 +133,8 @@ const BodyContainer = ({
       height: size.height - 87, // TODO 当前减去操作栏与表头
     },
   };
+
+  const { moveUp, moveDown, remove } = useField<ArrayFieldInstance>();
 
   const listRef = React.useRef<React.ElementRef<typeof List>>(null);
 
@@ -148,7 +147,6 @@ const BodyContainer = ({
       }
     },
   });
-
   if (
     scrollInfoRef !== null &&
     typeof scrollInfoRef === 'object' &&
@@ -160,8 +158,7 @@ const BodyContainer = ({
   }
 
   const arrayField = useField<ArrayFieldInstance>();
-  const selectableColumn = useSelectableColumns(columns, selectable);
-  const c = useTableFormColumns(selectableColumn, operator);
+  const c = useTableFormColumns(columns, { remove, moveUp, moveDown });
 
   return (
     <List
@@ -177,6 +174,7 @@ const BodyContainer = ({
         return (
           <SortableContainer
             lockAxis="y"
+            useDragHandle // 需要整行拖动，则为false
             onSortEnd={onSortEnd(arrayField.move)}
             {...props}
           >
@@ -192,15 +190,11 @@ const BodyContainer = ({
   );
 };
 
+// * 表单 与 表格的链接层
 type Operator = Pick<
   ArrayFieldInstance,
   'push' | 'remove' | 'move' | 'moveDown' | 'moveUp'
 >;
-type ColumnNeedOperator = Pick<
-  ArrayFieldInstance,
-  'moveUp' | 'moveDown' | 'remove'
->;
-
 const LinkComponent = observer(
   ({
     children,
@@ -225,48 +219,73 @@ const LinkComponent = observer(
   },
 );
 
+function TableEnhanced<RecordType extends object>({
+  size,
+  dataSource,
+  columns: originColumn,
+  selectable,
+  sortable,
+}) {
+  const { selectedItems, toggleSelection, isSelected } = useSelectable();
+
+  const selectableColumn = useSelectableColumns(
+    originColumn,
+    dataSource.map((i) => i[ROW_ID_KEY]),
+    selectable,
+  );
+  const columns = useSortableColumn(selectableColumn, sortable);
+
+  const renderList: CustomizeScrollBody<RecordType> = (
+    rawData: readonly RecordType[],
+    { ref, onScroll },
+  ) => {
+    return (
+      <BodyContainer
+        onScroll={({ scrollLeft }) => onScroll({ scrollLeft })}
+        scrollInfoRef={ref}
+        size={size}
+        dataSource={rawData}
+        columns={columns}
+      />
+    );
+  };
+
+  return (
+    <SelectableItemContext.Provider
+      value={{
+        toggleSelection,
+        isSelected,
+        selectedItems,
+      }}
+    >
+      <Table<RecordType>
+        rowKey={ROW_ID_KEY}
+        dataSource={dataSource}
+        columns={columns.concat({
+          title: '操作',
+          dataIndex: 'sssss',
+          width: 200,
+        })}
+        scroll={{ y: size.height, x: size.width }}
+        pagination={false}
+        components={{
+          body: renderList,
+        }}
+      />
+    </SelectableItemContext.Provider>
+  );
+}
+
 // TODO 表头高度？
 function TableContainer<RecordType extends object>({
   columns,
   selectable = true,
+  sortable = true,
 }) {
   const [size, setTableInfo] = React.useState({
     width: 0,
     height: 0,
   });
-
-  const {
-    setSelected,
-    selectedIndexes,
-    toggleSelection,
-    isSelected,
-  } = useSelectable();
-
-  const renderList = (
-    operator: ColumnNeedOperator,
-  ): CustomizeScrollBody<RecordType> => (
-    rawData: readonly RecordType[],
-    { ref, onScroll },
-  ) => {
-    return (
-      <SelectableItemContext.Provider
-        value={{
-          toggleSelection,
-          isSelected,
-        }}
-      >
-        <BodyContainer
-          selectable={selectable}
-          onScroll={({ scrollLeft }) => onScroll({ scrollLeft })}
-          scrollInfoRef={ref}
-          size={size}
-          dataSource={rawData}
-          operator={operator}
-          columns={columns}
-        />
-      </SelectableItemContext.Provider>
-    );
-  };
 
   return (
     <ResizeObserver
@@ -283,24 +302,12 @@ function TableContainer<RecordType extends object>({
             {(dataSource, operator) => {
               return (
                 <>
-                  <Table<RecordType>
-                    rowKey={ROW_ID_KEY}
-                    rowSelection={{
-                      onChange: setSelected,
-                      selectedRowKeys: selectedIndexes,
-                      columnWidth: selectable ? 32 : 0,
-                    }}
+                  <TableEnhanced<RecordType>
+                    size={size}
+                    selectable={selectable}
+                    sortable={sortable}
                     dataSource={dataSource}
-                    columns={columns.concat({
-                      title: '操作',
-                      dataIndex: 'sssss',
-                      width: 200,
-                    })}
-                    scroll={{ y: size.height, x: size.width }}
-                    pagination={false}
-                    components={{
-                      body: renderList(operator),
-                    }}
+                    columns={columns}
                   />
                   <Button
                     onClick={() =>

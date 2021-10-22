@@ -1,42 +1,68 @@
 import * as React from 'react';
 import { Checkbox } from 'antd';
+import styles from './selectable.less';
 import { ROW_ID_KEY } from '../../Form/models/ArrayField';
 
 export interface ISelectableItemProps {
-  toggleSelection: (index: React.Key) => () => void;
+  toggleSelection: (
+    index: React.Key | React.Key[],
+    clear?: boolean,
+  ) => () => void;
   isSelected: (index: React.Key) => boolean;
+  selectedItems: React.Key[];
 }
 const SelectableItemContext = React.createContext<ISelectableItemProps>(null!);
 SelectableItemContext.displayName = 'SelectableItemContext';
 
 function useSelectable() {
-  // const selectable = true;
-  // const [selectedAll, setSelectedAll] = React.useState(false);
-  const [selectedIndexes, setSelected] = React.useState<React.Key[]>([]);
+  const [selectedItems, setSelected] = React.useState<React.Key[]>([]);
 
-  const toggleSelection = (option: React.Key) => () => {
-    setSelected((v) => {
-      const curSelectionIndex = v.findIndex((i) => i === option);
-      if (curSelectionIndex >= 0) {
-        return v
-          .slice(0, curSelectionIndex)
-          .concat(v.slice(curSelectionIndex + 1));
-      }
-      return v.concat(option);
-    });
+  const toggleSelection: ISelectableItemProps['toggleSelection'] = (
+    option,
+    clear,
+  ) => () => {
+    if (Array.isArray(option)) {
+      setSelected(clear ? [] : option);
+    } else {
+      setSelected((v) => {
+        const curSelectionIndex = v.findIndex((i) => i === option);
+        if (curSelectionIndex >= 0) {
+          return v
+            .slice(0, curSelectionIndex)
+            .concat(v.slice(curSelectionIndex + 1));
+        }
+        return v.concat(option);
+      });
+    }
   };
 
-  const isSelected = (option: any) => {
-    return selectedIndexes.findIndex((i) => i === option) >= 0;
+  const isSelected: ISelectableItemProps['isSelected'] = (option) => {
+    return selectedItems.findIndex((i) => i === option) >= 0;
   };
 
   return {
     toggleSelection,
-    selectedIndexes,
+    selectedItems,
     isSelected,
     setSelected,
   };
 }
+
+const CKA = ({ allOptions }) => {
+  const { toggleSelection, selectedItems } = React.useContext(
+    SelectableItemContext,
+  );
+
+  const allChecked =
+    selectedItems.length === allOptions.length && selectedItems.length > 0;
+  return (
+    <Checkbox
+      indeterminate={selectedItems.length > 0 && !allChecked}
+      checked={allChecked}
+      onClick={toggleSelection(allOptions, allChecked)}
+    />
+  );
+};
 
 const CK = ({ record }) => {
   const { toggleSelection, isSelected } = React.useContext(
@@ -52,11 +78,20 @@ const CK = ({ record }) => {
 };
 const CheckBoxContainer = React.memo(CK);
 
-function useSelectableColumns(columns: any[], selectable?: boolean): any[] {
+function useSelectableColumns(
+  columns: any[],
+  lineIds: any[],
+  selectable?: boolean,
+): any[] {
   if (selectable) {
     const selectColumn = [
       {
         key: 'array_table_select',
+        title() {
+          return <CKA allOptions={lineIds} />;
+        },
+        className: styles.checkContainer,
+        align: 'center',
         dataIndex: 'array_table_select',
         width: 32,
         render(_, record) {
