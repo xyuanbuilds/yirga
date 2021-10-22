@@ -2,9 +2,12 @@
 2. ~~表格选中逻辑~~
 3. 表单validate：
    1. form.validateFields
+   2. 错误获取，并scroll到错误位置
 4. 样式补充；
 5. 设计获取&设置表单值：
    1. form.getFieldsValue;
    2. form.setFieldsValue;
 6. Field disabled & visible；
 7. 行拖拽；
+   1. 手柄拖拽
+8. 表头滚动联动；

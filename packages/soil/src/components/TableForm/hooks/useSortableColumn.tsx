@@ -19,30 +19,31 @@ const DragHandle = SortableHandle(() => (
 ));
 
 // * 默认 div 容器，props 除 SortableContainer 需要的 props，其余传递给 div
-const SortableContainer = SC(
-  ({
-    elementType = 'div',
-    ...props
-  }: {
-    elementType?: keyof React.ReactHTML;
-    lockAxis?: 'y' | 'x';
-    [key: string]: any;
-  }) => {
-    return React.createElement(elementType, props);
-  },
-);
+
+const Container = ({
+  elementType = 'div',
+  wrapperRef,
+  ...props
+}: {
+  elementType?: keyof React.ReactHTML;
+  [key: string]: any;
+}) => {
+  return React.createElement(elementType, { ...props, ref: wrapperRef });
+};
+
+const SortableContainer = SC(Container);
 
 // * 默认 div 行容器，props 除 SortableContainer 需要的 props，其余传递给 div
-const SortableRow = SortableElement(
-  ({
-    elementType = 'div',
-    ...props
-  }: {
-    elementType?: keyof React.ReactHTML;
-    [key: string]: any;
-  }) => {
-    return React.createElement(elementType, props);
-  },
-);
+const Row = ({
+  elementType = 'div',
+  ...props
+}: {
+  elementType?: keyof React.ReactHTML;
+  [key: string]: any;
+}) => {
+  return React.createElement(elementType, props);
+};
+
+const SortableRow = SortableElement(Row);
 
 export { DragHandle, SortableContainer, SortableRow, onSortEnd };

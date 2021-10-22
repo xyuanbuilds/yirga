@@ -325,7 +325,7 @@ function applyFieldPatches(
       const { identifier, oldIdentifier, payload } = patch;
       if (payload) {
         target[identifier] = payload;
-        if (target[oldIdentifier] === payload) target[oldIdentifier]?.destroy();
+        if (target[oldIdentifier] === payload) delete target[oldIdentifier];
       }
       //* 路径信息变更
       if (identifier && payload) {

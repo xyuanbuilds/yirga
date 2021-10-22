@@ -115,55 +115,82 @@ interface TableProps {
     width: number;
     height: number;
   };
+  // scrollInfoRef: React.MutableRefObject<{ scrollLeft: number }>;
+  scrollInfoRef: React.Ref<{ scrollLeft: number }>;
   selectable?: boolean;
-  onScroll: (info: { scrollLeft: number }) => void;
+  onScroll?: (info: { scrollLeft: number }) => void;
 }
-const BodyContainer = React.forwardRef<unknown, TableProps>(
-  (
-    { columns, dataSource, operator, selectable, size, onScroll }: TableProps,
-    ref,
-  ) => {
-    const listSize = {
-      rowHeight: 45,
-      container: {
-        width: size.width,
-        height: size.height - 87, // TODO 当前减去操作栏与表头
-      },
-    };
+const BodyContainer = ({
+  columns,
+  dataSource,
+  operator,
+  selectable,
+  size,
+  onScroll,
+  scrollInfoRef,
+}: TableProps) => {
+  const listSize = {
+    rowHeight: 45,
+    container: {
+      width: size.width,
+      height: size.height - 87, // TODO 当前减去操作栏与表头
+    },
+  };
 
-    const arrayField = useField<ArrayFieldInstance>();
-    const selectableColumn = useSelectableColumns(columns, selectable);
-    const c = useTableFormColumns(selectableColumn, operator);
+  const listRef = React.useRef<React.ElementRef<typeof List>>(null);
 
-    return (
-      <List
-        {...listSize}
-        renderRow={(props, index, content) => {
-          return (
-            <SortableRow index={index} {...props}>
-              {content}
-            </SortableRow>
-          );
-        }}
-        renderContainer={(props, content) => {
-          return (
-            <SortableContainer
-              lockAxis="y"
-              onSortEnd={onSortEnd(arrayField.move)}
-              {...props}
-            >
-              {content}
-            </SortableContainer>
-          );
-        }}
-        ref={ref}
-        onScroll={onScroll}
-        columns={c}
-        dataSource={dataSource}
-      />
-    );
-  },
-);
+  const obj = {} as { scrollLeft: number };
+  Object.defineProperty(obj, 'scrollLeft', {
+    get: () => null,
+    set: (scrollLeft: number) => {
+      if (listRef.current) {
+        listRef.current.scrollTo({ scrollLeft });
+      }
+    },
+  });
+
+  if (
+    scrollInfoRef !== null &&
+    typeof scrollInfoRef === 'object' &&
+    'current' in scrollInfoRef
+  ) {
+    (scrollInfoRef as {
+      current: { scrollLeft: number };
+    }).current = obj;
+  }
+
+  const arrayField = useField<ArrayFieldInstance>();
+  const selectableColumn = useSelectableColumns(columns, selectable);
+  const c = useTableFormColumns(selectableColumn, operator);
+
+  return (
+    <List
+      {...listSize}
+      renderRow={(props, index, content) => {
+        return (
+          <SortableRow index={index} {...props}>
+            {content}
+          </SortableRow>
+        );
+      }}
+      renderContainer={(props, content) => {
+        return (
+          <SortableContainer
+            lockAxis="y"
+            onSortEnd={onSortEnd(arrayField.move)}
+            {...props}
+          >
+            {content}
+          </SortableContainer>
+        );
+      }}
+      ref={listRef}
+      onScroll={onScroll}
+      columns={c}
+      dataSource={dataSource}
+    />
+  );
+};
 
 type Operator = Pick<
   ArrayFieldInstance,
@@ -230,8 +257,8 @@ function TableContainer<RecordType extends object>({
       >
         <BodyContainer
           selectable={selectable}
-          onScroll={onScroll}
-          ref={ref}
+          onScroll={({ scrollLeft }) => onScroll({ scrollLeft })}
+          scrollInfoRef={ref}
           size={size}
           dataSource={rawData}
           operator={operator}

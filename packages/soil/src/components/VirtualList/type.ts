@@ -59,7 +59,7 @@ export interface ListProps<RecordType> {
   renderContainer?: (
     props: {
       style: React.CSSProperties;
-      ref?: React.ForwardedRef<any>;
+      wrapperRef?: React.ForwardedRef<HTMLElement>;
       onScroll(e: React.UIEvent<HTMLDivElement, UIEvent>): void;
     },
     content: React.ReactNode | React.ReactNodeArray,

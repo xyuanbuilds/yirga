@@ -16,6 +16,11 @@ function Row({ style, index, items, record, render }) {
 
 const DEFAULT_OUT_OF_VIEW_ITEM_NUM = 1;
 
+type ScrollInfo = {
+  scrollLeft: number;
+  scrollTop: number;
+};
+
 type GridBasicInfo = {
   containerHeight: number;
   containerWidth: number;
@@ -29,10 +34,15 @@ type MeasuredData = {
   lastMeasuredRowIndex: number;
 };
 const MEASURED_ROW_HEIGHT = 40;
+
+interface ListRef {
+  scrollTo: ({ scrollLeft, scrollTop }: Partial<ScrollInfo>) => void;
+}
+
 // TODO onWheel 优化
-function List<RecordType extends object, T = any>(
+function List<RecordType extends object>(
   props: ListProps<RecordType>,
-  wrapper: React.ForwardedRef<T>,
+  wrapper: React.ForwardedRef<ListRef>,
 ): React.ReactElement {
   // TODO 省略columns 中的冗余信息，让columns只在 width 或 dataIndex 变化时，才导致当前组件刷新
   const {
@@ -42,7 +52,14 @@ function List<RecordType extends object, T = any>(
     rowHeight,
     renderRow,
     renderContainer,
+    onScroll: onScrollCallback,
   } = props;
+
+  const wrapperDom = React.useRef<HTMLElement>(null);
+  React.useImperativeHandle(wrapper, () => ({
+    scrollTo,
+  }));
+
   const cacheRef = React.useRef<Record<string, RowData>>({
     '-1': {
       size: 0,
@@ -67,13 +84,16 @@ function List<RecordType extends object, T = any>(
     (dataSource.length - measuredData.lastMeasuredRowIndex - 1) *
       MEASURED_ROW_HEIGHT;
 
-  const [scrollInfo, setScroll] = React.useState({
+  // TODO scrolling cached
+  const [_, setScrolling] = React.useState(false);
+  const [scrollInfo, setScroll] = React.useState<ScrollInfo>({
     scrollLeft: 0,
     scrollTop: 0,
   });
+  React.useLayoutEffect(() => {
+    if (typeof onScrollCallback === 'function') onScrollCallback(scrollInfo);
+  }, [scrollInfo, onScrollCallback]);
 
-  // TODO scrolling cached
-  const [isScrolling, setScrolling] = React.useState(false);
   const timer = React.useRef<null | {
     id: number;
   }>(null);
@@ -83,7 +103,7 @@ function List<RecordType extends object, T = any>(
     if (timer.current !== null) {
       cancelTimeout(timer.current);
     }
-    timer.current = requestTimeout(scrollReset, 100);
+    timer.current = requestTimeout(scrollReset, 150);
   }
   function scrollReset() {
     setScrolling(false);
@@ -102,19 +122,27 @@ function List<RecordType extends object, T = any>(
       scrollHeight,
       scrollWidth,
     } = e.currentTarget;
-    props?.onScroll?.({ scrollLeft, scrollTop });
+
     setScroll((prev) => {
       if (scrollLeft === prev.scrollLeft && scrollTop === prev.scrollTop)
         return prev;
 
+      setScrolling(true);
       const nextLeft = pipe(scrollWidth - clientWidth, min(scrollLeft), max(0));
       const nextTop = pipe(scrollHeight - clientHeight, min(scrollTop), max(0));
-      setScrolling(true);
+
       return {
         scrollTop: nextTop,
         scrollLeft: nextLeft,
       };
     });
+  }
+
+  function scrollTo({ scrollLeft, scrollTop }: Partial<ScrollInfo>) {
+    if (wrapperDom.current) {
+      wrapperDom.current.scrollLeft = scrollLeft || scrollInfo.scrollLeft;
+      wrapperDom.current.scrollTop = scrollTop || scrollInfo.scrollTop;
+    }
   }
 
   function getVerticalRange(): [
@@ -226,7 +254,7 @@ function List<RecordType extends object, T = any>(
   );
 
   const containerStyle: React.CSSProperties = {
-    pointerEvents: isScrolling ? 'none' : 'initial',
+    // pointerEvents: _ ? 'none' : undefined,
     ...container,
     overflow: 'auto',
   };
@@ -234,7 +262,7 @@ function List<RecordType extends object, T = any>(
   return typeof renderContainer === 'function' ? (
     renderContainer(
       {
-        ref: wrapper,
+        wrapperRef: wrapperDom,
         onScroll,
         style: containerStyle,
       },
@@ -243,7 +271,7 @@ function List<RecordType extends object, T = any>(
   ) : (
     <div
       id="table_container"
-      ref={(wrapper as React.ForwardedRef<HTMLDivElement>) || null}
+      ref={(wrapperDom as React.ForwardedRef<HTMLDivElement>) || null}
       onScroll={onScroll}
       // className={wrapperClassName}
       style={containerStyle}
