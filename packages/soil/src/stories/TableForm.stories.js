@@ -19,5 +19,5 @@ FormTable.args = {
   // bordered: false,
   // columns,
   height: 400, // TODO 容器监听
-  width: 500, // TODO 容器监听
+  width: 596, // TODO 容器监听
 };

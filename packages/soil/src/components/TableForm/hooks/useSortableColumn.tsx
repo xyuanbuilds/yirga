@@ -7,6 +7,8 @@ import {
 } from 'react-sortable-hoc';
 import { MenuOutlined } from '@ant-design/icons';
 
+export const SORTABlE_COLUMN_WIDTH = 32;
+
 const onSortEnd = (move: (old: number, newIndex: number) => void) => ({
   oldIndex,
   newIndex,
@@ -51,7 +53,7 @@ function useSortableColumn(columns, sortable) {
     return [
       {
         dataIndex: 'array_table_sort',
-        width: 30,
+        width: SORTABlE_COLUMN_WIDTH,
         render: () => <DragHandle />,
       },
     ].concat(columns);

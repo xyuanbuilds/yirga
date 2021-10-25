@@ -23,6 +23,7 @@ import useSelectableColumns, {
   useSelectable,
   SelectableItemContext,
 } from './hooks/useSelectableColumn';
+import useIndexColumns from './hooks/useIndexColumn';
 import useSortableColumn, {
   // DragHandle,
   SortableContainer,
@@ -72,14 +73,14 @@ function Test() {
     {
       dataIndex: 'b',
       title: 'b',
-      width: 200,
+      width: 100,
       component: [TestField],
       valueType: 'string',
     },
     {
       dataIndex: 'c',
       title: 'c',
-      width: 200,
+      width: 100,
       component: [
         TestSelect,
         {
@@ -222,18 +223,19 @@ const LinkComponent = observer(
 function TableEnhanced<RecordType extends object>({
   size,
   dataSource,
-  columns: originColumn,
+  columns: originColumns,
   selectable,
   sortable,
 }) {
   const { selectedItems, toggleSelection, isSelected } = useSelectable();
 
-  const selectableColumn = useSelectableColumns(
-    originColumn,
+  const indexedColumns = useIndexColumns(originColumns);
+  const selectableColumns = useSelectableColumns(
+    indexedColumns,
     dataSource.map((i) => i[ROW_ID_KEY]),
     selectable,
   );
-  const columns = useSortableColumn(selectableColumn, sortable);
+  const columns = useSortableColumn(selectableColumns, sortable);
 
   const renderList: CustomizeScrollBody<RecordType> = (
     rawData: readonly RecordType[],
@@ -259,12 +261,12 @@ function TableEnhanced<RecordType extends object>({
       }}
     >
       <Table<RecordType>
+        tableLayout="fixed"
         rowKey={ROW_ID_KEY}
         dataSource={dataSource}
         columns={columns.concat({
           title: '操作',
           dataIndex: 'sssss',
-          width: 200,
         })}
         scroll={{ y: size.height, x: size.width }}
         pagination={false}

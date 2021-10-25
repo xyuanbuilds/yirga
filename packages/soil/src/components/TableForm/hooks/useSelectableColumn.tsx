@@ -3,6 +3,8 @@ import { Checkbox } from 'antd';
 import styles from './selectable.less';
 import { ROW_ID_KEY } from '../../Form/models/ArrayField';
 
+export const SELECTABLE_COLUMN_WIDTH = 32;
+
 export interface ISelectableItemProps {
   toggleSelection: (
     index: React.Key | React.Key[],
@@ -93,7 +95,7 @@ function useSelectableColumns(
         className: styles.checkContainer,
         align: 'center',
         dataIndex: 'array_table_select',
-        width: 32,
+        width: SELECTABLE_COLUMN_WIDTH,
         render(_, record) {
           return <CheckBoxContainer record={record} />;
         },
