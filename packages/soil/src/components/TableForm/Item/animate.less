@@ -1,0 +1,63 @@
+@keyframes antShowHelpIn {
+  0% {
+    -webkit-transform: translateY(-5px);
+    transform: translateY(-5px);
+    opacity: 0;
+  }
+
+  to {
+    -webkit-transform: translateY(0);
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@-webkit-keyframes antShowHelpIn {
+  0% {
+    -webkit-transform: translateY(-5px);
+    transform: translateY(-5px);
+    opacity: 0;
+  }
+
+  to {
+    -webkit-transform: translateY(0);
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@-webkit-keyframes antShowHelpOut {
+  to {
+    -webkit-transform: translateY(-5px);
+    transform: translateY(-5px);
+    opacity: 0;
+  }
+}
+
+@keyframes antShowHelpOut {
+  to {
+    -webkit-transform: translateY(-5px);
+    transform: translateY(-5px);
+    opacity: 0;
+  }
+}
+
+:global {
+  .@{array-form-item-cls}-help-appear,
+  .@{array-form-item-cls}-help-enter {
+    animation-duration: 0.3s;
+    animation-fill-mode: both;
+    animation-play-state: paused;
+    animation-timing-function: cubic-bezier(0.645, 0.045, 0.355, 1);
+    opacity: 0;
+  }
+
+  .@{array-form-item-cls}-help-appear.@{array-form-item-cls}-help-appear-active,
+  .@{array-form-item-cls}-help-enter.@{array-form-item-cls}-help-enter-active {
+    & :local {
+      animation-name: antShowHelpIn;
+    }
+
+    animation-play-state: running;
+  }
+}

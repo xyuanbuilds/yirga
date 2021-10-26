@@ -12,16 +12,26 @@ export type NormalEvent = {
 };
 
 export type Segment = string | number;
+
+export type Validator = (name: string, value: unknown) => Promise<any[]>;
 export interface Field {
   form: Form;
   identifier: string; // * 内部名称，唯一数组
   address: Segment[]; // * 选址数组
   name: Segment; // * 外部名称，column中的 dataIndex
   initialValue: any;
+  modified: boolean;
+  validator: Validator;
+  setValidator: (validator: Validator) => void;
+  feedbacks: any[];
   value: any;
   dispose: () => void;
   destroy: () => void;
+  validate: () => void;
   disposers: (() => void)[];
+  caches: {
+    inputting: boolean;
+  };
   onInput: (event: NormalEvent) => void;
   reset: (options?: { forceClear?: boolean }) => void;
 }
@@ -41,7 +51,16 @@ type Component<
     onChange: (e: Event) => void;
   }
 > = React.FunctionComponent<P> | React.ComponentClass<P> | string;
-type ComponentProps = Record<string, any>;
+
+type DecoratorComponent<
+  P = {
+    feedbacks?: React.ReactNode[];
+  }
+> =
+  | React.FunctionComponent<React.PropsWithChildren<P>>
+  | React.ComponentClass<React.PropsWithChildren<P>>;
+
+type ComponentProps = Record<string, unknown>;
 
 export interface FieldProps {
   name: Segment;
@@ -54,6 +73,8 @@ export interface FieldProps {
   linkageReaction?: (field: Field, values: any | any[]) => void;
   // * 校验重名
   deduplicate?: boolean;
+  validator?: (name: string, value: unknown) => Promise<any[]>;
+  decorator: [DecoratorComponent, ComponentProps?];
 }
 
 export interface ArrayFieldProps extends FieldProps {

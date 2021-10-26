@@ -1,32 +1,52 @@
 import React from 'react';
 import { observer } from '@formily/reactive-react';
-import type { GeneralField } from './types/Field';
+import type { GeneralField, FieldProps } from './types/Field';
 import type { Form } from './types/Form';
 
-type C<
-  P = {
-    value?: any;
-    onChange: (e: Event) => void;
-  }
-> = React.FunctionComponent<P> | React.ComponentClass<P> | string;
-interface ReactiveFieldProps {
-  field: GeneralField;
-  onlyObservable?: boolean;
+interface OnlyObservableProps {
+  field?: GeneralField;
+  onlyObservable: true;
   children?:
     | ((field: GeneralField, form: Form) => React.ReactChild)
     | React.ReactNode;
-  component?: [C, Record<string, any>?];
 }
 
-const ReactiveInternal: React.FC<ReactiveFieldProps> = (props) => {
-  const { field, children, component, onlyObservable } = props;
+interface BasicProps {
+  field: GeneralField;
+  decorator?: FieldProps['decorator'];
+  component: FieldProps['component'];
+  children?:
+    | ((field: GeneralField, form: Form) => React.ReactChild)
+    | React.ReactNode;
+}
 
-  if (!component && !onlyObservable) return null;
-  if (onlyObservable || !field) {
+type ReactiveFieldProps = OnlyObservableProps | BasicProps;
+
+const ReactiveInternal: React.FC<ReactiveFieldProps> = (props) => {
+  const { field, children } = props;
+  // * 仅提供 observable 功能
+  if (('onlyObservable' in props && props.onlyObservable) || !field) {
     return <div>{children}</div>;
   }
+  const { component, decorator } = props as BasicProps;
+
+  if (!Array.isArray(component) || !component[0]) return null;
 
   // if (field.display !== 'visible') return null;
+  const renderFeedbacks = (fieldComponent: React.ReactElement) => {
+    const hasDecorator = Array.isArray(decorator);
+
+    const decoratorElement = hasDecorator ? decorator![0] : React.Fragment;
+    return React.createElement(
+      decoratorElement,
+      {
+        feedbacks: field.feedbacks,
+        ...(hasDecorator && decorator![1]),
+      },
+      fieldComponent,
+    );
+  };
+
   const renderComponent = () => {
     // const value = !isVoidField(field) ? field.value : undefined;
 
@@ -41,14 +61,16 @@ const ReactiveInternal: React.FC<ReactiveFieldProps> = (props) => {
     //   ? field.pattern === 'readOnly'
     //   : undefined;
 
-    return React.createElement(
-      component![0],
-      {
-        value: field.value,
-        onChange,
-        ...component![1],
-      },
-      children,
+    return renderFeedbacks(
+      React.createElement(
+        component[0],
+        {
+          value: field.value,
+          onChange,
+          ...component[1],
+        },
+        children,
+      ),
     );
   };
 

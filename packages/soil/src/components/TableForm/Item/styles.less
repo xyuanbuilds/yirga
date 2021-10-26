@@ -1,0 +1,289 @@
+@import '~antd/lib/style/themes/default.less';
+@import '~antd/lib/input/style/mixin.less';
+@import './animate.less';
+
+@array-form-item-cls: ~'@{ant-prefix}-array-form-item';
+
+:global {
+  .@{array-form-item-cls} {
+    display: flex;
+    position: relative;
+    font-size: @font-size-base;
+    width: 100%;
+
+    &:hover {
+      z-index: 1;
+    }
+
+    textarea.@{ant-prefix}-input {
+      height: auto;
+    }
+
+    .@{ant-prefix}-upload {
+      background: transparent;
+    }
+
+    .@{ant-prefix}-upload.@{ant-prefix}-upload-drag {
+      background: @background-color-light;
+    }
+
+    input[type='radio'],
+    input[type='checkbox'] {
+      width: @font-size-base;
+      height: @font-size-base;
+    }
+
+    // Radios and checkboxes on same line
+    .@{ant-prefix}-radio-inline,
+    .@{ant-prefix}-checkbox-inline {
+      display: inline-block;
+      margin-left: 8px;
+      font-weight: normal;
+      vertical-align: middle;
+      cursor: pointer;
+
+      &:first-child {
+        margin-left: 0;
+      }
+    }
+
+    .@{ant-prefix}-checkbox-vertical,
+    .@{ant-prefix}-radio-vertical {
+      display: block;
+    }
+
+    .@{ant-prefix}-checkbox-vertical + .@{ant-prefix}-checkbox-vertical,
+    .@{ant-prefix}-radio-vertical + .@{ant-prefix}-radio-vertical {
+      margin-left: 0;
+    }
+
+    .@{ant-prefix}-input-number {
+      width: 100%;
+
+      + .@{ant-prefix}-form-text {
+        margin-left: 8px;
+      }
+
+      &-handler-wrap {
+        z-index: 2; // https://github.com/ant-design/ant-design/issues/6289
+      }
+    }
+
+    .@{ant-prefix}-select,
+    .@{ant-prefix}-cascader-picker,
+    .@{ant-prefix}-picker {
+      width: 100%;
+    }
+
+    // Don't impact select inside input group
+    .@{ant-prefix}-input-group .@{ant-prefix}-select,
+    .@{ant-prefix}-input-group .@{ant-prefix}-cascader-picker {
+      width: auto;
+    }
+  }
+
+  .@{array-form-item-cls}-help {
+    font-size: 12px;
+    top: 100%;
+    background: #fff;
+    padding: 3px;
+    border-radius: 3px;
+    box-shadow: 0 0 10px #eee;
+  }
+  .@{array-form-item-cls}-help,
+  .@{array-form-item-cls}-extra {
+    clear: both;
+    min-height: @form-item-margin-bottom - 2;
+    color: rgba(0, 0, 0, 0.45);
+    transition: color 0.3s cubic-bezier(0.215, 0.61, 0.355, 1);
+  }
+
+  .@{array-form-item-cls}-fullness {
+    > .@{array-form-item-cls}-control {
+      > .@{array-form-item-cls}-control-content {
+        > .@{array-form-item-cls}-control-content-component {
+          > *:first-child {
+            width: 100%;
+          }
+        }
+      }
+    }
+  }
+
+  .@{array-form-item-cls}-active {
+    .@{array-form-item-cls}-control-content-component-has-feedback-icon {
+      .active();
+    }
+
+    .@{ant-prefix}-input-number,
+    .@{ant-prefix}-picker,
+    .@{ant-prefix}-cascader-picker:focus .@{ant-prefix}-cascader-input,
+    .@{ant-prefix}-select:not(.@{ant-prefix}-select-customize-input)
+    .@{ant-prefix}-select-selector,
+    .@{ant-prefix}-input {
+      .active();
+    }
+  }
+
+  .@{array-form-item-cls}-error {
+    .@{ant-prefix}-select-selector,
+    .@{ant-prefix}-cascader-picker,
+    .@{ant-prefix}-picker,
+    .@{ant-prefix}-input,
+    .@{ant-prefix}-input-number,
+    .@{ant-prefix}-input-affix-wrapper,
+    .@{ant-prefix}-input-affix-wrapper:hover,
+    .@{ant-prefix}-input:hover {
+      border-color: @error-color !important;
+    }
+
+    .@{ant-prefix}-select:not(.@{ant-prefix}-select-disabled):not(.@{ant-prefix}-select-customize-input) {
+      .@{ant-prefix}-select-selector {
+        background-color: @form-error-input-bg;
+        border-color: @error-color !important;
+      }
+
+      &.@{ant-prefix}-select-open .@{ant-prefix}-select-selector,
+      &.@{ant-prefix}-select-focused .@{ant-prefix}-select-selector {
+        .active(@error-color);
+      }
+    }
+
+    .@{ant-prefix}-input-number,
+    .@{ant-prefix}-picker {
+      background-color: @form-error-input-bg;
+      border-color: @error-color;
+
+      &-focused,
+      &:focus {
+        .active(@error-color);
+      }
+
+      &:not([disabled]):hover {
+        background-color: @form-error-input-bg;
+        border-color: @error-color;
+      }
+    }
+
+    .@{ant-prefix}-cascader-picker:focus .@{ant-prefix}-cascader-input {
+      background-color: @form-error-input-bg;
+      .active(@error-color);
+    }
+
+    .@{ant-prefix}-input-affix-wrapper-focused,
+    .@{ant-prefix}-input-affix-wrapper:focus,
+    .@{ant-prefix}-input-focused,
+    .@{ant-prefix}-input:focus {
+      .active(@error-color);
+    }
+  }
+
+  .@{array-form-item-cls}-error-help {
+    color: @error-color;
+  }
+
+  // .@{array-form-item-cls}-warning-help {
+  //   color: @warning-color;
+  // }
+
+  // .@{array-form-item-cls}-success-help {
+  //   color: @success-color;
+  // }
+
+  // .@{array-form-item-cls}-warning {
+  //   .@{ant-prefix}-select-selector,
+  //   .@{ant-prefix}-cascader-picker,
+  //   .@{ant-prefix}-picker,
+  //   .@{ant-prefix}-input,
+  //   .@{ant-prefix}-input-number,
+  //   .@{ant-prefix}-input-affix-wrapper,
+  //   .@{ant-prefix}-input-affix-wrapper,
+  //   .@{ant-prefix}-input {
+  //     border-color: @warning-color !important;
+  //   }
+
+  //   .@{ant-prefix}-select-selector,
+  //   .@{ant-prefix}-cascader-picker,
+  //   .@{ant-prefix}-picker,
+  //   .@{ant-prefix}-input,
+  //   .@{ant-prefix}-input-number,
+  //   .@{ant-prefix}-input-affix-wrapper,
+  //   .@{ant-prefix}-input-affix-wrapper:hover,
+  //   .@{ant-prefix}-input:hover {
+  //     border-color: @warning-color !important;
+  //   }
+
+  //   .@{ant-prefix}-select:not(.@{ant-prefix}-select-disabled):not(.@{ant-prefix}-select-customize-input) {
+  //     .@{ant-prefix}-select-selector {
+  //       background-color: @form-warning-input-bg;
+  //       border-color: @warning-color !important;
+  //     }
+
+  //     &.@{ant-prefix}-select-open .@{ant-prefix}-select-selector,
+  //     &.@{ant-prefix}-select-focused .@{ant-prefix}-select-selector {
+  //       .active(@warning-color);
+  //     }
+  //   }
+
+  //   .@{ant-prefix}-input-number,
+  //   .@{ant-prefix}-picker {
+  //     background-color: @form-warning-input-bg;
+  //     border-color: @warning-color;
+
+  //     &-focused,
+  //     &:focus {
+  //       .active(@warning-color);
+  //     }
+
+  //     &:not([disabled]):hover {
+  //       background-color: @form-warning-input-bg;
+  //       border-color: @warning-color;
+  //     }
+  //   }
+
+  //   .@{ant-prefix}-cascader-picker:focus .@{ant-prefix}-cascader-input {
+  //     background-color: @form-warning-input-bg;
+  //     .active(@warning-color);
+  //   }
+
+  //   .@{ant-prefix}-input-affix-wrapper-focused,
+  //   .@{ant-prefix}-input-affix-wrapper:focus,
+  //   .@{ant-prefix}-input-focused,
+  //   .@{ant-prefix}-input:focus {
+  //     .active(@warning-color);
+  //   }
+  // }
+
+  // .@{array-form-item-cls}-success {
+  //   .@{ant-prefix}-select-selector,
+  //   .@{ant-prefix}-cascader-picker,
+  //   .@{ant-prefix}-picker,
+  //   .@{ant-prefix}-input,
+  //   .@{ant-prefix}-input-number,
+  //   .@{ant-prefix}-input-affix-wrapper,
+  //   .@{ant-prefix}-input-affix-wrapper,
+  //   .@{ant-prefix}-input {
+  //     border-color: @success-color !important;
+  //   }
+
+  //   .@{ant-prefix}-select-selector,
+  //   .@{ant-prefix}-cascader-picker,
+  //   .@{ant-prefix}-picker,
+  //   .@{ant-prefix}-input,
+  //   .@{ant-prefix}-input-number,
+  //   .@{ant-prefix}-input-affix-wrapper,
+  //   .@{ant-prefix}-input-affix-wrapper:hover,
+  //   .@{ant-prefix}-input:hover {
+  //     border-color: @success-color !important;
+  //   }
+
+  //   .@{ant-prefix}-input-affix-wrapper-focused,
+  //   .@{ant-prefix}-input-affix-wrapper:focus,
+  //   .@{ant-prefix}-input-focused,
+  //   .@{ant-prefix}-input:focus {
+  //     border-color: @success-color !important;
+  //     border-right-width: 1px !important;
+  //     outline: 0;
+  //   }
+  // }
+}

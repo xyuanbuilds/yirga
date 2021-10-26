@@ -2,6 +2,8 @@ import * as React from 'react';
 import { Button } from 'antd';
 import Field from '../../Form/Field';
 import { useField } from '../../Form/context/Field';
+import { getValidator } from '../Item/validator';
+import FeedbackItem from '../Item/Item';
 
 export interface IArrayBaseItemProps {
   index: number;
@@ -38,6 +40,7 @@ function getFieldRender(column) {
       linkages,
       linkageReaction,
       deduplicate,
+      rules,
       ...extra
     } = column;
 
@@ -49,6 +52,8 @@ function getFieldRender(column) {
             {({ basePath }) => {
               return (
                 <Field
+                  decorator={[FeedbackItem]}
+                  validator={rules && getValidator(rules)}
                   component={component}
                   basePath={basePath}
                   name={name || dataIndex}

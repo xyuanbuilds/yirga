@@ -55,6 +55,7 @@ const formInit = (props: FormProps | undefined): Form => {
     linkages,
     linkageReaction,
     deduplicate,
+    validator,
   }: FieldFactoryProps): Field {
     const address = basePath.concat(name);
     const identifier = address.toString();
@@ -70,6 +71,7 @@ const formInit = (props: FormProps | undefined): Form => {
           name,
           address,
           identifier,
+          validator,
         });
 
         form.fields[identifier] = pipe(

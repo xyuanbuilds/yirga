@@ -13,6 +13,7 @@ export interface FieldFactoryProps
     | 'linkages'
     | 'linkageReaction'
     | 'deduplicate'
+    | 'validator'
   > {}
 
 export interface CreateArrayFieldProps {
@@ -39,8 +40,8 @@ export interface Form<ValueType extends object = any> {
   getValuesIn: (address: Address) => any;
   setValuesIn: (address: Address, value: any) => void;
   getInitialValuesIn: (address: Address) => any;
-  createField: (props: FieldFactoryProps) => Field; // TODO, 目前只支持 ArrayField，先做尝试
-  createArrayField: (props: CreateArrayFieldProps) => ArrayField; // TODO, 目前只支持 ArrayField，先做尝试
+  createField: (props: FieldFactoryProps) => Field;
+  createArrayField: (props: CreateArrayFieldProps) => ArrayField;
   unmount: () => void;
   reset: (props?: { forceClear?: boolean }) => void;
 }

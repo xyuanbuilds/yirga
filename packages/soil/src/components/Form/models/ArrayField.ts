@@ -96,7 +96,7 @@ const createModel = ({ field }: Dependencies): Dependencies => {
     define(field, {
       value: observable.computed,
       onInput: batch,
-      reset: batch,
+      reset: action,
       initialValue: observable.computed,
     });
 
@@ -183,13 +183,26 @@ function exchangeArrayState(
     );
   };
 
-  const isFromOrToNode = (identifier: string) => {
+  const isDown = fromIndex < toIndex;
+
+  const isMoveNode = (identifier: string) => {
     const afterStr = identifier.slice(address.length);
     const number = afterStr.match(/^,(\d+)/)?.[1];
     if (number === undefined) return false;
     const index = Number(number);
 
-    return index === toIndex || index === fromIndex;
+    return isDown
+      ? index > fromIndex && index <= toIndex
+      : index < fromIndex && index >= toIndex;
+  };
+
+  const isFrom = (identifier: string) => {
+    const afterStr = identifier.slice(address.length);
+    const number = afterStr.match(/^,(\d+)/)?.[1];
+    if (number === undefined) return false;
+    const index = Number(number);
+
+    return index === fromIndex;
   };
 
   const moveIndex = (identifier: string) => {
@@ -201,7 +214,7 @@ function exchangeArrayState(
     if (index === fromIndex) {
       index = toIndex;
     } else {
-      index = fromIndex;
+      index += isDown ? -1 : 1;
     }
 
     return `${preStr}${afterStr.replace(/^,\d+/, `,${index}`)}`;
@@ -210,7 +223,7 @@ function exchangeArrayState(
   batch(() => {
     each(fields, (curField, identifier) => {
       if (isArrayChildren(identifier)) {
-        if (isFromOrToNode(identifier)) {
+        if (isMoveNode(identifier) || isFrom(identifier)) {
           const newIdentifier = moveIndex(identifier);
           fieldPatches.push({
             type: 'update',
@@ -308,6 +321,7 @@ function spliceArrayState(
         }
       }
     });
+
     applyFieldPatches(fields, fieldPatches);
   });
   // field.form.notify(LifeCycleTypes.ON_FORM_GRAPH_CHANGE);

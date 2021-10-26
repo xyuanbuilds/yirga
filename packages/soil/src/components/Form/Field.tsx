@@ -28,9 +28,11 @@ function Field({
   component,
   basePath,
   initialValue,
+  validator,
   linkages,
   linkageReaction,
   deduplicate,
+  decorator,
 }: FieldProps) {
   const form = useForm();
   const parent = useField();
@@ -38,14 +40,19 @@ function Field({
     name,
     basePath: basePath || parent?.address,
     initialValue,
+    validator,
     linkages,
     linkageReaction,
     deduplicate,
   });
 
+  useEffect(() => {
+    if (typeof validator === 'function') field.setValidator(validator);
+  }, [field, validator]);
+
   return (
     <FieldContext.Provider value={field}>
-      <ReactiveField component={component} field={field}>
+      <ReactiveField decorator={decorator} component={component} field={field}>
         {children}
       </ReactiveField>
     </FieldContext.Provider>

@@ -5,6 +5,7 @@ import ResizeObserver from 'rc-resize-observer';
 import { observer } from '@formily/reactive-react';
 
 import type { CustomizeScrollBody } from 'rc-table/lib/interface.d';
+import type { Rule } from 'rc-field-form/lib/interface.d';
 
 import List from '../VirtualList/List';
 
@@ -17,6 +18,7 @@ import { isValid } from '../Form/predicate';
 
 import TestField from '../Form/TestField';
 import TestSelect from '../Form/TestFieldSelect';
+import { validator1, validator2 } from './test/validator';
 
 import useTableFormColumns from './hooks/useTableFormColumns';
 import useSelectableColumns, {
@@ -25,7 +27,6 @@ import useSelectableColumns, {
 } from './hooks/useSelectableColumn';
 import useIndexColumns from './hooks/useIndexColumn';
 import useSortableColumn, {
-  // DragHandle,
   SortableContainer,
   SortableRow,
   onSortEnd,
@@ -53,10 +54,12 @@ interface ColumnProps {
   linkages?: string[];
   linkageReaction?: (field: any, value: any) => void;
   deduplicate?: boolean;
+  rules?: Rule[];
 }
 
 // * 测试实际使用环境
 function Test() {
+  const [rules, setRules] = React.useState(validator1);
   const testColumns: ColumnProps[] = [
     {
       dataIndex: 'a',
@@ -65,9 +68,10 @@ function Test() {
       component: [TestField],
       valueType: 'string',
       linkages: ['b', 'c'],
+      rules,
       linkageReaction: (field, values) => {
         const [b, c] = values;
-        field.value = (isValid(b) ? b : '') + (isValid(c) ? c : '');
+        field.value = isValid(b) && isValid(c) ? b + c : field.value;
       },
     },
     {
@@ -76,6 +80,7 @@ function Test() {
       width: 100,
       component: [TestField],
       valueType: 'string',
+      rules,
     },
     {
       dataIndex: 'c',
@@ -96,7 +101,18 @@ function Test() {
     },
   ];
 
-  return <TableContainer columns={testColumns} />;
+  return (
+    <>
+      <Button
+        onClick={() =>
+          setRules((v) => (v === validator2 ? validator1 : validator2))
+        }
+      >
+        切换validator
+      </Button>
+      <TableContainer columns={testColumns} />
+    </>
+  );
 }
 
 // * 表单功能添加

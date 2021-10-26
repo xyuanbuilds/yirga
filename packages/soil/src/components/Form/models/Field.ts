@@ -23,10 +23,12 @@ const fieldInit = ({
   name,
   identifier,
   address,
+  validator,
 }: Pick<FieldFactoryProps, 'name'> & {
   form: Form;
   identifier: string;
   address: (number | string)[];
+  validator?: any;
 }): Field => {
   const field: Field = {
     form,
@@ -36,30 +38,34 @@ const fieldInit = ({
     set value(value: any) {
       form.setValuesIn(field.address, value);
     },
-    onInput(e: NormalEvent) {
+    async onInput(e: NormalEvent) {
+      field.caches.inputting = true;
       if ('target' in e) {
         field.value = 'value' in e.target ? e.target.value : e.target.checked;
       } else {
         throw new Error('invalid target');
       }
+      field.modified = true;
 
       //  const values = getValuesFromEvent(args);
       //  const value = values[0];
       //  this.inputValue = value;
       //  this.inputValues = values;
-
-      // field.modified = true;
       // form.modified = true;
 
       // form.notify(LifeCycleTypes.ON_FIELD_INPUT_VALUE_CHANGE, this);
       // form.notify(LifeCycleTypes.ON_FORM_INPUT_CHANGE, this.form);
-
-      //  await this.validate('onInput');
-      //  this.caches.inputting = false;
+      await field.validate();
+      field.caches.inputting = false;
     },
     get initialValue() {
       return form.getInitialValuesIn(field.address);
     },
+    modified: false,
+    validate,
+    validator,
+    setValidator,
+    feedbacks: [],
     reset,
     address,
     identifier,
@@ -67,10 +73,48 @@ const fieldInit = ({
     dispose,
     destroy,
     disposers: [],
+    caches: {
+      inputting: false,
+    },
   };
 
+  function setValidator(
+    newValidator: (name: string, value: unknown) => Promise<any[]>,
+  ) {
+    field.validator = newValidator;
+  }
+  async function validate() {
+    if (!field.modified) return;
+    const start = () => {
+      // this.setValidating(true)
+      // this.form.notify(LifeCycleTypes.ON_FIELD_VALIDATE_START, this)
+    };
+    const end = () => {
+      // TODO validate status
+      // this.setValidating(false)
+      // if (this.valid) {
+      //   this.form.notify(LifeCycleTypes.ON_FIELD_VALIDATE_SUCCESS, this)
+      // } else {
+      //   this.form.notify(LifeCycleTypes.ON_FIELD_VALIDATE_FAILED, this)
+      // }
+      // this.form.notify(LifeCycleTypes.ON_FIELD_VALIDATE_END, this)
+    };
+    start();
+    // TODO 先validator 获取 validate 结果
+    // TODO 再 setFeedback 设置 Item 样式
+    try {
+      const results = await field.validator(field.identifier, field.value);
+      field.feedbacks = results;
+    } catch (e) {
+      field.feedbacks = e;
+    }
+    end();
+    // return results
+  }
+
   function reset(options?: { forceClear?: boolean }) {
-    // this.modified = false
+    field.modified = false;
+    field.feedbacks = [];
     // this.visited = false
     // this.feedbacks = []
     // this.inputValue = undefined
@@ -115,6 +159,11 @@ const createFieldModel = ({ form, field }: Dependencies): Dependencies => {
       onInput: batch,
       reset: action,
       initialValue: observable.computed,
+      modified: observable.ref,
+      validator: observable.shallow,
+      feedbacks: observable.shallow,
+      setValidator: action,
+      validate: action,
     });
 
     form.fields[identifier] = field as Field;
@@ -137,9 +186,20 @@ const createFieldReactions = ({
         () => field.value,
         () => {
           field.form.notify(LifeCycles.ON_FIELD_VALUE_CHANGE, field);
-          // if (isValid(value) && this.modified && !this.caches.inputting) {
-          //   this.validate();
-          // }
+          if (field.modified && !field.caches.inputting) {
+            field.validate();
+          }
+        },
+      ),
+    );
+
+    field.disposers!.push(
+      reaction(
+        () => field.validator,
+        () => {
+          if (field.modified) {
+            field.validate();
+          }
         },
       ),
     );
