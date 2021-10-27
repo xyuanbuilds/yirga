@@ -11,8 +11,12 @@ export interface IArrayBaseItemProps {
 const ItemContext = React.createContext<IArrayBaseItemProps>(null!);
 ItemContext.displayName = 'ArrayItemContext';
 
-const Item = ({ children, index }) => {
+const Item = ({ rules, children, index }) => {
   const arrayField = useField();
+
+  const validator = React.useMemo(() => {
+    return rules && getValidator(rules);
+  }, [rules]);
 
   const basePath = React.useMemo(() => {
     return arrayField.address.concat(index);
@@ -20,7 +24,7 @@ const Item = ({ children, index }) => {
 
   return (
     <ItemContext.Provider value={index}>
-      {children({ basePath })}
+      {children({ basePath, validator })}
     </ItemContext.Provider>
   );
 };
@@ -48,12 +52,12 @@ function getFieldRender(column) {
       ...extra,
       render: (_: any, __: any, index: number) => {
         return (
-          <Item index={index}>
-            {({ basePath }) => {
+          <Item rules={rules} index={index}>
+            {({ basePath, validator }) => {
               return (
                 <Field
                   decorator={[FeedbackItem]}
-                  validator={rules && getValidator(rules)}
+                  validator={validator}
                   component={component}
                   basePath={basePath}
                   name={name || dataIndex}

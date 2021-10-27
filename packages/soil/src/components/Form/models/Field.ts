@@ -45,6 +45,7 @@ const fieldInit = ({
       } else {
         throw new Error('invalid target');
       }
+      field.form.modified = true;
       field.modified = true;
 
       //  const values = getValuesFromEvent(args);
@@ -83,8 +84,9 @@ const fieldInit = ({
   ) {
     field.validator = newValidator;
   }
-  async function validate() {
-    if (!field.modified) return;
+  async function validate(options?: { force?: boolean }) {
+    if (!options?.force && !field.modified) return;
+
     const start = () => {
       // this.setValidating(true)
       // this.form.notify(LifeCycleTypes.ON_FIELD_VALIDATE_START, this)

@@ -27,7 +27,7 @@ export interface Field {
   value: any;
   dispose: () => void;
   destroy: () => void;
-  validate: () => void;
+  validate: (options?: { force?: boolean }) => Promise<any>;
   disposers: (() => void)[];
   caches: {
     inputting: boolean;
@@ -74,7 +74,7 @@ export interface FieldProps {
   // * 校验重名
   deduplicate?: boolean;
   validator?: (name: string, value: unknown) => Promise<any[]>;
-  decorator: [DecoratorComponent, ComponentProps?];
+  decorator?: [DecoratorComponent, ComponentProps?];
 }
 
 export interface ArrayFieldProps extends FieldProps {

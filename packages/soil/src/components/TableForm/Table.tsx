@@ -12,9 +12,10 @@ import List from '../VirtualList/List';
 import ArrayField from '../Form/ArrayField';
 import Form from '../Form/Form';
 import { useField } from '../Form/context/Field';
-import createForm from '../Form/models/Form';
+// import createForm from '../Form/models/Form';
 import { ROW_ID_KEY } from '../Form/models/ArrayField';
 import { isValid } from '../Form/predicate';
+import useForm from '../Form/useForm';
 
 import TestField from '../Form/TestField';
 import TestSelect from '../Form/TestFieldSelect';
@@ -33,7 +34,7 @@ import useSortableColumn, {
 } from './hooks/useSortableColumn';
 import type { ArrayField as ArrayFieldInstance } from '../Form/types/Field';
 
-const form = createForm();
+// const form = createForm();
 
 type ValueType =
   | 'array'
@@ -59,6 +60,7 @@ interface ColumnProps {
 
 // * 测试实际使用环境
 function Test() {
+  const [form] = useForm();
   const [rules, setRules] = React.useState(validator1);
   const testColumns: ColumnProps[] = [
     {
@@ -110,15 +112,63 @@ function Test() {
       >
         切换validator
       </Button>
-      <TableContainer columns={testColumns} />
+      <Button
+        onClick={async () => {
+          const res = await form.getFieldsValue();
+          console.log(res);
+        }}
+      >
+        获得
+      </Button>
+      <Button
+        onClick={() => {
+          form.reset();
+        }}
+      >
+        重置
+      </Button>
+      <Button
+        onClick={async () => {
+          const res = await form.validateFields();
+          console.log(res);
+        }}
+      >
+        验证
+      </Button>
+      <TableContainer
+        initialValues={{
+          array: [
+            { a: '1111', b: 'cccc' },
+            { a: '1111', b: 'cccc' },
+            { a: '1111', b: 'cccc' },
+            { a: '1111', b: 'cccc' },
+            { a: '1111', b: 'cccc' },
+            { a: '1111', b: 'cccc' },
+            { a: '1111', b: 'cccc' },
+            { a: '1111', b: 'cccc' },
+            { a: '1111', b: 'cccc' },
+            { a: '1111', b: 'cccc' },
+            { a: '1111', b: 'cccc' },
+            { a: '1111', b: 'cccc' },
+            { a: '1111', b: 'cccc' },
+            { a: '1111', b: 'cccc' },
+            { a: '1111', b: 'cccc' },
+            { a: '1111', b: 'cccc' },
+            { a: '1111', b: 'cccc' },
+            { a: '1111', b: 'cccc' },
+          ],
+        }}
+        form={form}
+        columns={testColumns}
+      />
     </>
   );
 }
 
 // * 表单功能添加
-function FormContainer({ children }) {
+function FormContainer({ initialValues, children, form }) {
   return (
-    <Form form={form}>
+    <Form initialValues={initialValues} form={form}>
       <ArrayField>{children}</ArrayField>
     </Form>
   );
@@ -296,7 +346,9 @@ function TableEnhanced<RecordType extends object>({
 
 // TODO 表头高度？
 function TableContainer<RecordType extends object>({
+  form,
   columns,
+  initialValues,
   selectable = true,
   sortable = true,
 }) {
@@ -315,7 +367,7 @@ function TableContainer<RecordType extends object>({
       }}
     >
       <div style={{ height: '100%', width: '100%' }}>
-        <FormContainer>
+        <FormContainer initialValues={initialValues} form={form}>
           <LinkComponent>
             {(dataSource, operator) => {
               return (

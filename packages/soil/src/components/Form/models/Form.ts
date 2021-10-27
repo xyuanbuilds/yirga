@@ -1,6 +1,13 @@
 /* eslint-disable no-param-reassign */
 import { define, observable, batch, action, toJS } from '@formily/reactive';
-import { isValid, isArr, isNumberIndex, isNum, isFn } from '../predicate';
+import {
+  isValid,
+  isArr,
+  isNumberIndex,
+  isNum,
+  isFn,
+  isPlainObj,
+} from '../predicate';
 import * as FieldModel from './Field';
 import * as ArrayFieldModel from './ArrayField';
 import LifeCycles from '../effects/constants';
@@ -14,9 +21,11 @@ const formInit = (props: FormProps | undefined): Form => {
   const effects = props?.effects;
   const form: Form = {
     lifeCycles: [],
+    modified: false,
     fields: {}, // { xx.0.xx: Field }
     values: {}, // { array: [{ a1: xx }, { a1: xx }]}
     initialValues: {},
+    setInitialValues,
     setValuesIn,
     getValuesIn,
     getInitialValuesIn,
@@ -24,6 +33,7 @@ const formInit = (props: FormProps | undefined): Form => {
     createArrayField,
     notify,
     reset,
+    validate,
     unmount,
   };
 
@@ -39,9 +49,42 @@ const formInit = (props: FormProps | undefined): Form => {
   }
 
   function reset(...args) {
+    form.modified = false;
     each(form.fields, (field) => {
       field.reset(...args);
     });
+  }
+
+  function setInitialValues(
+    initialValues: any,
+    strategy: 'merge' | 'replace' = 'replace',
+  ) {
+    if (!isPlainObj(initialValues)) return;
+    if (strategy === 'merge') {
+      // form.initialValues = merge(this.initialValues, initialValues, {
+      //   arrayMerge: (target, source) => source,
+      // })
+      // TODO
+    } else {
+      form.initialValues = initialValues as any;
+    }
+    if (!form.modified) {
+      form.values = toJS(form.initialValues);
+    }
+  }
+
+  async function validate() {
+    const promises: Promise<any>[] = [];
+
+    each(form.fields, (field) => {
+      promises.push(
+        field.validate({
+          force: true,
+        }),
+      );
+    });
+
+    return Promise.all(promises);
   }
 
   function unmount() {
@@ -172,7 +215,9 @@ const createFormModel = (form: Form): Form => {
   return define(form, {
     fields: observable.shallow,
     values: observable,
+    modified: observable.ref,
     initialValues: observable,
+    setInitialValues: action,
     setValuesIn: action,
     reset: action,
   });

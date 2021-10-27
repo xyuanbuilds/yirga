@@ -35,13 +35,16 @@ export interface Form<ValueType extends object = any> {
   ) => void;
   fields: Record<string, GeneralField>;
   values: ValueType;
+  modified: boolean;
   initialValues: ValueType;
   lifeCycles: any[];
   getValuesIn: (address: Address) => any;
   setValuesIn: (address: Address, value: any) => void;
+  setInitialValues: (values: any, strategrey?: 'merge' | 'replace') => void;
   getInitialValuesIn: (address: Address) => any;
   createField: (props: FieldFactoryProps) => Field;
   createArrayField: (props: CreateArrayFieldProps) => ArrayField;
   unmount: () => void;
   reset: (props?: { forceClear?: boolean }) => void;
+  validate: () => Promise<any[]>;
 }

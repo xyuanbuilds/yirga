@@ -1,4 +1,3 @@
-/* eslint-disable prefer-rest-params */
 import { isArr, isStr, isObj, isPlainObj } from './predicate';
 
 type EachArrayIterator<T> = (currentValue: T, key: number) => void | boolean;
@@ -188,6 +187,7 @@ export function pipe(
     case 9:
       return hi!(gh!(fg!(ef!(de!(cd!(bc!(ab!(a))))))));
     default: {
+      /* eslint-disable prefer-rest-params */
       let ret = arguments[0];
       for (let i = 1; i < arguments.length; i += 1) {
         ret = arguments[i](ret);
