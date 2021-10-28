@@ -10,7 +10,7 @@ import {
 import { nanoid } from 'nanoid/non-secure';
 import { fieldInit as normalFieldInit } from './Field';
 import { isArr, isNumberIndex } from '../predicate';
-import { each, clone } from '../utils';
+import { each } from '../utils';
 
 import type { GeneralField, ArrayField } from '../types/Field';
 import type { Form, FieldFactoryProps } from '../types/Form';
@@ -39,15 +39,30 @@ const fieldInit = ({
       name,
     }),
     {
+      reset(options?: { forceClear?: boolean }) {
+        field.modified = false;
+        field.feedbacks = [];
+        // this.visited = false
+        // this.feedbacks = []
+        // this.inputValue = undefined
+        // this.inputValues = []
+        // batch.scope?.(() => {
+        if (options?.forceClear) {
+          field.value = [] as any;
+        } else if (isArr(field.value)) {
+          const hasLine =
+            isArr(field.initialValue) && field.initialValue.length > 0;
+          field.value = hasLine
+            ? setLineId(toJS(field.initialValue))
+            : toJS(field.initialValue) || [];
+        }
+      },
       push(...items: any[]) {
         if (!isArr(field.value)) return;
         action(() => {
-          field.value.push(
-            ...items.map((i) => ({
-              ...i,
-              [ROW_ID_KEY]: nanoid(),
-            })),
-          );
+          field.value.push(...setLineId(items));
+
+          field.form.modified = true;
           // 用于触发相应的生命周期，及其他状态，暂不需要
           // TODO return field.onInput(field.value);
         });
@@ -61,6 +76,8 @@ const fieldInit = ({
           });
           field.value.splice(index, 1);
           // return this.onInput(this.value);
+
+          field.form.modified = true;
         });
       },
       move(fromIndex: number, toIndex: number) {
@@ -75,6 +92,8 @@ const fieldInit = ({
           field.value.splice(fromIndex, 1);
           field.value.splice(toIndex, 0, fromItem);
           // return this.onInput(this.value);
+
+          field.form.modified = true;
         });
       },
       moveUp(index: number) {
@@ -114,17 +133,10 @@ const setInitial = ({
   initialValue?: any[];
 }) => ({ field }: Dependencies): Dependencies => {
   /* 表单联动相关内容 */
-  const defaultValue =
-    clone(toJS(field.initialValue)) || propsInitialValue || [];
+  const defaultValue = toJS(field.initialValue) || propsInitialValue || [];
 
   batch.scope?.(() => {
-    if (isArr(defaultValue))
-      field.value = defaultValue.map((i) => {
-        return {
-          ...i,
-          [ROW_ID_KEY]: nanoid(),
-        };
-      });
+    if (isArr(defaultValue)) field.value = setLineId(defaultValue);
   });
 
   return {
@@ -379,5 +391,12 @@ function cleanupArrayChildren(field: ArrayField, start: number) {
   });
 }
 
-export { ROW_ID_KEY };
+function setLineId(items: any[]) {
+  return items.map((i) => ({
+    ...i,
+    [ROW_ID_KEY]: nanoid(),
+  }));
+}
+
+export { ROW_ID_KEY, setLineId };
 export { fieldInit, createModel, setInitial, setReactions };

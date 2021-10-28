@@ -12,7 +12,7 @@ import * as FieldModel from './Field';
 import * as ArrayFieldModel from './ArrayField';
 import LifeCycles from '../effects/constants';
 import { createHeart, runEffects } from './LifeCycle';
-import { each, pipe, clone } from '../utils';
+import { each, pipe } from '../utils';
 
 import type { Field, ArrayField, Segment } from '../types/Field';
 import type { Form, FormProps, FieldFactoryProps } from '../types/Form';
@@ -69,7 +69,7 @@ const formInit = (props: FormProps | undefined): Form => {
       form.initialValues = initialValues as any;
     }
     if (!form.modified) {
-      form.values = toJS(form.initialValues);
+      form.values = getValuesFromInitialValue(form.initialValues);
     }
   }
 
@@ -204,9 +204,9 @@ const formInit = (props: FormProps | undefined): Form => {
 };
 
 const setInitial = (props: { initialValues?: any }) => (form: Form): Form => {
-  form.initialValues = clone(props.initialValues) || ({} as any);
+  form.initialValues = props.initialValues || ({} as any);
 
-  form.values = toJS(form.initialValues);
+  form.values = getValuesFromInitialValue(form.initialValues);
 
   return form;
 };
@@ -265,5 +265,22 @@ const createForm = (props?: FormProps) => {
 
   return form!;
 };
+
+function initialValuesHandle(initialValues: any) {
+  Object.keys(initialValues).forEach((key: string) => {
+    const cur = initialValues[key];
+    if (isArr(cur)) {
+      initialValues[key] = ArrayFieldModel.setLineId(cur);
+    } else if (isPlainObj(cur)) {
+      initialValuesHandle(cur);
+    }
+  });
+
+  return initialValues;
+}
+
+function getValuesFromInitialValue(initialValues: any): any {
+  return initialValuesHandle(toJS(initialValues));
+}
 
 export default createForm;

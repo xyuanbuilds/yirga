@@ -46,7 +46,7 @@ type ValueType =
   | 'string';
 
 // TODO 标准化组件 columns 类型
-interface ColumnProps {
+interface ColumnType {
   dataIndex: string;
   title: string;
   valueType: ValueType;
@@ -62,7 +62,7 @@ interface ColumnProps {
 function Test() {
   const [form] = useForm();
   const [rules, setRules] = React.useState(validator1);
-  const testColumns: ColumnProps[] = [
+  const testColumns: ColumnType[] = [
     {
       dataIndex: 'a',
       title: 'a',
@@ -138,7 +138,7 @@ function Test() {
       <TableContainer
         initialValues={{
           array: [
-            { a: '1111', b: 'cccc' },
+            { a: 'aaa', b: 'cccc' },
             { a: '1111', b: 'cccc' },
             { a: '1111', b: 'cccc' },
             { a: '1111', b: 'cccc' },
@@ -175,7 +175,7 @@ function FormContainer({ initialValues, children, form }) {
 }
 
 interface BodyProps {
-  columns: ColumnProps[];
+  columns: ColumnType[];
   dataSource: any;
   size: {
     width: number;
@@ -292,15 +292,25 @@ function TableEnhanced<RecordType extends object>({
   columns: originColumns,
   selectable,
   sortable,
+}: {
+  size: { width: number; height: number };
+  dataSource: RecordType[];
+  columns: ColumnType[];
+  selectable: boolean;
+  sortable: boolean;
 }) {
-  const { selectedItems, toggleSelection, isSelected } = useSelectable();
-
+  // * 3 line index
   const indexedColumns = useIndexColumns(originColumns);
+
+  // * 2 selectable
+  const { selectedItems, toggleSelection, isSelected } = useSelectable();
+  const options = dataSource.map((i: object) => i[ROW_ID_KEY]) as string[];
   const selectableColumns = useSelectableColumns(
     indexedColumns,
-    dataSource.map((i) => i[ROW_ID_KEY]),
+    options,
     selectable,
   );
+  // * 1 handler sort
   const columns = useSortableColumn(selectableColumns, sortable);
 
   const renderList: CustomizeScrollBody<RecordType> = (
@@ -328,6 +338,8 @@ function TableEnhanced<RecordType extends object>({
     >
       <Table<RecordType>
         tableLayout="fixed"
+        // * rc-table 未添加 symbol 为支持类型
+        // @ts-ignore
         rowKey={ROW_ID_KEY}
         dataSource={dataSource}
         columns={columns.concat({

@@ -10,7 +10,7 @@ import {
 import { isValid, isArr, isFn } from '../predicate';
 import LifeCycles from '../effects/constants';
 
-import type { Field, ArrayField, NormalEvent } from '../types/Field';
+import type { Field, NormalEvent } from '../types/Field';
 import type { Form, FieldFactoryProps } from '../types/Form';
 
 interface Dependencies {
@@ -123,19 +123,10 @@ const fieldInit = ({
     // this.inputValues = []
     // batch.scope?.(() => {
     if (options?.forceClear) {
-      if (isArrayField(field)) {
-        field.value = [] as any;
-      } else {
-        field.value = undefined;
-      }
+      field.value = undefined;
     } else if (isValid(field.value)) {
-      // if (isArrayField(field)) {
-      // field.value = toJS(field.initialValue);
-      // } else {
       field.value = toJS(field.initialValue);
-      // }
     }
-    // });
   }
 
   function dispose() {
@@ -199,7 +190,7 @@ const createFieldReactions = ({
       reaction(
         () => field.validator,
         () => {
-          if (field.modified) {
+          if (field.modified && !field.caches.inputting) {
             field.validate();
           }
         },
@@ -309,9 +300,5 @@ const setFieldInitial = ({
     };
   };
 };
-
-export function isArrayField(node: any): node is ArrayField {
-  return isArr(node.value);
-}
 
 export { fieldInit, createFieldModel, createFieldReactions, setFieldInitial };
