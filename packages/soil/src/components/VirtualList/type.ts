@@ -6,22 +6,18 @@ export type ColumnWidth = number | ((columIndex: number) => number);
 
 // TODO more info column
 // * 后续实现
-export interface ColumnType<RecordType> {
+export interface ColumnType<RecordType extends object = any> {
   align?: 'left' | 'right' | 'center' | undefined;
   title?: React.ReactNode;
   key?: React.Key;
   dataIndex?: DataIndex; // 列 -> 数据映射 可提供key
   children?: ColumnType<RecordType>[]; // TODO 表头分组相关
   skipCheckEmpty?: boolean;
-  render?: (
-    value: unknown,
-    record: RecordType,
-    index: number,
-  ) => React.ReactNode;
-  className?: (record: RecordType, index: number) => string;
+  render?: (value: any, record: RecordType, index: number) => React.ReactNode;
+  className?: ((record: RecordType, index: number) => string) | string;
   width?: number; // * 渲染宽度
   minWidth?: number; // * 最小渲染宽度
-  ellipsis?: boolean;
+  // ellipsis?: boolean;
 }
 export interface ColumnPos {
   key: React.Key;
@@ -30,12 +26,13 @@ export interface ColumnPos {
 }
 
 // * 实现虚拟滚动的 column 只需要 width 和 dataIndex
-export interface ListColumnType<RecordType> extends ColumnType<RecordType> {
+export interface ListColumnType<RecordType extends object = any>
+  extends ColumnType<RecordType> {
   width: number;
   dataIndex: DataIndex;
 }
 
-export interface ListProps<RecordType> {
+export interface ListProps<RecordType extends object = any> {
   container: {
     height: number;
     width: number;

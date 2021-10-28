@@ -4,6 +4,7 @@ import Field from '../../Form/Field';
 import { useField } from '../../Form/context/Field';
 import { getValidator } from '../Item/validator';
 import FeedbackItem from '../Item/Item';
+import type { ColumnType } from '../type';
 
 export interface IArrayBaseItemProps {
   index: number;
@@ -75,13 +76,12 @@ function getFieldRender(column) {
   return column;
 }
 
-function useTableFormColumns(
-  columns,
-  // dataSource,
+function useTableFormColumns<RecordType extends object = any>(
+  columns: ColumnType<RecordType>[],
   { remove, moveUp, moveDown },
 ) {
   return columns
-    .reduce((buf, column) => {
+    .reduce<ColumnType<RecordType>[]>((buf, column) => {
       return buf.concat(getFieldRender(column));
     }, [])
     .concat({

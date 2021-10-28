@@ -40,7 +40,7 @@ interface ListRef {
 }
 
 // TODO onWheel 优化
-function List<RecordType extends object>(
+function List<RecordType extends object = any>(
   props: ListProps<RecordType>,
   wrapper: React.ForwardedRef<ListRef>,
 ): React.ReactElement {
@@ -462,4 +462,6 @@ function getNumInfo(
   return numOrFunc;
 }
 
-export default React.forwardRef(List);
+export default React.forwardRef(List) as <RecordType extends object = any>(
+  props: ListProps<RecordType> & { ref?: React.ForwardedRef<ListRef> },
+) => ReturnType<typeof List>;

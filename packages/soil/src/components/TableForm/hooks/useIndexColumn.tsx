@@ -1,9 +1,13 @@
+import type { ColumnType } from '../type';
+
 import styles from './selectable.less';
 
 export const INDEX_COLUMN_WIDTH = 32;
 
-function useIndexColumns(columns: any[]): any[] {
-  const indexColumn = [
+function useIndexColumns<RecordType extends object = any>(
+  columns: ColumnType<RecordType>[],
+): ColumnType<RecordType>[] {
+  const indexColumn: ColumnType<RecordType>[] = [
     {
       key: 'array_table_index',
       title() {

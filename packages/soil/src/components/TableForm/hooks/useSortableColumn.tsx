@@ -6,6 +6,7 @@ import {
   SortableHandle,
 } from 'react-sortable-hoc';
 import { MenuOutlined } from '@ant-design/icons';
+import type { ColumnType } from '../type';
 
 export const SORTABlE_COLUMN_WIDTH = 32;
 
@@ -48,16 +49,21 @@ const Row = ({
 
 const SortableRow = SortableElement(Row);
 
-function useSortableColumn(columns, sortable) {
-  if (sortable)
-    return [
+function useSortableColumn<RecordType extends object = any>(
+  columns: ColumnType<RecordType>[],
+  sortable?: boolean,
+): ColumnType<RecordType>[] {
+  if (sortable) {
+    const sortableColumn: ColumnType<RecordType>[] = [
       {
         dataIndex: 'array_table_sort',
         width: SORTABlE_COLUMN_WIDTH,
         render: () => <DragHandle />,
       },
-    ].concat(columns);
+    ];
 
+    return sortableColumn.concat(columns);
+  }
   return columns;
 }
 

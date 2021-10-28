@@ -3,24 +3,18 @@ import * as React from 'react';
 import { Table, Button } from 'antd';
 import ResizeObserver from 'rc-resize-observer';
 import { observer } from '@formily/reactive-react';
-
 import type { CustomizeScrollBody } from 'rc-table/lib/interface.d';
-import type { Rule } from 'rc-field-form/lib/interface.d';
-
+import type { ColumnType as AntdColumnType } from 'antd/lib/table';
+/* List */
 import List from '../VirtualList/List';
-
+/* Form */
 import ArrayField from '../Form/ArrayField';
 import Form from '../Form/Form';
 import { useField } from '../Form/context/Field';
-// import createForm from '../Form/models/Form';
 import { ROW_ID_KEY } from '../Form/models/ArrayField';
 import { isValid } from '../Form/predicate';
 import useForm from '../Form/useForm';
-
-import TestField from '../Form/TestField';
-import TestSelect from '../Form/TestFieldSelect';
-import { validator1, validator2 } from './test/validator';
-
+/* Enhanced */
 import useTableFormColumns from './hooks/useTableFormColumns';
 import useSelectableColumns, {
   useSelectable,
@@ -32,37 +26,20 @@ import useSortableColumn, {
   SortableRow,
   onSortEnd,
 } from './hooks/useSortableColumn';
+
 import type { ArrayField as ArrayFieldInstance } from '../Form/types/Field';
+import type { ColumnType } from './type';
 
-// const form = createForm();
-
-type ValueType =
-  | 'array'
-  | 'boolean'
-  | 'date'
-  | 'datetime'
-  | 'number'
-  | 'object'
-  | 'string';
-
-// TODO 标准化组件 columns 类型
-interface ColumnType {
-  dataIndex: string;
-  title: string;
-  valueType: ValueType;
-  width?: number;
-  component: [React.FunctionComponent<any>, Record<string, any>?];
-  linkages?: string[];
-  linkageReaction?: (field: any, value: any) => void;
-  deduplicate?: boolean;
-  rules?: Rule[];
-}
+// * Test
+import TestField from '../Form/TestField';
+import TestSelect from '../Form/TestFieldSelect';
+import { validator1, validator2 } from './test/validator';
 
 // * 测试实际使用环境
 function Test() {
   const [form] = useForm();
   const [rules, setRules] = React.useState(validator1);
-  const testColumns: ColumnType[] = [
+  const testColumns: ColumnType<any>[] = [
     {
       dataIndex: 'a',
       title: 'a',
@@ -174,8 +151,8 @@ function FormContainer({ initialValues, children, form }) {
   );
 }
 
-interface BodyProps {
-  columns: ColumnType[];
+interface BodyProps<RecordType extends object> {
+  columns: ColumnType<RecordType>[];
   dataSource: any;
   size: {
     width: number;
@@ -186,13 +163,13 @@ interface BodyProps {
 }
 
 // * 虚拟滚动表体的链接层
-const BodyContainer = ({
+const BodyContainer = <RecordType extends object = any>({
   columns,
   dataSource,
   size,
   onScroll,
   scrollInfoRef,
-}: BodyProps) => {
+}: BodyProps<RecordType>) => {
   const listSize = {
     rowHeight: 45,
     container: {
@@ -228,7 +205,7 @@ const BodyContainer = ({
   const c = useTableFormColumns(columns, { remove, moveUp, moveDown });
 
   return (
-    <List
+    <List<RecordType>
       {...listSize}
       renderRow={(props, index, content) => {
         return (
@@ -286,7 +263,7 @@ const LinkComponent = observer(
   },
 );
 
-function TableEnhanced<RecordType extends object>({
+function TableEnhanced<RecordType extends object = any>({
   size,
   dataSource,
   columns: originColumns,
@@ -295,7 +272,7 @@ function TableEnhanced<RecordType extends object>({
 }: {
   size: { width: number; height: number };
   dataSource: RecordType[];
-  columns: ColumnType[];
+  columns: ColumnType<RecordType>[];
   selectable: boolean;
   sortable: boolean;
 }) {
@@ -342,7 +319,7 @@ function TableEnhanced<RecordType extends object>({
         // @ts-ignore
         rowKey={ROW_ID_KEY}
         dataSource={dataSource}
-        columns={columns.concat({
+        columns={(columns as AntdColumnType<any>[]).concat({
           title: '操作',
           dataIndex: 'sssss',
         })}

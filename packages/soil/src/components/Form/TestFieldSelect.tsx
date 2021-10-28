@@ -3,7 +3,7 @@ import * as React from 'react';
 
 function TestFieldComponent(props: {
   value?: string;
-  onChange?: (v: { target: any }) => void;
+  onChange?: (v: { target: { value: any } }) => void;
   options?: {
     label: string;
     value: string;
