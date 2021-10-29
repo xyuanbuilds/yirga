@@ -84,7 +84,27 @@ const formInit = (props: FormProps | undefined): Form => {
       );
     });
 
-    return Promise.all(promises);
+    const res = await Promise.all(promises).then(() => {
+      let mostTopIndex = -1;
+      let hasGotIndex = promises.length;
+      each(form.fields, (curField) => {
+        const curLineIndex =
+          curField.address.length >= 3 ? (curField.address[1] as number) : -1;
+        if (curLineIndex >= hasGotIndex) return;
+        if (curField.feedbacks.length > 0) {
+          hasGotIndex = hasGotIndex > curLineIndex ? curLineIndex : hasGotIndex;
+          if (mostTopIndex === -1) mostTopIndex = curLineIndex;
+          mostTopIndex =
+            mostTopIndex >= 0 && mostTopIndex > curLineIndex
+              ? curLineIndex
+              : mostTopIndex;
+        }
+      });
+
+      return mostTopIndex;
+    });
+
+    return res;
   }
 
   function unmount() {
@@ -220,6 +240,7 @@ const createFormModel = (form: Form): Form => {
     setInitialValues: action,
     setValuesIn: action,
     reset: action,
+    validate: action,
   });
 };
 

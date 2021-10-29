@@ -37,6 +37,7 @@ const MEASURED_ROW_HEIGHT = 40;
 
 interface ListRef {
   scrollTo: ({ scrollLeft, scrollTop }: Partial<ScrollInfo>) => void;
+  scrollToIndex: (index: number) => void;
 }
 
 // TODO onWheel 优化
@@ -58,6 +59,7 @@ function List<RecordType extends object = any>(
   const wrapperDom = React.useRef<HTMLElement>(null);
   React.useImperativeHandle(wrapper, () => ({
     scrollTo,
+    scrollToIndex,
   }));
 
   const cacheRef = React.useRef<Record<string, RowData>>({
@@ -143,6 +145,11 @@ function List<RecordType extends object = any>(
       wrapperDom.current.scrollLeft = scrollLeft || scrollInfo.scrollLeft;
       wrapperDom.current.scrollTop = scrollTop || scrollInfo.scrollTop;
     }
+  }
+
+  function scrollToIndex(index: number) {
+    if (typeof rowHeight === 'number')
+      scrollTo({ scrollTop: index * rowHeight });
   }
 
   function getVerticalRange(): [

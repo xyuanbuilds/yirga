@@ -11,6 +11,7 @@ import List from '../VirtualList/List';
 import ArrayField from '../Form/ArrayField';
 import Form from '../Form/Form';
 import { useField } from '../Form/context/Field';
+import { useForm as useFormInstance } from '../Form/context/Form';
 import { ROW_ID_KEY } from '../Form/models/ArrayField';
 import { isValid } from '../Form/predicate';
 import useForm from '../Form/useForm';
@@ -171,16 +172,21 @@ const BodyContainer = <RecordType extends object = any>({
   scrollInfoRef,
 }: BodyProps<RecordType>) => {
   const listSize = {
-    rowHeight: 45,
+    rowHeight: 48,
     container: {
       width: size.width,
       height: size.height - 87, // TODO 当前减去操作栏与表头
     },
   };
 
+  const form = useFormInstance();
+
   const { moveUp, moveDown, remove } = useField<ArrayFieldInstance>();
 
   const listRef = React.useRef<React.ElementRef<typeof List>>(null);
+  // TODO 需要优化
+  // @ts-ignore
+  form.onValidated = listRef.current?.scrollToIndex;
 
   const obj = {} as { scrollLeft: number };
   Object.defineProperty(obj, 'scrollLeft', {
@@ -333,7 +339,6 @@ function TableEnhanced<RecordType extends object = any>({
   );
 }
 
-// TODO 表头高度？
 function TableContainer<RecordType extends object>({
   form,
   columns,

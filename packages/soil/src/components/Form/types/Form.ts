@@ -46,5 +46,5 @@ export interface Form<ValueType extends object = any> {
   createArrayField: (props: CreateArrayFieldProps) => ArrayField;
   unmount: () => void;
   reset: (props?: { forceClear?: boolean }) => void;
-  validate: () => Promise<any[]>;
+  validate: () => Promise<number>;
 }

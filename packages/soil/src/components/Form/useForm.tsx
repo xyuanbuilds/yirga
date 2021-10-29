@@ -5,14 +5,20 @@ import createFrom from './models/Form';
 import type { Form } from './types/Form';
 
 class FormStore {
-  private form: Form;
+  private form: Form & {
+    onValidated?: (index: number) => void;
+  };
 
   constructor() {
     this.form = createFrom();
   }
 
-  private validateFields = () => {
-    this.form.validate();
+  private validateFields = async () => {
+    const line = await this.form.validate();
+
+    if (typeof this.form.onValidated === 'function')
+      this.form.onValidated(line);
+    return line;
   };
 
   private getFieldsValue = async () => {
