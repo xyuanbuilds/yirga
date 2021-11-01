@@ -41,6 +41,7 @@ export interface Form<ValueType extends object = any> {
   getValuesIn: (address: Address) => any;
   setValuesIn: (address: Address, value: any) => void;
   setInitialValues: (values: any, strategrey?: 'merge' | 'replace') => void;
+  setValidator: (pattern: RegExp, validator: any) => void;
   getInitialValuesIn: (address: Address) => any;
   createField: (props: FieldFactoryProps) => Field;
   createArrayField: (props: CreateArrayFieldProps) => ArrayField;

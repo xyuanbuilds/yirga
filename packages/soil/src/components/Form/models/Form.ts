@@ -26,6 +26,7 @@ const formInit = (props: FormProps | undefined): Form => {
     values: {}, // { array: [{ a1: xx }, { a1: xx }]}
     initialValues: {},
     setInitialValues,
+    setValidator,
     setValuesIn,
     getValuesIn,
     getInitialValuesIn,
@@ -73,6 +74,17 @@ const formInit = (props: FormProps | undefined): Form => {
     }
   }
 
+  //  /array,[\d]+,a/
+  function setValidator(pattern: RegExp, validator: any) {
+    if (pattern instanceof RegExp) {
+      each(form.fields, (field, identifier) => {
+        if (pattern.test(identifier)) {
+          field.setValidator(validator);
+        }
+      });
+    }
+  }
+
   async function validate() {
     const promises: Promise<any>[] = [];
 
@@ -100,7 +112,6 @@ const formInit = (props: FormProps | undefined): Form => {
               : mostTopIndex;
         }
       });
-
       return mostTopIndex;
     });
 
@@ -238,6 +249,7 @@ const createFormModel = (form: Form): Form => {
     modified: observable.ref,
     initialValues: observable,
     setInitialValues: action,
+    setValidator: action,
     setValuesIn: action,
     reset: action,
     validate: action,

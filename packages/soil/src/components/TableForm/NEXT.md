@@ -5,16 +5,16 @@
 3. 虚拟滚动中，根据 initialValue 提前生成 fields；
 4. ~~表单validate~~：
    1. ~~form.validateFields；~~
-   2. 错误获取，并scroll到错误位置；
-      1. rowHeight 获取；
-      2. validate 中包含行信息；
+   2. ~~错误获取，并scroll到错误位置；~~
+      1. ~~rowHeight 获取；~~
+      2. validate 中包含行信息； // TODO 看后续反馈
 5. 列重名，feedback 添加；
 6. 样式补充；
 7. ~~form 实例外部管理；~~
 8. ~~设计获取&设置表单值：~~
    1. form.getFieldsValue;
       1. ~~form.validateFields;~~
-   2. form.setFieldsValue;
+   2. form.setFieldsValue; // TODO 看后续反馈
 9. Field disabled & visible；
    1. disabled/visible 阻断 validate
 10. ~~index 列~~；

@@ -15,6 +15,9 @@ import { useForm as useFormInstance } from '../Form/context/Form';
 import { ROW_ID_KEY } from '../Form/models/ArrayField';
 import { isValid } from '../Form/predicate';
 import useForm from '../Form/useForm';
+/* Form pre */
+import useValidator from './hooks/useValidator';
+import useInitialValues from './hooks/useInitialValues';
 /* Enhanced */
 import useTableFormColumns from './hooks/useTableFormColumns';
 import useSelectableColumns, {
@@ -114,28 +117,152 @@ function Test() {
         验证
       </Button>
       <TableContainer
-        initialValues={{
-          array: [
-            { a: 'aaa', b: 'cccc' },
-            { a: '1111', b: 'cccc' },
-            { a: '1111', b: 'cccc' },
-            { a: '1111', b: 'cccc' },
-            { a: '1111', b: 'cccc' },
-            { a: '1111', b: 'cccc' },
-            { a: '1111', b: 'cccc' },
-            { a: '1111', b: 'cccc' },
-            { a: '1111', b: 'cccc' },
-            { a: '1111', b: 'cccc' },
-            { a: '1111', b: 'cccc' },
-            { a: '1111', b: 'cccc' },
-            { a: '1111', b: 'cccc' },
-            { a: '1111', b: 'cccc' },
-            { a: '1111', b: 'cccc' },
-            { a: '1111', b: 'cccc' },
-            { a: '1111', b: 'cccc' },
-            { a: '1111', b: 'cccc' },
-          ],
-        }}
+        initialValues={[
+          { a: 'aaa', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: 'aaa', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: 'aaa', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: 'aaa', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: 'aaa', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: 'aaa', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: 'aaa', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: 'aaa', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+          { a: '1111', b: 'cccc' },
+        ]}
         form={form}
         columns={testColumns}
       />
@@ -247,10 +374,18 @@ type Operator = Pick<
 >;
 const LinkComponent = observer(
   ({
+    columns,
     children,
+    initialValues,
   }: {
+    columns: any[];
+    initialValues: any[];
     children: (dataSource: any[], operator: Operator) => JSX.Element;
   }) => {
+    const form = useFormInstance();
+    useInitialValues(initialValues, columns, form);
+    useValidator(columns, form);
+
     const arrayField = useField<ArrayFieldInstance>();
     const dataSource = Array.isArray(arrayField.value)
       ? arrayField.value.slice()
@@ -351,6 +486,8 @@ function TableContainer<RecordType extends object>({
     height: 0,
   });
 
+  const formInitialValues = useInitialValues.getInitialValue(initialValues);
+
   return (
     <ResizeObserver
       onResize={({ width, height }) => {
@@ -361,8 +498,8 @@ function TableContainer<RecordType extends object>({
       }}
     >
       <div style={{ height: '100%', width: '100%' }}>
-        <FormContainer initialValues={initialValues} form={form}>
-          <LinkComponent>
+        <FormContainer initialValues={formInitialValues} form={form}>
+          <LinkComponent initialValues={initialValues} columns={columns}>
             {(dataSource, operator) => {
               return (
                 <>

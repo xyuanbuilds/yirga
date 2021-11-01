@@ -46,9 +46,9 @@ function Field({
     deduplicate,
   });
 
-  useEffect(() => {
-    if (typeof validator === 'function') field.setValidator(validator);
-  }, [field, validator]);
+  // useEffect(() => {
+  //   if (typeof validator === 'function') field.setValidator(validator);
+  // }, [field, validator]);
 
   return (
     <FieldContext.Provider value={field}>
