@@ -1,6 +1,6 @@
 /* eslint-disable no-param-reassign */
 import * as React from 'react';
-import { Table, Button, Checkbox, Input, Select } from 'antd';
+import { Table, Button } from 'antd';
 import ResizeObserver from 'rc-resize-observer';
 import { observer } from '@formily/reactive-react';
 import type { CustomizeScrollBody } from 'rc-table/lib/interface.d';
@@ -13,10 +13,8 @@ import Form from '../Form/Form';
 import { useField } from '../Form/context/Field';
 import { useForm as useFormInstance } from '../Form/context/Form';
 import { ROW_ID_KEY } from '../Form/models/ArrayField';
-import { isValid } from '../Form/predicate';
 
-import useForm from '../Form/useForm';
-import ConfigProvider, { useConfig } from './hooks/useConfig';
+import ConfigProvider from './hooks/useConfig';
 /* Form pre */
 import useValidator from './hooks/useValidator';
 import useInitialValues from './hooks/useInitialValues';
@@ -37,249 +35,6 @@ import useSortableColumn, {
 import type { ArrayField as ArrayFieldInstance } from '../Form/types/Field';
 import type { Form as TableForm } from '../Form/types/Form';
 import type { ColumnType } from './type';
-
-// * Test
-import { validator1, validator2 } from './test/validator';
-
-// * 测试实际使用环境
-function Test() {
-  const [form] = useForm();
-  const [rules, setRules] = React.useState(validator1);
-  const testColumns: ColumnType<any>[] = [
-    {
-      dataIndex: 'a',
-      title: 'a',
-      width: 100,
-      component: [Input],
-      valueType: 'string',
-      linkages: ['b', 'c'],
-      rules,
-      linkageReaction: (field, values) => {
-        const [b, c] = values;
-        field.value = isValid(b) && isValid(c) ? b + c : field.value;
-      },
-    },
-    {
-      dataIndex: 'b',
-      title: 'b',
-      width: 100,
-      component: [Input],
-      valueType: 'string',
-      rules,
-    },
-    {
-      dataIndex: 'cc',
-      title: 'cc',
-      width: 32,
-      keep: true,
-      component: [Checkbox],
-      valueType: 'boolean',
-    },
-    {
-      dataIndex: 'c',
-      title: 'c',
-      width: 100,
-      component: [
-        Select,
-        {
-          options: [
-            { label: 'aaa', value: 'aaa' },
-            { label: 'bbb', value: 'bbb' },
-            { label: 'ccc', value: 'ccc' },
-          ],
-        },
-      ],
-      valueType: 'string',
-      deduplicate: true,
-    },
-  ];
-
-  return (
-    <>
-      <Button
-        onClick={() =>
-          setRules((v) => (v === validator2 ? validator1 : validator2))
-        }
-      >
-        切换validator
-      </Button>
-      <Button
-        onClick={async () => {
-          const res = await form.getFieldsValue();
-          console.log(res);
-        }}
-      >
-        获得
-      </Button>
-      <Button
-        onClick={() => {
-          form.reset();
-        }}
-      >
-        重置
-      </Button>
-      <Button
-        onClick={async () => {
-          const res = await form.validateFields();
-          console.log(res);
-        }}
-      >
-        验证
-      </Button>
-      <TableContainer
-        onlyDelete
-        initialValues={[
-          { a: 'aaa', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: 'aaa', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: 'aaa', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: 'aaa', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: 'aaa', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: 'aaa', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: 'aaa', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: 'aaa', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-        ]}
-        form={form}
-        columns={testColumns}
-      />
-    </>
-  );
-}
 
 // * 表单功能添加
 function FormContainer({ initialValues, children, form }) {
@@ -552,4 +307,4 @@ function TableContainer<RecordType extends object>({
   );
 }
 
-export default Test;
+export default TableContainer;
