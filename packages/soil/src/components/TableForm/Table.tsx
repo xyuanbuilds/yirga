@@ -14,7 +14,9 @@ import { useField } from '../Form/context/Field';
 import { useForm as useFormInstance } from '../Form/context/Form';
 import { ROW_ID_KEY } from '../Form/models/ArrayField';
 import { isValid } from '../Form/predicate';
+
 import useForm from '../Form/useForm';
+import ConfigProvider, { useConfig } from './hooks/useConfig';
 /* Form pre */
 import useValidator from './hooks/useValidator';
 import useInitialValues from './hooks/useInitialValues';
@@ -33,6 +35,7 @@ import useSortableColumn, {
 } from './hooks/useSortableColumn';
 
 import type { ArrayField as ArrayFieldInstance } from '../Form/types/Field';
+import type { Form as TableForm } from '../Form/types/Form';
 import type { ColumnType } from './type';
 
 // * Test
@@ -68,7 +71,7 @@ function Test() {
       dataIndex: 'cc',
       title: 'cc',
       width: 32,
-      fixed: true,
+      keep: true,
       component: [Checkbox],
       valueType: 'boolean',
     },
@@ -124,6 +127,7 @@ function Test() {
         验证
       </Button>
       <TableContainer
+        onlyDelete
         initialValues={[
           { a: 'aaa', b: 'cccc' },
           { a: '1111', b: 'cccc' },
@@ -342,11 +346,7 @@ const BodyContainer = <RecordType extends object = any>({
   }
 
   const arrayField = useField<ArrayFieldInstance>();
-  const c = useTableFormColumns(
-    columns,
-    { remove, moveUp, moveDown },
-    { movable: false, deletable: true },
-  );
+  const c = useTableFormColumns(columns, { remove, moveUp, moveDown });
 
   return (
     <List<RecordType>
@@ -389,8 +389,8 @@ const LinkComponent = observer(
     children,
     initialValues,
   }: {
-    columns: any[];
-    initialValues: any[];
+    columns?: any[];
+    initialValues?: Record<string, any>;
     children: (dataSource: any[], operator: Operator) => JSX.Element;
   }) => {
     const form = useFormInstance();
@@ -419,39 +419,23 @@ function TableEnhanced<RecordType extends object = any>({
   size,
   dataSource,
   columns: originColumns,
-  selectable,
-  sortable,
-  hasIndex,
-  onlyDelete = true,
 }: {
   size: { width: number; height: number };
   dataSource: RecordType[];
-  columns: ColumnType<RecordType>[];
-  selectable: boolean;
-  sortable: boolean;
-  hasIndex: boolean;
-  onlyDelete: boolean;
+  columns?: ColumnType<RecordType>[];
 }) {
-  const columnWithWidth = useColWidth(size.width, 8, originColumns, {
-    indexCol: hasIndex,
-    selectable,
-    sortable,
-    actionNum: onlyDelete ? 1 : 3,
-  });
+  const columnWithWidth = useColWidth(size.width, 8, originColumns);
 
   // * 3 line index
-  const indexedColumns = useIndexColumns(columnWithWidth, hasIndex);
+  const indexedColumns = useIndexColumns(columnWithWidth);
 
   // * 2 selectable
   const { selectedItems, toggleSelection, isSelected } = useSelectable();
   const options = dataSource.map((i: object) => i[ROW_ID_KEY]) as string[];
-  const selectableColumns = useSelectableColumns(
-    indexedColumns,
-    options,
-    selectable,
-  );
+  const selectableColumns = useSelectableColumns(indexedColumns, options);
+
   // * 1 handler sort
-  const columns = useSortableColumn(selectableColumns, sortable);
+  const columns = useSortableColumn(selectableColumns);
 
   const renderList: CustomizeScrollBody<RecordType> = (
     rawData: readonly RecordType[],
@@ -496,15 +480,25 @@ function TableEnhanced<RecordType extends object = any>({
   );
 }
 
+export interface TableFormProps<RecordType extends object> {
+  form?: TableForm;
+  columns?: ColumnType<RecordType>[];
+  initialValues?: Record<string, any>[];
+  selectable?: boolean;
+  sortable?: boolean;
+  hasIndex?: boolean;
+  onlyDelete?: boolean;
+}
+
 function TableContainer<RecordType extends object>({
   form,
   columns,
   initialValues,
-  selectable = true,
-  sortable = true,
-  hasIndex = true,
-  onlyDelete = false,
-}) {
+  selectable,
+  sortable,
+  hasIndex,
+  onlyDelete,
+}: TableFormProps<RecordType>) {
   const [size, setTableInfo] = React.useState({
     width: 0,
     height: 0,
@@ -526,13 +520,14 @@ function TableContainer<RecordType extends object>({
           <LinkComponent initialValues={initialValues} columns={columns}>
             {(dataSource, operator) => {
               return (
-                <>
+                <ConfigProvider
+                  selectable={selectable}
+                  sortable={sortable}
+                  hasIndex={hasIndex}
+                  onlyDelete={onlyDelete}
+                >
                   <TableEnhanced<RecordType>
-                    hasIndex={hasIndex}
-                    onlyDelete={onlyDelete}
                     size={size}
-                    selectable={selectable}
-                    sortable={sortable}
                     dataSource={dataSource}
                     columns={columns}
                   />
@@ -547,7 +542,7 @@ function TableContainer<RecordType extends object>({
                   >
                     增加
                   </Button>
-                </>
+                </ConfigProvider>
               );
             }}
           </LinkComponent>

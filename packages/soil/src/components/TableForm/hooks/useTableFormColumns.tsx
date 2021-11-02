@@ -11,6 +11,8 @@ import { getValidator } from '../Item/validator';
 import FeedbackItem from '../Item/Item';
 import type { ColumnType } from '../type';
 
+import { useConfig } from './useConfig';
+
 export interface IArrayBaseItemProps {
   index: number;
 }
@@ -84,9 +86,10 @@ function getFieldRender(column) {
 function useTableFormColumns<RecordType extends object = any>(
   columns: ColumnType<RecordType>[],
   { remove, moveUp, moveDown },
-  { movable = true, deletable = true },
 ) {
-  const actionNum = (movable ? 2 : 0) + (deletable ? 1 : 0);
+  const { onlyDelete } = useConfig();
+
+  const actionNum = (onlyDelete ? 0 : 3) + (onlyDelete ? 1 : 0);
 
   return columns
     .reduce<ColumnType<RecordType>[]>((buf, column) => {
@@ -95,11 +98,11 @@ function useTableFormColumns<RecordType extends object = any>(
     .concat({
       key: 'array_action_column',
       dataIndex: 'array_action_column',
-      width: actionNum * 16 + (actionNum - 1) * 16 + 16,
+      width: onlyDelete ? 60 : actionNum * 16 + (actionNum - 1) * 16 + 16,
       render: (_: any, __: any, index: number) => {
         return (
-          <>
-            {movable && (
+          <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+            {!onlyDelete && (
               <>
                 <ArrowUpOutlined
                   style={{ fontSize: 16 }}
@@ -113,13 +116,11 @@ function useTableFormColumns<RecordType extends object = any>(
                 <Divider type="vertical" />
               </>
             )}
-            {deletable && (
-              <DeleteOutlined
-                style={{ fontSize: 16 }}
-                onClick={() => remove(index)}
-              />
-            )}
-          </>
+            <DeleteOutlined
+              style={{ fontSize: 16 }}
+              onClick={() => remove(index)}
+            />
+          </div>
         );
       },
     });

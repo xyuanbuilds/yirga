@@ -1,6 +1,7 @@
 /* eslint-disable no-param-reassign */
 import type { ColumnType } from '../type';
 
+import { useConfig } from './useConfig';
 import { INDEX_COLUMN_WIDTH } from './useIndexColumn';
 import { SELECTABLE_COLUMN_WIDTH } from './useSelectableColumn';
 import { SORTABlE_COLUMN_WIDTH } from './useSortableColumn';
@@ -11,28 +12,23 @@ export const ACTION_DIVIDER_WIDTH = 16;
 function useColWidth(
   containerWidth: number,
   scrollbarSize: number,
-  columns: ColumnType<any>[],
-  {
-    indexCol,
-    sortable,
-    selectable,
-    actionNum,
-  }: {
-    sortable: boolean;
-    selectable: boolean;
-    actionNum: number;
-    indexCol: boolean;
-  },
+  originColumns: ColumnType<any>[] | undefined,
 ) {
-  const actionColWidth =
-    ACTION_ITEM_WIDTH * actionNum + ACTION_DIVIDER_WIDTH * (actionNum - 1) + 16;
+  const columns = Array.isArray(originColumns) ? originColumns : [];
+  const { sortable, selectable, hasIndex, onlyDelete } = useConfig();
+  const actionNum = onlyDelete ? 1 : 3;
+  const actionColWidth = onlyDelete
+    ? 60
+    : ACTION_ITEM_WIDTH * actionNum +
+      ACTION_DIVIDER_WIDTH * (actionNum - 1) +
+      16;
 
   const fixedColWidth =
     (sortable ? SORTABlE_COLUMN_WIDTH : 0) +
     (selectable ? SELECTABLE_COLUMN_WIDTH : 0) +
-    (indexCol ? INDEX_COLUMN_WIDTH : 0) +
+    (hasIndex ? INDEX_COLUMN_WIDTH : 0) +
     columns.reduce((res, i) => {
-      if (i.fixed && i.width) {
+      if (i.keep && i.width) {
         res += i.width;
       }
       return res;
@@ -41,14 +37,14 @@ function useColWidth(
   const remainingWidth =
     containerWidth - actionColWidth - fixedColWidth - scrollbarSize;
 
-  const preWeight = columns.find((column) => !column.fixed && column.width)
+  const preWeight = columns.find((column) => !column.keep && column.width)
     ?.width;
   let totalWeight = 0;
   const weightMap = preWeight
     ? columns.reduce<Record<string, number>>((pre, column) => {
-        const { dataIndex, width, fixed } = column;
+        const { dataIndex, width, keep } = column;
 
-        if (!fixed && width) {
+        if (!keep && width) {
           pre[dataIndex] = width / preWeight;
           totalWeight += pre[dataIndex];
         }
@@ -59,7 +55,7 @@ function useColWidth(
 
   return weightMap
     ? columns.map((column) => {
-        if (column.fixed) {
+        if (column.keep) {
           return column;
         }
         return {

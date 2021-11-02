@@ -31,6 +31,8 @@ export interface ColumnType<RecordType extends object>
   linkageReaction?: (field: any, value: any) => void;
   deduplicate?: boolean;
   rules?: Rule[];
+  /** 是否维持固定宽度，默认随容器宽度延伸 */
+  keep?: boolean;
   render?: (
     data: unknown,
     record: RecordType,

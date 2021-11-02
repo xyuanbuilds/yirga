@@ -8,6 +8,8 @@ import {
 import { MenuOutlined } from '@ant-design/icons';
 import type { ColumnType } from '../type';
 
+import { useConfig } from './useConfig';
+
 export const SORTABlE_COLUMN_WIDTH = 32;
 
 const onSortEnd = (move: (old: number, newIndex: number) => void) => ({
@@ -51,8 +53,8 @@ const SortableRow = SortableElement(Row);
 
 function useSortableColumn<RecordType extends object = any>(
   columns: ColumnType<RecordType>[],
-  sortable?: boolean,
 ): ColumnType<RecordType>[] {
+  const { sortable } = useConfig();
   if (sortable) {
     const sortableColumn: ColumnType<RecordType>[] = [
       {

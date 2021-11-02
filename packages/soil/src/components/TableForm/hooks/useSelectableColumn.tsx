@@ -3,6 +3,8 @@ import { Checkbox } from 'antd';
 import { ROW_ID_KEY } from '../../Form/models/ArrayField';
 import type { ColumnType } from '../type';
 
+import { useConfig } from './useConfig';
+
 import styles from './selectable.less';
 
 export const SELECTABLE_COLUMN_WIDTH = 32;
@@ -94,8 +96,8 @@ const CheckBoxContainer = CK;
 function useSelectableColumns<RecordType extends object = any>(
   columns: ColumnType<RecordType>[],
   lineIds: React.Key[],
-  selectable?: boolean,
 ): ColumnType<RecordType>[] {
+  const { selectable } = useConfig();
   if (selectable) {
     const selectColumn: ColumnType<RecordType>[] = [
       {

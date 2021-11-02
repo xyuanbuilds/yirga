@@ -1,4 +1,5 @@
 import type { ColumnType } from '../type';
+import { useConfig } from './useConfig';
 
 import styles from './selectable.less';
 
@@ -6,8 +7,8 @@ export const INDEX_COLUMN_WIDTH = 32;
 
 function useIndexColumns<RecordType extends object = any>(
   columns: ColumnType<RecordType>[],
-  hasIndex: boolean,
 ): ColumnType<RecordType>[] {
+  const { hasIndex } = useConfig();
   if (hasIndex) {
     const indexColumn: ColumnType<RecordType>[] = [
       {
