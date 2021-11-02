@@ -7,6 +7,8 @@ export type NormalEvent = {
         value: any;
       }
     | {
+        value?: any;
+        __ANT_CHECKBOX: true; // eslint-disable-line @typescript-eslint/naming-convention
         checked: boolean;
       };
 };
@@ -48,7 +50,8 @@ export interface ArrayField extends Field {
 type Component<
   P = {
     value?: any;
-    onChange: (e: Event) => void;
+    checked?: boolean;
+    onChange?: (e: React.ChangeEvent) => void;
   }
 > = React.FunctionComponent<P> | React.ComponentClass<P> | string;
 

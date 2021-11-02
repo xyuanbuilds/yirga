@@ -49,7 +49,6 @@ const ReactiveInternal: React.FC<ReactiveFieldProps> = (props) => {
 
   const renderComponent = () => {
     // const value = !isVoidField(field) ? field.value : undefined;
-
     const onChange = (event) => {
       field.onInput(event);
     };
@@ -65,7 +64,10 @@ const ReactiveInternal: React.FC<ReactiveFieldProps> = (props) => {
       React.createElement(
         component[0],
         {
-          value: field.value,
+          // @ts-ignore
+          ...(component[0].__ANT_CHECKBOX // eslint-disable-line no-underscore-dangle
+            ? { checked: field.value }
+            : { value: field.value }),
           onChange,
           ...component[1],
         },

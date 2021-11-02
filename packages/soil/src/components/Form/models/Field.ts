@@ -38,12 +38,16 @@ const fieldInit = ({
     set value(value: any) {
       form.setValuesIn(field.address, value);
     },
-    async onInput(e: NormalEvent) {
+    async onInput(e: NormalEvent | string) {
       field.caches.inputting = true;
-      if ('target' in e) {
-        field.value = 'value' in e.target ? e.target.value : e.target.checked;
+      if (typeof e === 'object' && 'target' in e) {
+        field.value =
+          'checked' in e.target && e.target.value === undefined
+            ? e.target.checked
+            : e.target.value;
       } else {
-        throw new Error('invalid target');
+        field.value = e;
+        // throw new Error('invalid target');
       }
       field.form.modified = true;
       field.modified = true;

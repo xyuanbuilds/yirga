@@ -1,5 +1,10 @@
 import * as React from 'react';
-import { Button } from 'antd';
+import { Divider } from 'antd';
+import {
+  DeleteOutlined,
+  ArrowUpOutlined,
+  ArrowDownOutlined,
+} from '@ant-design/icons';
 import Field from '../../Form/Field';
 import { useField } from '../../Form/context/Field';
 import { getValidator } from '../Item/validator';
@@ -79,7 +84,10 @@ function getFieldRender(column) {
 function useTableFormColumns<RecordType extends object = any>(
   columns: ColumnType<RecordType>[],
   { remove, moveUp, moveDown },
+  { movable = true, deletable = true },
 ) {
+  const actionNum = (movable ? 2 : 0) + (deletable ? 1 : 0);
+
   return columns
     .reduce<ColumnType<RecordType>[]>((buf, column) => {
       return buf.concat(getFieldRender(column));
@@ -87,13 +95,30 @@ function useTableFormColumns<RecordType extends object = any>(
     .concat({
       key: 'array_action_column',
       dataIndex: 'array_action_column',
-      width: 200,
+      width: actionNum * 16 + (actionNum - 1) * 16 + 16,
       render: (_: any, __: any, index: number) => {
         return (
           <>
-            <Button onClick={() => moveUp(index)}>向上</Button>
-            <Button onClick={() => moveDown(index)}>向下</Button>
-            <Button onClick={() => remove(index)}>删除</Button>
+            {movable && (
+              <>
+                <ArrowUpOutlined
+                  style={{ fontSize: 16 }}
+                  onClick={() => moveUp(index)}
+                />
+                <Divider type="vertical" />
+                <ArrowDownOutlined
+                  style={{ fontSize: 16 }}
+                  onClick={() => moveDown(index)}
+                />
+                <Divider type="vertical" />
+              </>
+            )}
+            {deletable && (
+              <DeleteOutlined
+                style={{ fontSize: 16 }}
+                onClick={() => remove(index)}
+              />
+            )}
           </>
         );
       },

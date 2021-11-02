@@ -1,6 +1,6 @@
 /* eslint-disable no-param-reassign */
 import * as React from 'react';
-import { Table, Button } from 'antd';
+import { Table, Button, Checkbox, Input, Select } from 'antd';
 import ResizeObserver from 'rc-resize-observer';
 import { observer } from '@formily/reactive-react';
 import type { CustomizeScrollBody } from 'rc-table/lib/interface.d';
@@ -20,6 +20,7 @@ import useValidator from './hooks/useValidator';
 import useInitialValues from './hooks/useInitialValues';
 /* Enhanced */
 import useTableFormColumns from './hooks/useTableFormColumns';
+import useColWidth from './hooks/useColWidth';
 import useSelectableColumns, {
   useSelectable,
   SelectableItemContext,
@@ -35,8 +36,6 @@ import type { ArrayField as ArrayFieldInstance } from '../Form/types/Field';
 import type { ColumnType } from './type';
 
 // * Test
-import TestField from '../Form/TestField';
-import TestSelect from '../Form/TestFieldSelect';
 import { validator1, validator2 } from './test/validator';
 
 // * 测试实际使用环境
@@ -48,7 +47,7 @@ function Test() {
       dataIndex: 'a',
       title: 'a',
       width: 100,
-      component: [TestField],
+      component: [Input],
       valueType: 'string',
       linkages: ['b', 'c'],
       rules,
@@ -61,16 +60,24 @@ function Test() {
       dataIndex: 'b',
       title: 'b',
       width: 100,
-      component: [TestField],
+      component: [Input],
       valueType: 'string',
       rules,
+    },
+    {
+      dataIndex: 'cc',
+      title: 'cc',
+      width: 32,
+      fixed: true,
+      component: [Checkbox],
+      valueType: 'boolean',
     },
     {
       dataIndex: 'c',
       title: 'c',
       width: 100,
       component: [
-        TestSelect,
+        Select,
         {
           options: [
             { label: 'aaa', value: 'aaa' },
@@ -335,7 +342,11 @@ const BodyContainer = <RecordType extends object = any>({
   }
 
   const arrayField = useField<ArrayFieldInstance>();
-  const c = useTableFormColumns(columns, { remove, moveUp, moveDown });
+  const c = useTableFormColumns(
+    columns,
+    { remove, moveUp, moveDown },
+    { movable: false, deletable: true },
+  );
 
   return (
     <List<RecordType>
@@ -410,15 +421,26 @@ function TableEnhanced<RecordType extends object = any>({
   columns: originColumns,
   selectable,
   sortable,
+  hasIndex,
+  onlyDelete = true,
 }: {
   size: { width: number; height: number };
   dataSource: RecordType[];
   columns: ColumnType<RecordType>[];
   selectable: boolean;
   sortable: boolean;
+  hasIndex: boolean;
+  onlyDelete: boolean;
 }) {
+  const columnWithWidth = useColWidth(size.width, 8, originColumns, {
+    indexCol: hasIndex,
+    selectable,
+    sortable,
+    actionNum: onlyDelete ? 1 : 3,
+  });
+
   // * 3 line index
-  const indexedColumns = useIndexColumns(originColumns);
+  const indexedColumns = useIndexColumns(columnWithWidth, hasIndex);
 
   // * 2 selectable
   const { selectedItems, toggleSelection, isSelected } = useSelectable();
@@ -480,6 +502,8 @@ function TableContainer<RecordType extends object>({
   initialValues,
   selectable = true,
   sortable = true,
+  hasIndex = true,
+  onlyDelete = false,
 }) {
   const [size, setTableInfo] = React.useState({
     width: 0,
@@ -504,6 +528,8 @@ function TableContainer<RecordType extends object>({
               return (
                 <>
                   <TableEnhanced<RecordType>
+                    hasIndex={hasIndex}
+                    onlyDelete={onlyDelete}
                     size={size}
                     selectable={selectable}
                     sortable={sortable}

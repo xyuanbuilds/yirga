@@ -11,15 +11,11 @@ type ValueType =
   | 'object'
   | 'string';
 
-type BasicTarget = { value: any };
-type CheckedTarget = {
-  checked: boolean;
-};
-
 type Component<
   P = {
+    type?: string;
     value?: any;
-    onChange: (e: { target: BasicTarget | CheckedTarget }) => void;
+    checked?: boolean;
   }
 > = React.FunctionComponent<P> | React.ComponentClass<P> | string;
 
