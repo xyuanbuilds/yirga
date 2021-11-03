@@ -1,11 +1,13 @@
 import React from 'react';
 import 'antd/es/input-number/style/index';
 import { Input, Checkbox, Select, Button } from 'antd';
-import TableFrom from '../components/TableForm';
+import TableFrom, { Form } from '../components/TableForm';
 import { validator1, validator2 } from './test/validator';
 
+const { useForm } = TableFrom;
+
 function Test() {
-  const [form] = TableFrom.useForm();
+  const [form] = useForm();
   const [rules, setRules] = React.useState(validator1);
   const testColumns = [
     {
@@ -18,6 +20,7 @@ function Test() {
       rules,
       linkageReaction: (field, values) => {
         const [b, c] = values;
+        console.log(field.identifier, values);
         field.value = b !== undefined && c !== undefined ? b + c : field.value;
       },
     },
@@ -32,7 +35,7 @@ function Test() {
     {
       dataIndex: 'cc',
       title: 'cc',
-      width: 32,
+      width: 56,
       keep: true,
       component: [Checkbox],
       valueType: 'boolean',
@@ -57,189 +60,105 @@ function Test() {
   ];
 
   return (
-    <>
-      <Button
-        onClick={() =>
-          setRules((v) => (v === validator2 ? validator1 : validator2))
-        }
-      >
-        切换validator
-      </Button>
-      <Button
-        onClick={async () => {
-          const res = await form.getFieldsValue();
-          console.log(res);
-        }}
-      >
-        获得
-      </Button>
-      <Button
-        onClick={() => {
-          form.reset();
-        }}
-      >
-        重置
-      </Button>
-      <Button
-        onClick={async () => {
-          const res = await form.validateFields();
-          console.log(res);
-        }}
-      >
-        验证
-      </Button>
-      <TableFrom
-        onlyDelete
-        initialValues={[
-          { a: 'aaa', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: 'aaa', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: 'aaa', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: 'aaa', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: 'aaa', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: 'aaa', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: 'aaa', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: 'aaa', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-          { a: '1111', b: 'cccc' },
-        ]}
-        form={form}
-        columns={testColumns}
-      />
-    </>
+    <Form form={form}>
+      {({ push }) => (
+        <>
+          <Button
+            onClick={() =>
+              setRules((v) => (v === validator2 ? validator1 : validator2))
+            }
+          >
+            切换validator
+          </Button>
+          <Button
+            onClick={async () => {
+              const res = await form.getFieldsValue();
+              console.log(res);
+            }}
+          >
+            获得
+          </Button>
+          <Button
+            onClick={() => {
+              form.reset();
+            }}
+          >
+            重置
+          </Button>
+          <Button
+            onClick={async () => {
+              const res = await form.validateFields();
+              console.log(res);
+            }}
+          >
+            验证
+          </Button>
+          <Button onClick={() => push({})}>增加</Button>
+          <TableFrom
+            scroll={{ y: 500 }}
+            // onlyDelete
+            initialValues={[
+              { a: 'aaa', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'bbbb', b: 'cccc' },
+              { a: 'aaa', b: 'cccc' },
+            ]}
+            form={form}
+            columns={testColumns}
+          />
+        </>
+      )}
+    </Form>
   );
 }
 

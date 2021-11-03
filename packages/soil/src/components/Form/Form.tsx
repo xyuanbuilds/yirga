@@ -3,7 +3,7 @@ import * as React from 'react';
 import FormContext from './context/Form';
 import createForm from './models/Form';
 
-import { isPlainObj } from './predicate';
+// import { isPlainObj } from './predicate';
 
 import type { Form } from './types/Form';
 
@@ -16,17 +16,17 @@ export type FieldPath = Array<string | number | FieldPath>;
 function FormInstance({
   form,
   children,
-  initialValues,
-}: {
+}: // initialValues,
+{
   form?;
   children?;
-  initialValues?;
+  // initialValues?;
 }) {
   const { current: formInstance } = React.useRef<Form>(form || createForm());
 
-  React.useEffect(() => {
-    if (isPlainObj(initialValues)) formInstance.setInitialValues(initialValues);
-  }, [formInstance, initialValues]);
+  // React.useEffect(() => {
+  //   if (isPlainObj(initialValues)) formInstance.setInitialValues(initialValues);
+  // }, [formInstance, initialValues]);
 
   return (
     <FormContext.Provider value={formInstance}>{children}</FormContext.Provider>

@@ -18,12 +18,10 @@ function useInitialValues(initialValues: any, columns, form: Form) {
           const { rules, linkages, linkageReaction, deduplicate } = columns[
             columnIndex
           ];
-          const initialValue = data[dataIndex];
 
           form.createField({
             name: dataIndex,
             basePath: parent,
-            initialValue,
             validator: rules ? getValidator(rules) : undefined,
             linkages,
             linkageReaction,
@@ -34,8 +32,13 @@ function useInitialValues(initialValues: any, columns, form: Form) {
   }, [form, initialValues, columns]);
 }
 
-const getInitialValue = (initialValues) => ({
-  array: initialValues,
-});
+const getInitialValue = (initialValues) => {
+  if (Array.isArray(initialValues)) {
+    return {
+      array: initialValues,
+    };
+  }
+  return {};
+};
 
 export default Object.assign(useInitialValues, { getInitialValue });

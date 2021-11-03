@@ -33,7 +33,10 @@ type MeasuredData = {
   /* 已被测量过 row 信息 y 最大值 */
   lastMeasuredRowIndex: number;
 };
-const MEASURED_ROW_HEIGHT = 40;
+const MEASURED_ROW_HEIGHT = 48;
+function getMeasuredRowHeight(rowHeight: number) {
+  return rowHeight >= MEASURED_ROW_HEIGHT ? rowHeight : MEASURED_ROW_HEIGHT;
+}
 
 interface ListRef {
   scrollTo: ({ scrollLeft, scrollTop }: Partial<ScrollInfo>) => void;
@@ -84,7 +87,9 @@ function List<RecordType extends object = any>(
     lastMeasuredRow.offset +
     lastMeasuredRow.size +
     (dataSource.length - measuredData.lastMeasuredRowIndex - 1) *
-      MEASURED_ROW_HEIGHT;
+      (typeof rowHeight === 'number'
+        ? getMeasuredRowHeight(rowHeight)
+        : MEASURED_ROW_HEIGHT);
 
   // TODO scrolling cached
   const [_, setScrolling] = React.useState(false);
@@ -141,6 +146,7 @@ function List<RecordType extends object = any>(
   }
 
   function scrollTo({ scrollLeft, scrollTop }: Partial<ScrollInfo>) {
+    console.log(scrollTop, scrollLeft);
     if (wrapperDom.current) {
       wrapperDom.current.scrollLeft =
         typeof scrollLeft === 'number' ? scrollLeft : scrollInfo.scrollLeft;

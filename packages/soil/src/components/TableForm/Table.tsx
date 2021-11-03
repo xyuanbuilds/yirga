@@ -1,6 +1,6 @@
 /* eslint-disable no-param-reassign */
 import * as React from 'react';
-import { Table, Button } from 'antd';
+import { Table } from 'antd';
 import ResizeObserver from 'rc-resize-observer';
 import { observer } from '@formily/reactive-react';
 import type { CustomizeScrollBody } from 'rc-table/lib/interface.d';
@@ -8,8 +8,6 @@ import type { ColumnType as AntdColumnType } from 'antd/lib/table';
 /* List */
 import List from '../VirtualList/List';
 /* Form */
-import ArrayField from '../Form/ArrayField';
-import Form from '../Form/Form';
 import { useField } from '../Form/context/Field';
 import { useForm as useFormInstance } from '../Form/context/Form';
 import { ROW_ID_KEY } from '../Form/models/ArrayField';
@@ -36,15 +34,6 @@ import type { ArrayField as ArrayFieldInstance } from '../Form/types/Field';
 import type { Form as TableForm } from '../Form/types/Form';
 import type { ColumnType } from './type';
 
-// * 表单功能添加
-function FormContainer({ initialValues, children, form }) {
-  return (
-    <Form initialValues={initialValues} form={form}>
-      <ArrayField>{children}</ArrayField>
-    </Form>
-  );
-}
-
 interface BodyProps<RecordType extends object> {
   columns: ColumnType<RecordType>[];
   dataSource: any;
@@ -68,7 +57,7 @@ const BodyContainer = <RecordType extends object = any>({
     rowHeight: 48,
     container: {
       width: size.width,
-      height: size.height - 87, // TODO 当前减去操作栏与表头
+      height: size.height - 32, // TODO 当前减去操作栏与表头
     },
   };
 
@@ -145,11 +134,22 @@ const LinkComponent = observer(
     initialValues,
   }: {
     columns?: any[];
-    initialValues?: Record<string, any>;
+    initialValues?: Record<string, any>[];
     children: (dataSource: any[], operator: Operator) => JSX.Element;
   }) => {
     const form = useFormInstance();
+
+    const formInitialValues = React.useMemo(
+      () => useInitialValues.getInitialValue(initialValues),
+      [initialValues],
+    );
+
+    React.useEffect(() => {
+      form.setInitialValues(formInitialValues);
+    }, [form, formInitialValues]);
+
     useInitialValues(initialValues, columns, form);
+
     useValidator(columns, form);
 
     const arrayField = useField<ArrayFieldInstance>();
@@ -243,24 +243,25 @@ export interface TableFormProps<RecordType extends object> {
   sortable?: boolean;
   hasIndex?: boolean;
   onlyDelete?: boolean;
+  scroll?: {
+    x?: number;
+    y?: number;
+  };
 }
 
 function TableContainer<RecordType extends object>({
-  form,
   columns,
   initialValues,
   selectable,
   sortable,
   hasIndex,
   onlyDelete,
+  scroll,
 }: TableFormProps<RecordType>) {
   const [size, setTableInfo] = React.useState({
     width: 0,
     height: 0,
   });
-
-  const formInitialValues = useInitialValues.getInitialValue(initialValues);
-
   return (
     <ResizeObserver
       onResize={({ width, height }) => {
@@ -270,38 +271,25 @@ function TableContainer<RecordType extends object>({
         });
       }}
     >
-      <div style={{ height: '100%', width: '100%' }}>
-        <FormContainer initialValues={formInitialValues} form={form}>
-          <LinkComponent initialValues={initialValues} columns={columns}>
-            {(dataSource, operator) => {
-              return (
-                <ConfigProvider
-                  selectable={selectable}
-                  sortable={sortable}
-                  hasIndex={hasIndex}
-                  onlyDelete={onlyDelete}
-                >
-                  <TableEnhanced<RecordType>
-                    size={size}
-                    dataSource={dataSource}
-                    columns={columns}
-                  />
-                  <Button
-                    onClick={() =>
-                      operator.push({
-                        a: undefined,
-                        b: undefined,
-                        c: undefined,
-                      })
-                    }
-                  >
-                    增加
-                  </Button>
-                </ConfigProvider>
-              );
-            }}
-          </LinkComponent>
-        </FormContainer>
+      <div style={{ height: scroll?.y, width: '100%' }}>
+        <LinkComponent initialValues={initialValues} columns={columns}>
+          {(dataSource) => {
+            return (
+              <ConfigProvider
+                selectable={selectable}
+                sortable={sortable}
+                hasIndex={hasIndex}
+                onlyDelete={onlyDelete}
+              >
+                <TableEnhanced<RecordType>
+                  size={size}
+                  dataSource={dataSource}
+                  columns={columns}
+                />
+              </ConfigProvider>
+            );
+          }}
+        </LinkComponent>
       </div>
     </ResizeObserver>
   );
