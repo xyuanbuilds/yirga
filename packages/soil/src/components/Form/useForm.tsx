@@ -60,11 +60,13 @@ class FormStore {
 export interface FormOperator<Values extends object> {
   getFieldsValue: () => Promise<Values>;
   resetFields: () => void;
-  validateFields: () => void;
+  validateFields: () => Promise<number>;
 }
 
-function useForm<Values extends object>(): [Form & FormOperator<Values>] {
-  const formRef = React.useRef<Form & FormOperator<Values>>();
+function useForm<Values extends object>(): [
+  Form<Values> & FormOperator<Values>,
+] {
+  const formRef = React.useRef<Form<Values> & FormOperator<Values>>();
 
   if (!formRef.current) {
     // const forceReRender = () => {

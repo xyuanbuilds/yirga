@@ -36,6 +36,7 @@ function Test() {
     {
       dataIndex: 'cc',
       title: 'cc',
+      align: 'center',
       width: 56,
       keep: true,
       component: [Checkbox],
