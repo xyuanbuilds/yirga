@@ -20,8 +20,9 @@ function Test() {
       rules,
       linkageReaction: (field, values) => {
         const [b, c] = values;
-        console.log(field.identifier, values);
-        field.value = b !== undefined && c !== undefined ? b + c : field.value;
+        if (b !== undefined && c !== undefined) {
+          field.value = b + c;
+        }
       },
     },
     {
@@ -101,7 +102,7 @@ function Test() {
               { a: 'aaa', b: 'cccc' },
               { a: 'bbbb', b: 'cccc' },
               { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
+              { a: 'xxxx', b: 'cccc' },
               { a: 'bbbb', b: 'cccc' },
               { a: 'bbbb', b: 'cccc' },
               { a: 'bbbb', b: 'cccc' },

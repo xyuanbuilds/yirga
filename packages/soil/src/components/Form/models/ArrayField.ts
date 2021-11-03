@@ -92,7 +92,6 @@ const fieldInit = ({
           field.value.splice(fromIndex, 1);
           field.value.splice(toIndex, 0, fromItem);
           // return this.onInput(this.value);
-
           field.form.modified = true;
         });
       },
@@ -302,7 +301,7 @@ function spliceArrayState(
     return (
       index >= startIndex &&
       !fields[
-        `${preStr}${afterStr.replace(/^,\d+/, `.${index + deleteCount}`)}`
+        `${preStr}${afterStr.replace(/^,\d+/, `,${index + deleteCount}`)}`
       ]
     );
   };

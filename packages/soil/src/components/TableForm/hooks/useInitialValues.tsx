@@ -5,7 +5,7 @@ import type { Form } from '../../Form/types/Form';
 
 function useInitialValues(initialValues: any, columns, form: Form) {
   React.useEffect(() => {
-    if (Array.isArray(initialValues))
+    if (Array.isArray(initialValues) && !form.modified)
       initialValues.forEach((data, line) => {
         const parent = ['array', line];
 

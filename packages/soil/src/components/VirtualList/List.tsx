@@ -146,7 +146,6 @@ function List<RecordType extends object = any>(
   }
 
   function scrollTo({ scrollLeft, scrollTop }: Partial<ScrollInfo>) {
-    console.log(scrollTop, scrollLeft);
     if (wrapperDom.current) {
       wrapperDom.current.scrollLeft =
         typeof scrollLeft === 'number' ? scrollLeft : scrollInfo.scrollLeft;
