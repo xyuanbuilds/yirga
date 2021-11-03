@@ -89,7 +89,7 @@ const fieldInit = ({
     field.validator = newValidator;
   }
   async function validate(options?: { force?: boolean }) {
-    if (!options?.force && !field.modified) return;
+    if ((!options?.force && !field.modified) || !field.validator) return;
 
     const start = () => {
       // this.setValidating(true)
@@ -241,7 +241,6 @@ const createFieldReactions = ({
             () => {
               const { address, name } = field;
               const keyIndex = address.findIndex((s) => s === name);
-              // TODO 优化数组内寻址
               const arr = form.values[address[0]].reduce(
                 (res: any[], cur: any) => {
                   res.push(cur[address[keyIndex]]);
@@ -263,12 +262,28 @@ const createFieldReactions = ({
               const { address, value } = field;
               const fieldIndex = address[1];
 
+              const text =
+                typeof deduplicate === 'string'
+                  ? deduplicate
+                  : '名称已存在, 请重命名';
+
               if (
                 isValid(value) &&
                 Array.isArray(values) &&
                 values.find((v, index) => v === value && index !== fieldIndex)
               ) {
-                console.log(`${field.identifier} same: ${field.value}`);
+                // console.log(`${field.identifier} same: ${field.value}`);
+                if (!field.feedbacks.find((i) => i === text)) {
+                  field.feedbacks = [...field.feedbacks, text];
+                }
+              } else {
+                const removeIndex = field.feedbacks.findIndex(
+                  (i) => i === text,
+                );
+                if (removeIndex > -1) {
+                  field.feedbacks.splice(removeIndex, 1);
+                  field.feedbacks = [...field.feedbacks];
+                }
               }
             },
           ),

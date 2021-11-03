@@ -71,11 +71,12 @@ export interface FieldProps {
   initialValue?: any;
   children?: React.ReactElement;
   component: [Component, ComponentProps?];
-  // * 产生联动关系
+  /** 建立列间联动关系 */
   linkages?: Segment | Segment[];
+  /** 联动行为 */
   linkageReaction?: (field: Field, values: any | any[]) => void;
-  // * 校验重名
-  deduplicate?: boolean;
+  /**  校验重名 */
+  deduplicate?: boolean | string;
   validator?: (name: string, value: unknown) => Promise<any[]>;
   decorator?: [DecoratorComponent, ComponentProps?];
 }

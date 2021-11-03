@@ -56,7 +56,7 @@ function Test() {
         },
       ],
       valueType: 'string',
-      deduplicate: true,
+      deduplicate: '相同了, 请重命名',
     },
   ];
 
