@@ -21,6 +21,10 @@ class FormStore {
     return line;
   };
 
+  private removeSelected = async () => {
+    this.form.notify('removeSelected');
+  };
+
   private getFieldsValue = async () => {
     try {
       await this.form.validate();
@@ -38,6 +42,7 @@ class FormStore {
     const formWithOperators = Object.assign(this.form, {
       // getFieldValue: this.getFieldValue,
       getFieldsValue: this.getFieldsValue,
+      removeSelected: this.removeSelected,
       // getFieldError: this.getFieldError,
       // getFieldWarning: this.getFieldWarning,
       // getFieldsError: this.getFieldsError,
@@ -60,6 +65,7 @@ class FormStore {
 export interface FormOperator<Values extends object> {
   getFieldsValue: () => Promise<Values>;
   resetFields: () => void;
+  removeSelected: () => void;
   validateFields: () => Promise<number>;
 }
 

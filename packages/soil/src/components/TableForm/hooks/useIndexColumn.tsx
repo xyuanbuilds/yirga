@@ -3,7 +3,7 @@ import { useConfig } from './useConfig';
 
 import styles from './selectable.less';
 
-export const INDEX_COLUMN_WIDTH = 32;
+export const INDEX_COLUMN_WIDTH = 56;
 
 function useIndexColumns<RecordType extends object = any>(
   columns: ColumnType<RecordType>[],

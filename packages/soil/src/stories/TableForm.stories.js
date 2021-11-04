@@ -1,6 +1,7 @@
 import React from 'react';
 import 'antd/es/input-number/style/index';
 import { Input, Checkbox, Select, Button } from 'antd';
+import ResizableObserver from 'rc-resize-observer';
 import TableFrom, { Form } from '../components/TableForm';
 import { validator1, validator2 } from './test/validator';
 
@@ -9,6 +10,14 @@ const { useForm } = TableFrom;
 function Test() {
   const [form] = useForm();
   const [rules, setRules] = React.useState(validator1);
+
+  const [scroll, setScroll] = React.useState({ x: 0, y: 0 });
+
+  const [onlyDelete, toggleOnlyDelete] = React.useState(false);
+  const [selectable, toggleSelectable] = React.useState(true);
+  const [sortable, toggleSortable] = React.useState(true);
+  const [hasIndex, toggleIndex] = React.useState(true);
+
   const testColumns = [
     {
       dataIndex: 'a',
@@ -62,105 +71,172 @@ function Test() {
   ];
 
   return (
-    <Form form={form}>
-      {({ push }) => (
-        <>
-          <Button
-            onClick={() =>
-              setRules((v) => (v === validator2 ? validator1 : validator2))
-            }
-          >
-            切换validator
-          </Button>
-          <Button
-            onClick={async () => {
-              const res = await form.getFieldsValue();
-              console.log(res);
-            }}
-          >
-            获得
-          </Button>
-          <Button
-            onClick={() => {
-              form.reset();
-            }}
-          >
-            重置
-          </Button>
-          <Button
-            onClick={async () => {
-              const res = await form.validateFields();
-              console.log(res);
-            }}
-          >
-            验证
-          </Button>
-          <Button onClick={() => push({})}>增加</Button>
-          <TableFrom
-            scroll={{ y: 500 }}
-            // onlyDelete
-            initialValues={[
-              { a: 'aaa', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'xxxx', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'bbbb', b: 'cccc' },
-              { a: 'aaa', b: 'cccc' },
-            ]}
-            form={form}
-            columns={testColumns}
-          />
-        </>
-      )}
-    </Form>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        width: '100%',
+      }}
+    >
+      <div>
+        <Button
+          onClick={() => {
+            toggleSelectable((v) => !v);
+          }}
+        >
+          切换选择列{`(${selectable ? '有' : '无'})`}
+        </Button>
+        <Button
+          onClick={() => {
+            toggleSortable((v) => !v);
+          }}
+        >
+          切换排序列{`(${sortable ? '有' : '无'})`}
+        </Button>
+        <Button
+          onClick={() => {
+            toggleIndex((v) => !v);
+          }}
+        >
+          切换序号列{`(${hasIndex ? '有' : '无'})`}
+        </Button>
+        <Button
+          onClick={() => {
+            toggleOnlyDelete((v) => !v);
+          }}
+        >
+          切换操作栏{`(${onlyDelete ? '只有删除' : '正常'})`}
+        </Button>
+      </div>
+
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <Form form={form}>
+          {({ push }) => (
+            <>
+              <div>
+                <Button
+                  onClick={() =>
+                    setRules((v) =>
+                      v === validator2 ? validator1 : validator2,
+                    )
+                  }
+                >
+                  切换validator
+                </Button>
+                <Button
+                  onClick={async () => {
+                    const res = await form.getFieldsValue();
+                    console.log(res);
+                  }}
+                >
+                  获得
+                </Button>
+                <Button
+                  onClick={() => {
+                    form.reset();
+                  }}
+                >
+                  重置
+                </Button>
+                <Button
+                  onClick={async () => {
+                    const res = await form.validateFields();
+                    console.log(res);
+                  }}
+                >
+                  验证
+                </Button>
+                <Button
+                  onClick={() => {
+                    form.removeSelected();
+                  }}
+                >
+                  选中删除
+                </Button>
+                <Button onClick={() => push({})}>增加</Button>
+              </div>
+              <ResizableObserver
+                onResize={({ width, height }) => {
+                  setScroll({
+                    x: width,
+                    y: height,
+                  });
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <TableFrom
+                    scroll={scroll}
+                    onlyDelete={onlyDelete}
+                    selectable={selectable}
+                    hasIndex={hasIndex}
+                    sortable={sortable}
+                    initialValues={[
+                      { a: 'aaa', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'xxxx', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'bbbb', b: 'cccc' },
+                      { a: 'aaa', b: 'cccc' },
+                    ]}
+                    form={form}
+                    columns={testColumns}
+                  />
+                </div>
+              </ResizableObserver>
+            </>
+          )}
+        </Form>
+      </div>
+    </div>
   );
 }
 

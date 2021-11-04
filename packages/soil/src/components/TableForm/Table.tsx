@@ -11,6 +11,7 @@ import List from '../VirtualList/List';
 import { useField } from '../Form/context/Field';
 import { useForm as useFormInstance } from '../Form/context/Form';
 import { ROW_ID_KEY } from '../Form/models/ArrayField';
+import { createCustomLifeCycle } from '../Form/models/LifeCycle';
 
 import ConfigProvider from './hooks/useConfig';
 /* Form pre */
@@ -180,7 +181,7 @@ function TableEnhanced<RecordType extends object = any>({
   columns?: ColumnType<RecordType>[];
 }) {
   const columnWithWidth = useColWidth(size.width, 8, originColumns);
-
+  const form = useFormInstance();
   // * 3 line index
   const indexedColumns = useIndexColumns(columnWithWidth);
 
@@ -188,6 +189,21 @@ function TableEnhanced<RecordType extends object = any>({
   const { selectedItems, toggleSelection, isSelected } = useSelectable();
   const options = dataSource.map((i: object) => i[ROW_ID_KEY]) as string[];
   const selectableColumns = useSelectableColumns(indexedColumns, options);
+
+  React.useEffect(() => {
+    const lines = selectedItems.map((selected) => {
+      return options.findIndex((i) => i === selected);
+    });
+    form.addEffects('table_selected', () => {
+      createCustomLifeCycle('removeSelected', () => {
+        lines
+          .sort((a, b) => b - a)
+          .forEach((line) => {
+            (form.fields.array as ArrayFieldInstance).remove(line);
+          });
+      });
+    });
+  }, [selectedItems, form, options]);
 
   // * 1 handler sort
   const columns = useSortableColumn(selectableColumns);
@@ -238,11 +254,17 @@ function TableEnhanced<RecordType extends object = any>({
 export interface TableFormProps<RecordType extends object> {
   form?: TableForm;
   columns?: ColumnType<RecordType>[];
+  /** 表格表单初始值 `{ dataIndex: value }[]` */
   initialValues?: Record<string, any>[];
+  /** 是否拥有选择列 */
   selectable?: boolean;
+  /** 是否拥有排序列 */
   sortable?: boolean;
+  /** 是否拥有序号列 */
   hasIndex?: boolean;
+  /** 是否只有删除操作 */
   onlyDelete?: boolean;
+  /** 表格所占宽高 */
   scroll?: {
     x?: number;
     y?: number;

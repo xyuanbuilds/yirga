@@ -23,5 +23,6 @@ export interface FieldLifeCycle {
 }
 
 export interface Heart {
+  addLifeCycles: (id: any, lifeCycles: LifeCycle<any>[]) => void;
   publish: <P, C>(type: any, payload?: P, context?: C) => void;
 }

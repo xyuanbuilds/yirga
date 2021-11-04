@@ -42,6 +42,25 @@ function createFormLifeCycle<Payload extends ExtraPayload>(
   };
 }
 
+function createCustomLifeCycle<Payload extends ExtraPayload>(
+  type: string | symbol,
+  cb: (form: Form, payload?: Payload) => void,
+) {
+  function listener(form: Form, curType: string, payload?: Payload) {
+    if (curType === type) {
+      cb(form, payload);
+    }
+  }
+
+  if (EFFECT_STATE.effectStart) {
+    EFFECT_STATE.lifecycles.push({
+      notify(notifyType: string, payload: Payload, form: Form) {
+        listener(form, notifyType, payload);
+      },
+    });
+  }
+}
+
 // * 填充生命周期 type, 等待 callback
 function initFormLifeCycle<Payload extends ExtraPayload = undefined>(
   type: string,
@@ -116,7 +135,7 @@ export function createHeart(effectsRes: any[], form: Form): Heart {
     [],
   );
   // * 额外的生命周期
-  const outLifeCycles: LifeCycle[][] = [];
+  const outLifeCycles: Map<string | symbol, LifeCycle[]> = new Map();
 
   return {
     //* payload, context 为可选配置，context 除特殊情况，其他都为 form
@@ -133,10 +152,19 @@ export function createHeart(effectsRes: any[], form: Form): Heart {
         });
       }
     },
+    // hasLifeCycles(id: any) {
+    //   return outLifeCycles.has(id);
+    // },
+    addLifeCycles(id: any, outlifeCycles: LifeCycle[] = []) {
+      outLifeCycles.set(id, outlifeCycles);
+    },
   };
 }
 
-export function runEffects(form: Form, ...args: ((...arg: any) => void)[]) {
+export function runEffects(
+  form: Form,
+  ...args: (((...arg: any) => void) | undefined)[]
+) {
   EFFECT_STATE.lifecycles = [];
   EFFECT_STATE.effectStart = true;
   EFFECT_STATE.effectEnd = false;
@@ -152,6 +180,7 @@ export function runEffects(form: Form, ...args: ((...arg: any) => void)[]) {
   return EFFECT_STATE.lifecycles;
 }
 
+export { createCustomLifeCycle };
 export const onFormInit = initFormLifeCycle(LC.ON_FORM_INIT);
 export const onFormMount = initFormLifeCycle(LC.ON_FORM_MOUNT);
 export const onFormUnmount = initFormLifeCycle(LC.ON_FORM_UNMOUNT);

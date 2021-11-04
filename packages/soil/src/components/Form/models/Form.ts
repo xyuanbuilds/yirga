@@ -1,13 +1,6 @@
 /* eslint-disable no-param-reassign */
 import { define, observable, batch, action, toJS } from '@formily/reactive';
-import {
-  isValid,
-  isArr,
-  isNumberIndex,
-  isNum,
-  isFn,
-  isPlainObj,
-} from '../predicate';
+import { isValid, isArr, isNumberIndex, isNum, isPlainObj } from '../predicate';
 import * as FieldModel from './Field';
 import * as ArrayFieldModel from './ArrayField';
 import LifeCycles from '../effects/constants';
@@ -36,14 +29,17 @@ const formInit = (props: FormProps | undefined): Form => {
     reset,
     validate,
     unmount,
+    addEffects,
   };
 
-  form.heart = isFn(effects)
-    ? createHeart(runEffects(form, effects), form)
-    : undefined;
+  form.heart = createHeart(runEffects(form, effects), form);
+
+  function addEffects(id: string | symbol, extraEffects: () => void) {
+    form.heart?.addLifeCycles(id, runEffects(form, extraEffects));
+  }
 
   // * form.notify 用于处理 form 与 field 周期
-  function notify(type: string, field?: any) {
+  function notify(type: string | symbol, field?: any) {
     if (form.heart) {
       form.heart.publish(type, field || { form });
     }

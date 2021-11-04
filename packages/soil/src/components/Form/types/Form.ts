@@ -48,4 +48,5 @@ export interface Form<ValueType extends object = any> {
   unmount: () => void;
   reset: (props?: { forceClear?: boolean }) => void;
   validate: () => Promise<number>;
+  addEffects: (id: string | symbol, extraEffects: () => void) => void;
 }

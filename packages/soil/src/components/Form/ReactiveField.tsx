@@ -26,7 +26,7 @@ const ReactiveInternal: React.FC<ReactiveFieldProps> = (props) => {
   const { field, children } = props;
   // * 仅提供 observable 功能
   if (('onlyObservable' in props && props.onlyObservable) || !field) {
-    return <div>{children}</div>;
+    return <>{children}</>;
   }
   const { component, decorator } = props as BasicProps;
 
